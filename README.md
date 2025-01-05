@@ -26,7 +26,7 @@ When you're there, do:
 *init.cmd sets up the environment in your CMD prompt for using Visual Studio command line stuff. setupBuild.cmd only needs to be called when you don't already have a build folder set up. The build folder is a CMake thing and it's where the finished program + other shit will get put after you compile.*
 
 ### To compile everything in the project
-you go to the build folder and run `cmake --build ..`
+you go to the build folder and run `cmake --build .`
 
 
 ### Other things
