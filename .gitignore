@@ -1,0 +1,9 @@
+# ignore ALL .log files
+*.obj
+*.exe
+*.pdb
+*.ilk
+
+*.dll
+
+.vscode
