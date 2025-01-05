@@ -28,6 +28,9 @@ When you're there, do:
 ### To compile everything in the project
 you go to the build folder and run `cmake --build .`
 
+### To run the program
+the cmake build command above will output the program at *...\butimagine\build\Debug\butimagine.exe* if you wanna run it
+
 
 ### Other things
-- CMake is only here so that we don't have to carry around external libraries in our repo. It automatically downloads them for us. However, once you've built the project with cmake and installs the libraries, you can take the build command it uses and repurpose that to compile things using just the compiler and not have to worry about all the other shit CMake's doing. To get the build command from cmake, run it with the verbose option -- `cmake --build .. -v`. It'll have a ton of shit, most you don't need to worry about. But you can easily add and remove source files from the build command if you wanna build just small parts of the project. The reason why you need to copy from the cmake build command is because it has the library linking stuff in there that's annoying to find on your own.
+- CMake is only here so that we don't have to carry around external libraries in our repo. It automatically downloads them for us. However, once you've built the project with cmake and installs the libraries, you can take the build command it uses and repurpose that to compile things using just the compiler and not have to worry about all the other shit CMake's doing. To get the build command from cmake, run it with the verbose option -- `cmake --build . -v`. It'll have a ton of shit, most you don't need to worry about. But you can easily add and remove source files from the build command if you wanna build just small parts of the project. The reason why you need to copy from the cmake build command is because it has the library linking stuff in there that's annoying to find on your own.
