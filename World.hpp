@@ -1,5 +1,9 @@
-#include <array>
+#pragma once
+
+#define SDL_MAIN_HANDLED 1
 #include "SDL.h"
+
+#include "util.hpp"
 
 #define MAP_WIDTH 640
 #define MAP_HEIGHT 480
@@ -31,16 +35,20 @@ struct Player {
     int height = 10;
     int health = 100;
     int runEnergy = 100;
-    int playerID = 333; //using this as their color
+    int playerID = INT_MAX/2; //using this as their color
     
     Map* map;
+
+    Player::Player(int _x, int _y, Map* _map);
+
+    void Player::MoveHoriz(int xD);
+    void Player::MoveVert(int yD);
 
     friend struct Display;
 };
 
 struct Map {
-    typedef std::array<std::array<int, MAP_HEIGHT>, MAP_WIDTH> arr2d;
-    arr2d grid;
+    Arr2d<int> grid;
 
     // npcs
 

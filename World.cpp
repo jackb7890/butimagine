@@ -27,9 +27,7 @@ void Player::MoveVert(int yD) {
 }
 
 Map::Map () {
-    std::array<int, MAP_HEIGHT> inner;
-    inner.fill(0);
-    grid.fill(inner);
+    grid = Arr2d<int>(MAP_WIDTH, MAP_HEIGHT);
 }
 
 // Drawing each pixel based on each entry of grid for the map
@@ -40,7 +38,7 @@ void Map::SetStartMap() {
     const int stride = 5;
     for (int i = 0; i < MAP_WIDTH; i+=stride) {
         for (int j = 0; j < MAP_HEIGHT; j+=stride) {
-            grid[i][j] = i*MAP_HEIGHT + j;
+            grid(i,j) = i*MAP_HEIGHT + j;
         }
     }
 }
@@ -49,7 +47,7 @@ void Map::SetStartMap() {
 void Map::Clear(Player player) {
     for (int i = player.position.x; i < player.width; i++) {
         for (int j = player.position.y; j < player.height; j++) {
-            grid[i % MAP_WIDTH][j % MAP_HEIGHT] = 0;
+            grid(i % MAP_WIDTH,j % MAP_HEIGHT) = 0;
         }
     }
 }
@@ -58,7 +56,7 @@ void Map::Clear(Player player) {
 void Map::Add(Player player) {
     for (int i = player.position.x; i < player.width; i++) {
         for (int j = player.position.y; j < player.height; j++) {
-            grid[i % MAP_WIDTH][j % MAP_HEIGHT] = player.playerID;
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = player.playerID;
         }
     }
 }
@@ -71,11 +69,11 @@ Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::Update(Map map, bool updateScreen = true) {
+void Display::Update(Map map, bool updateScreen) {
     for (int i = 0; i < MAP_WIDTH; i++) {
         for (int j = 0; j < MAP_HEIGHT; j++) {
             SDL_Rect point {i, j, 1, 1};
-            SDL_FillRect(surface, &point, map.grid[i][j]);
+            SDL_FillRect(surface, &point, map.grid(i,j));
         }
     }
     if (updateScreen) {
@@ -83,7 +81,7 @@ void Display::Update(Map map, bool updateScreen = true) {
     }
 }
 
-void Display::Erase(Player player, bool updateScreen = true) {
+void Display::Erase(Player player, bool updateScreen) {
     SDL_Rect blankRect = {player.position.x, player.position.y, player.width, player.height};
     SDL_FillRect(surface, &blankRect, 0);
     if (updateScreen) {
@@ -91,7 +89,7 @@ void Display::Erase(Player player, bool updateScreen = true) {
     }
 }
 
-void Display::Update(Player player, bool updateScreen = true) {
+void Display::Update(Player player, bool updateScreen) {
     if (player.hasMovedOffScreen) {
         Erase(player, false /* false so we don't update in Erase and update again here*/);
     }
