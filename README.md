@@ -13,6 +13,8 @@
     want with VS. Select C++ Desktop Development
     - This is a great product with really sexy devs
 
+#### For the following steps, open CMD prompt 
+
 ### Clone this repo
 On the main page for this repo, click the green "code" button, and copy
 the https url. Open a CMD prompt and go to folder where you want to put this.
@@ -20,8 +22,10 @@ When you're there, do:
 `git clone <the_url_u_copied>`
 
 ### And then do this
-1. run the init.cmd script
-2. run the setupBuild.cmd script
+1. run the init.cmd script (you must do this everytime you start a new CMD prompt)
+2. run the setupBuild.cmd script (you need to do this whenever you need to setup your build folder)  
+(so if you clear out or delete the build folder, rerun this. However, if you build, make some changes, and build again, you don't have to run setupBuild again)
+
 
 *init.cmd sets up the environment in your CMD prompt for using Visual Studio command line stuff. setupBuild.cmd only needs to be called when you don't already have a build folder set up. The build folder is a CMake thing and it's where the finished program + other shit will get put after you compile.*
 
