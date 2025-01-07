@@ -5,4 +5,4 @@ for /f "delims=" %%x in (hehehe) do set nowayitwasthathard=%%x
 call %nowayitwasthathard%
 del hehehe
 
-set PATH=%%PATH%%;%~dp0\scripts
+set PATH=%PATH%;%~dp0\scripts
