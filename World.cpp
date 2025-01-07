@@ -6,7 +6,7 @@ Player::Player(int _x, int _y, Map* _map) : position(_x, _y), map(_map) {
 
 void Player::MoveHoriz(int xD) {
     hasMovedOffScreen = true;
-    oldPos.x = position.x;
+    oldPos = position;
     map->Clear(*this);
     position.x += xD;
     if (position.x > MAP_WIDTH) {
@@ -17,7 +17,7 @@ void Player::MoveHoriz(int xD) {
 
 void Player::MoveVert(int yD) {
     hasMovedOffScreen = true;
-    oldPos.y = position.y;
+    oldPos = position;
     map->Clear(*this);
     position.y += yD;
     if (position.y > MAP_HEIGHT) {
@@ -45,8 +45,8 @@ void Map::SetStartMap() {
 
 // Clears the map at area covered by player
 void Map::Clear(Player player) {
-    for (int i = player.position.x; i < player.width; i++) {
-        for (int j = player.position.y; j < player.height; j++) {
+    for (int i = player.position.x; i < player.position.x + player.width; i++) {
+        for (int j = player.position.y; j < player.position.y + player.height; j++) {
             grid(i % MAP_WIDTH,j % MAP_HEIGHT) = 0;
         }
     }
@@ -54,8 +54,8 @@ void Map::Clear(Player player) {
 
 // Adds a player to the map
 void Map::Add(Player player) {
-    for (int i = player.position.x; i < player.width; i++) {
-        for (int j = player.position.y; j < player.height; j++) {
+    for (int i = player.position.x; i < player.position.x + player.width; i++) {
+        for (int j = player.position.y; j < player.position.y + player.height; j++) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = player.playerID;
         }
     }
