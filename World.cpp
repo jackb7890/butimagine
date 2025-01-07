@@ -82,7 +82,7 @@ void Display::Update(Map map, bool updateScreen) {
 }
 
 void Display::Erase(Player player, bool updateScreen) {
-    SDL_Rect blankRect = {player.position.x, player.position.y, player.width, player.height};
+    SDL_Rect blankRect = {player.oldPos.x, player.oldPos.y, player.width, player.height};
     SDL_FillRect(surface, &blankRect, 0);
     if (updateScreen) {
         SDL_UpdateWindowSurface(window);
