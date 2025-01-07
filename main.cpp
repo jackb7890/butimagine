@@ -1,71 +1,69 @@
-#include <vector>
 #include <cstdio>
 #include <windows.h>
 
 #define SDL_MAIN_HANDLED 1
 #include "SDL.h"
 
-
-// what to do first
-
-// i need a map
-class Map {
-    typedef std::vector<std::vector<int>> vector2d;
-    vector2d grid;
-    // npcs
-
-    // walls
-};
-
-struct GridPos {
-    int i, j;
-
-    GridPos() : i(0), j(0) {}
-    GridPos(int _i, int _j) : i(_i), j(_i) {}
-};
-
-class Player {
-    GridPos position;
-    int health;
-    int runEnergy;
-
-    Player() : position(0, 0), health(0), runEnergy(0) {}
-};
+#include "World.hpp"
 
 void init() {
-    printf("Doing SDL_Init\n");
     SDL_Init(SDL_INIT_EVERYTHING);
 }
 
-// int main() {
-//     init();
-//     return 0;
-// }
+void cleanup() {
+    SDL_Quit();
+}
 
 int main(int argc, char* argv[]) {
     init();
+    Map map;
+    map.SetStartMap();
 
-    SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, 640, 480, SDL_WINDOW_SHOWN );
+    // not sure how I feel about the map updating through the player class but fuck it right
+    Player player1(MAP_WIDTH/2, MAP_HEIGHT/2, &map);
 
+    SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN );
     if ( !win ) {
         printf("Failed to create a window! Error: %s\n", SDL_GetError());
     }
 
-    SDL_Surface* winSurface = SDL_GetWindowSurface( win );
+    Display display(win);
+    printf("A\n");
 
-    // do drawing
-    SDL_FillRect( winSurface, NULL, SDL_MapRGB( winSurface->format, 90, 255, 120 ));
+    display.Update(map); // first draw of the map the screen (should include player initial pos)
+    printf("A\n");
+    Sleep(1500);
+    printf("A\n");
+    printf("Z\n");
 
-    SDL_UpdateWindowSurface( win );
+    player1.MoveHoriz(50);
+    display.Update(player1);
+    Sleep(1500);
 
-    printf("starting sleep\n");
-    Sleep(5000);
-    printf("OUT OF sleep\n");
+    player1.MoveVert(40);
+    display.Update(player1);
+    Sleep(1500);
 
-    SDL_DestroyWindow( win );
-    win = NULL;
-    winSurface = NULL;
-
-    SDL_Quit();
+    cleanup();
     return 0;
 }
+
+
+// stuff I made, and stopped using, but don't wanna throw away yet so I can reference it
+namespace Junkyard {
+    void DrawPlayer(Player player, SDL_Surface* winSurface) {
+        SDL_Rect rect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
+        SDL_FillRect( winSurface, &rect, SDL_MapRGB( winSurface->format, 255, 90, 120 ));
+    }
+
+    void InitSurface(Player player1, SDL_Surface* winSurface) {
+        const int stride = 5;
+        for (int i = 0; i < MAP_WIDTH; i+=stride) {
+            for (int j = 0; j < MAP_HEIGHT; j+=stride) {
+                SDL_Rect rect {i, j, stride, stride};
+                SDL_FillRect(winSurface, &rect, i*MAP_HEIGHT + j);
+            }
+        }
+        DrawPlayer(player1, winSurface);
+    }
+};
