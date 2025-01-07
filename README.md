@@ -1,7 +1,8 @@
 ## Steps for building locally
 ![](https://github.com/jackb7890/butimagine/blob/main/hentie.gif)
 ### Download these things
-- CMake: https://cmake.org/download/#latest
+- ~~CMake: https://cmake.org/download/#latest~~
+    - DONT HAVE TO DOWNLOAD, IT COMES WITH VISUAL STUDIO APPARENTLY
     - Download and run the x64 Windows Installer
     - This is for keeping track of our library dependencies (SDL2)
 - Git: https://git-scm.com/downloads/win
