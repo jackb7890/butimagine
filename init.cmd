@@ -6,3 +6,5 @@ call %nowayitwasthathard%
 del hehehe
 
 set PATH=%PATH%;%~dp0\scripts
+
+set VCPKG_INC="%~dp0\..\butimagine\build\vcpkg_installed\x64-windows\include"
