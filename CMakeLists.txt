@@ -5,9 +5,11 @@ set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT_F}/scripts/buildsystems/vcpkg.cmake)
 project(butimagine)
 
 find_package(sdl2 CONFIG REQUIRED)
+find_package(sdl2_image CONFIG REQUIRED)
 
 add_executable(butimagine main.cpp World.cpp)
 
 find_path(SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2)
 target_include_directories(butimagine PRIVATE ${SDL2_INCLUDE_DIR})
 target_link_libraries(butimagine PRIVATE SDL2::SDL2 SDL2::SDL2main)
+target_link_libraries(butimagine PRIVATE SDL2_image::SDL2_image)
