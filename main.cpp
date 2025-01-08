@@ -15,6 +15,14 @@ void cleanup() {
     SDL_Quit();
 }
 
+bool HandleQuitEv(void) {
+    return false;
+}
+
+SDL_Keycode HandleKeyDnEv(SDL_KeyboardEvent ev) {
+    return ev.keysym.sym;
+}
+
 int main(int argc, char* argv[]) {
     init();
 
@@ -31,9 +39,6 @@ int main(int argc, char* argv[]) {
     // not sure how I feel about the map updating through the player class but fuck it right
     Player player1(MAP_WIDTH/2, MAP_HEIGHT/2, map);
 
-    display.Update(map); // first draw of the map the screen (should include player initial pos)
-    Sleep(1500);
-
     // short walls are 25 long
     // long walls on bot/top are 50 long
     // long back wall is 75 long
@@ -44,24 +49,50 @@ int main(int argc, char* argv[]) {
     Wall top = Wall(155, 205, 50, false, map);
     Wall upperFront = Wall(205, 205, 25, true, map);
 
+    display.Update(map); // first draw of the map the screen (should include player initial pos)
+
     display.Update(lowerFront);
-    Sleep(500);
     display.Update(bottom);
-    Sleep(500);
     display.Update(back);
-    Sleep(500);
     display.Update(top);
-    Sleep(500);
     display.Update(upperFront);
-    Sleep(500);
 
-    player1.MoveHoriz(-140);
-    display.Update(player1);
-    Sleep(1500);
+    bool runLoop = true;
+    SDL_Event ev;
+    while (runLoop) {
+        while (SDL_PollEvent(&ev) != 0) {
+            switch(ev.type) {
+                case SDL_QUIT:
+                    runLoop = HandleQuitEv();
+                    break;
+                case SDL_KEYDOWN:
+                {
+                    SDL_Keycode key = HandleKeyDnEv(ev.key);
+                    switch (key) {
+                        case SDLK_w:
+                            player1.MoveVert(-5);
+                            break;
+                        case SDLK_a:
+                            player1.MoveHoriz(-5);
+                            break;
+                        case SDLK_s:
+                            player1.MoveVert(5);
+                            break;
+                        case SDLK_d:
+                            player1.MoveHoriz(5);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                default:
+                    break;
+            }
+            display.Update(player1);
+        }
 
-    player1.MoveVert(-20);
-    display.Update(player1);
-    Sleep(1500);
+        SDL_Delay(100);
+    }
 
     int shake = 5;
     for (int i = 0; i < 75; i++) {
