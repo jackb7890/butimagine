@@ -25,8 +25,6 @@ int main() {
         // it will also have the logic to parse the keyboard input from the client
         // then it will send back a the new state of the game for the player to display
 
-
-
         // ORRRRRRR
 
         // i just got different idea
@@ -44,7 +42,6 @@ int main() {
             // in the first one, its the entire world map, every keystroke
             // in this one, its just the single keystroke
     }
-
 
     return 0;
 }

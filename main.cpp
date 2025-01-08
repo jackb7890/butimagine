@@ -59,6 +59,7 @@ int main(int argc, char* argv[]) {
 
     bool runLoop = true;
     SDL_Event ev;
+    const int speed = 20;
     while (runLoop) {
         while (SDL_PollEvent(&ev) != 0) {
             switch(ev.type) {
@@ -70,16 +71,16 @@ int main(int argc, char* argv[]) {
                     SDL_Keycode key = HandleKeyDnEv(ev.key);
                     switch (key) {
                         case SDLK_w:
-                            player1.MoveVert(-5);
+                            player1.MoveVert(-1 * speed);
                             break;
                         case SDLK_a:
-                            player1.MoveHoriz(-5);
+                            player1.MoveHoriz(-1 * speed);
                             break;
                         case SDLK_s:
-                            player1.MoveVert(5);
+                            player1.MoveVert(1 * speed);
                             break;
                         case SDLK_d:
-                            player1.MoveHoriz(5);
+                            player1.MoveHoriz(1 * speed);
                             break;
                         default:
                             break;
@@ -92,14 +93,6 @@ int main(int argc, char* argv[]) {
         }
 
         SDL_Delay(100);
-    }
-
-    int shake = 5;
-    for (int i = 0; i < 75; i++) {
-        player1.MoveVert(shake);
-        display.Update(player1);
-        Sleep(20);
-        shake *= -1;
     }
 
     cleanup();

@@ -12,6 +12,9 @@ void Player::MoveHoriz(int xD) {
     if (position.x > MAP_WIDTH) {
         position.x = position.x % MAP_WIDTH;
     }
+    else if (position.x < 0) {
+        position.x = MAP_HEIGHT + (position.x % MAP_HEIGHT);
+    }
     map.Add(*this);
 }
 
@@ -22,6 +25,9 @@ void Player::MoveVert(int yD) {
     position.y += yD;
     if (position.y > MAP_HEIGHT) {
         position.y = position.y % MAP_HEIGHT;
+    }
+    else if (position.y < 0) {
+        position.y = MAP_HEIGHT + (position.y % MAP_HEIGHT);
     }
     map.Add(*this);
 }
