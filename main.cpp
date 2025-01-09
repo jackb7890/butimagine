@@ -5,8 +5,10 @@
 #include "SDL.h"
 
 #include "World.hpp"
+#include "SDL_image.h"
 
 void init() {
+    IMG_Init (IMG_INIT_JPG | IMG_INIT_PNG);
     SDL_Init(SDL_INIT_EVERYTHING);
 }
 
