@@ -1,29 +1,35 @@
 #include "World.hpp"
 
-Player::Player(int _x, int _y, Map* _map) : position(_x, _y), map(_map) {
-    map->Add(*this);
+Player::Player(int _x, int _y, Map& _map) : position(_x, _y), map(_map) {
+    map.Add(*this);
 }
 
 void Player::MoveHoriz(int xD) {
     hasMovedOffScreen = true;
     oldPos = position;
-    map->Clear(*this);
+    map.Clear(*this);
     position.x += xD;
     if (position.x > MAP_WIDTH) {
         position.x = position.x % MAP_WIDTH;
     }
-    map->Add(*this);
+    else if (position.x < 0) {
+        position.x = MAP_HEIGHT + (position.x % MAP_HEIGHT);
+    }
+    map.Add(*this);
 }
 
 void Player::MoveVert(int yD) {
     hasMovedOffScreen = true;
     oldPos = position;
-    map->Clear(*this);
+    map.Clear(*this);
     position.y += yD;
     if (position.y > MAP_HEIGHT) {
         position.y = position.y % MAP_HEIGHT;
     }
-    map->Add(*this);
+    else if (position.y < 0) {
+        position.y = MAP_HEIGHT + (position.y % MAP_HEIGHT);
+    }
+    map.Add(*this);
 }
 
 Map::Map () {
@@ -57,6 +63,18 @@ void Map::Add(Player player) {
     for (int i = player.position.x; i < player.position.x + player.width; i++) {
         for (int j = player.position.y; j < player.position.y + player.height; j++) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = player.playerID;
+        }
+    }
+}
+
+// Adds a wall to the map
+void Map::Add(Wall wall) {
+    int width = wall.width;
+    int length = wall.length;
+    if (!wall.isVert) std::swap(width, length);
+    for (int i = wall.origin.x; i < wall.origin.x + width; i++) {
+        for (int j = wall.origin.y; j < wall.origin.y + length; j++) {
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = wall.color.r;
         }
     }
 }
@@ -96,6 +114,16 @@ void Display::Update(Player player, bool updateScreen) {
     SDL_Rect playerRect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
     SDL_FillRect(surface, &playerRect, player.playerID);
     player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
+    if (updateScreen) {
+        SDL_UpdateWindowSurface(window);
+    }
+}
+
+void Display::Update(Wall wall, bool updateScreen) {
+    SDL_Rect wallRect = wall.isVert ? 
+        SDL_Rect {wall.origin.x, wall.origin.y, wall.width, wall.length} :
+        SDL_Rect {wall.origin.x, wall.origin.y, wall.length, wall.width};
+    SDL_FillRect(surface, &wallRect, SDL_MapRGB(surface->format, wall.color.r, wall.color.g, wall.color.b));
     if (updateScreen) {
         SDL_UpdateWindowSurface(window);
     }

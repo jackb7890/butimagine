@@ -18,6 +18,34 @@ struct GridPos {
     inline GridPos(int _x, int _y) : x(_x), y(_y) {}
 };
 
+struct RGBColor {
+    int r;
+    int g;
+    int b;
+
+    RGBColor(int _r, int _g, int _b) :
+        r(_r), g(_g), b(_b) {}
+};
+
+struct Wall {
+    bool isVert;
+    GridPos origin;
+    int width = 2;
+    int length;
+    RGBColor color;
+
+    Map& map;
+
+    // default color 112,112,112 is gray
+    Wall(int _x, int _y, int _l, bool _isV, Map& _map) : 
+        origin(_x, _y), length(_l), isVert(_isV), 
+        color(RGBColor(112, 112, 112)), map(_map) {}
+
+    Wall(int _x, int _y, int _l, RGBColor _c, bool _isV, Map& _map) : 
+        origin(_x, _y), length(_l), isVert(_isV), 
+        color(_c), map(_map) {}
+};
+
 struct Player {
     private:
     // Currently the way it works is player has 2 positions.
@@ -37,9 +65,9 @@ struct Player {
     int runEnergy = 100;
     int playerID = INT_MAX/2; //using this as their color
     
-    Map* map;
+    Map& map;
 
-    Player::Player(int _x, int _y, Map* _map);
+    Player::Player(int _x, int _y, Map& _map);
 
     void Player::MoveHoriz(int xD);
     void Player::MoveVert(int yD);
@@ -64,8 +92,21 @@ struct Map {
     // Clears the map at area covered by player
     void Clear(Player player);
 
+    // These add functions add data that get's drawn differently
+    // than drawing via display.Update(wall) or for player.
+    // For example, if we add a wall to the map, it will store wall.color.r
+    // in the map, and when we display.Update(map) it will use wall.color.r to color that pixel
+    // But if we do display.Update(wall) it will use the full rgb color correctly.
+
+    // I think to fix this we should start storing entire objects in the grid,
+    // and to do that, we will need to make them the same type. So that means we gotta
+    // add inheritence aka a parent class for wall and player called like MapEntry or something
+    // Then we have a grid full of MapEntry objects, some of which are players, some of which are walls.
+
     // Adds a player to the map
     void Add(Player player);
+
+    void Add(Wall wall);
 };
 
 struct Display {
@@ -81,4 +122,6 @@ struct Display {
     void Erase(Player player, bool updateScreen = true);
 
     void Update(Player player, bool updateScreen = true);
+
+    void Update(Wall wall, bool updateScreen = true);
 };
