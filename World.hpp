@@ -38,7 +38,8 @@ struct HitBox {
         origin(_x, _y), dim(_w, _d) {}
 };
 
-struct RGBColor {
+class RGBColor {
+    public:
     int r;
     int g;
     int b;
@@ -53,6 +54,8 @@ struct RGBColor {
         assert(0 <= b && b <= 255);
 
     }
+
+    unsigned ConvertToSDL(SDL_Surface* surface);
 };
 
 class MapEntity {
@@ -79,11 +82,15 @@ class MapEntity {
     Map* map;
 
     public:
-    MapEntity(HitBox _hb, RGBColor _c, Map* _map);
+    MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
     inline MapEntity() : valid(false) {}
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
+    }
+
+    inline GridPos GetOldPos() const {
+        return oldPos;
     }
 
     inline int GetWidth() const {
@@ -146,6 +153,7 @@ class Player : public MapEntity {
 struct Map {
     int numberOfEntities = 0;
     Arr2d<MapEntity> grid;
+    Arr2d<MapEntity> background;
 
     // npcs
 
@@ -156,7 +164,7 @@ struct Map {
     // Drawing each pixel based on each entry of grid for the map
     // will be slow compared to if we can do some SDL_FillRects, but
     // idk how to we'd do that
-    void SetStartMap();
+    void CreateBackground();
 
     // Clears the map at area covered by player
     void Clear(Player player);
@@ -186,12 +194,13 @@ struct Map {
 struct Display {
     SDL_Window* window = nullptr;
     SDL_Surface* surface = nullptr;
+    Map* map = nullptr;
 
-    Display(SDL_Window* _w);
+    Display(SDL_Window* _w, Map* map);
 
     ~Display();
 
-    void Update(Map map, bool updateScreen = true);
+    void Update(bool updateScreen = true);
 
     void Erase(Player player, bool updateScreen = true);
 

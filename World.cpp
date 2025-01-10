@@ -1,6 +1,10 @@
 #include "World.hpp"
 #include <algorithm>
 
+unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
+    return SDL_MapRGB(surface->format, r, g, b);
+}
+
 void MapEntity::Move(int xD, int yD) {
     hasMovedOffScreen = true;
     oldPos = GetCurrentPos();
@@ -45,26 +49,28 @@ void MapEntity::MoveVert(int yD) {
 Map::Map () {
     numberOfEntities = 0;
     grid = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
+    background = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
 }
 
 // Drawing each pixel based on each entry of grid for the map
 // will be slow compared to if we can do some SDL_FillRects, but
 // idk how to we'd do that
-void Map::SetStartMap() {
-    // random stuff to start it out
+void Map::CreateBackground() {
     for (int i = 0; i < MAP_WIDTH; i++) {
         for (int j = 0; j < MAP_HEIGHT; j++) {
-            // grid(i,j) = i*MAP_HEIGHT + j;
-            grid(i,j) = MapEntity();
+            HitBox hb = HitBox(i, j, 1, 1);
+            int index = i*MAP_HEIGHT+j;
+            RGBColor color = RGBColor(index % 255, (index / 255) % 255, (index / 65025) % 255);
+            background(i,j) = MapEntity(hb, color, this, false /* don't give background collision */);
         }
     }
 }
 
-// Clears an entity to the map
+// Clears an entity on the map
 void Map::Clear(MapEntity entity) {
     for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
         for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = MapEntity();
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = background(i % MAP_WIDTH, j % MAP_HEIGHT);
         }
     }
 }
@@ -101,7 +107,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     return false;
 }
 
-Display::Display(SDL_Window* _w) : window(_w) {
+Display::Display(SDL_Window* _w, Map* _map) : window(_w), map(_map) {
     surface = SDL_GetWindowSurface(window);
 }
 
@@ -109,21 +115,18 @@ Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::Update(Map map, bool updateScreen) {
-    int i, j;
-    for (i = 0; i < MAP_WIDTH; i++) {
-        for (j = 0; j < MAP_HEIGHT; j++) {
+void Display::Update(bool updateScreen) {
+    for (int i = 0; i < MAP_WIDTH; i++) {
+        for (int j = 0; j < MAP_HEIGHT; j++) {
             SDL_Rect point {i, j, 1, 1};
-            MapEntity entity = map.grid(i, j);
-            if (i == 155 && j == 280) {
-                printf("k");
-            }
+            MapEntity entity = map->grid(i, j);
+
             if (entity.valid) {
-                unsigned color = SDL_MapRGB(surface->format, entity.color.r, entity.color.g, entity.color.b);
-                SDL_FillRect(surface, &point, color);
+                SDL_FillRect(surface, &point, entity.color.ConvertToSDL(surface));
             }
             else {
-                SDL_FillRect(surface, &point, i*MAP_HEIGHT + j);
+                MapEntity bg = map->background(i, j);
+                SDL_FillRect(surface, &point, bg.color.ConvertToSDL(surface));
             }
         }
     }
@@ -133,8 +136,15 @@ void Display::Update(Map map, bool updateScreen) {
 }
 
 void Display::Erase(Player player, bool updateScreen) {
-    SDL_Rect blankRect = {player.oldPos.x, player.oldPos.y, player.GetWidth(), player.GetDepth()};
-    SDL_FillRect(surface, &blankRect, 0);
+
+    for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
+        for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
+            MapEntity background = map->background(i, j);
+            SDL_Rect rect = background.GetSDLRect();
+            SDL_FillRect(surface, &rect, background.color.ConvertToSDL(surface));
+        }
+    }
+
     if (updateScreen) {
         SDL_UpdateWindowSurface(window);
     }
@@ -157,15 +167,14 @@ void Display::Update(Wall wall, bool updateScreen) {
 
 void Display::Update(MapEntity entity, bool updateScreen) {
     SDL_Rect rect = entity.GetSDLRect();
-    unsigned color = SDL_MapRGB(surface->format, entity.color.r, entity.color.g, entity.color.b);
-    SDL_FillRect(surface, &rect, color);
+    SDL_FillRect(surface, &rect, entity.color.ConvertToSDL(surface));
     if (updateScreen) {
         SDL_UpdateWindowSurface(window);
     }
 }
 
-MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
-    hitbox(_hb), color(_c), map(_map), hasCollision(true) {
+MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :
+    hitbox(_hb), color(_c), map(_map), hasCollision(_hasCol) {
     ID = map->numberOfEntities++;
 }
 
