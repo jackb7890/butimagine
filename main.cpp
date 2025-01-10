@@ -33,24 +33,25 @@ int main(int argc, char* argv[]) {
         printf("Failed to create a window! Error: %s\n", SDL_GetError());
     }
 
-    Display display(win);
-
     Map map;
-    map.SetStartMap();
+
+    Display display(win, &map);
+
+    map.CreateBackground();
 
     // not sure how I feel about the map updating through the player class but fuck it right
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
-    RGBColor player1Color = {255, 120, 10};
+    RGBColor player1Color = {120, 200, 200};
     Player player1(player1HitBox, player1Color, &map);
     map.Add(player1);
 
-    display.Update(map); // first draw of the map the screen (should include player initial pos)
+    display.Update(); // first draw of the map the screen (should include player initial pos)
 
     // short walls are 25 long
     // long walls on bot/top are 50 long
     // long back wall is 75 long
 
-    RGBColor wallColor = {112, 112, 112};
+    RGBColor wallColor = {170, 170, 170};
 
     Wall lowerFront = Wall({205, 255}, 25, true, wallColor, &map);
     map.Add(lowerFront);
@@ -66,18 +67,13 @@ int main(int argc, char* argv[]) {
     display.Update(top);
     Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
     map.Add(upperFront);
-    display.Update(upperFront);
+    display.Update(upperFront); 
 
+    display.Update(); // this updates the map stored within display
     
-
-    display.Update(map);
-    
-    
-    
-
     bool runLoop = true;
     SDL_Event ev;
-    const int speed = 20;
+    const int speed = 10;
     while (runLoop) {
         while (SDL_PollEvent(&ev) != 0) {
             switch(ev.type) {
