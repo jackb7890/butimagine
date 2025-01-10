@@ -13,7 +13,7 @@ void Player::MoveHoriz(int xD) {
         position.x = position.x % MAP_WIDTH;
     }
     else if (position.x < 0) {
-        position.x = MAP_HEIGHT + (position.x % MAP_HEIGHT);
+        position.x = MAP_WIDTH + (position.x % MAP_WIDTH);
     }
     map.Add(*this);
 }

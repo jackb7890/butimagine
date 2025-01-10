@@ -5,8 +5,8 @@
 
 #include "util.hpp"
 
-#define MAP_WIDTH 640
-#define MAP_HEIGHT 480
+#define MAP_WIDTH 1280
+#define MAP_HEIGHT 720
 
 struct Map;
 struct Display;
@@ -64,6 +64,9 @@ struct Player {
     int health = 100;
     int runEnergy = 100;
     int playerID = INT_MAX/2; //using this as their color
+    //A- 2 Variables important for timing
+    Uint32 born = 0;
+    Uint32 lastUpdate = 0;
     
     Map& map;
 
