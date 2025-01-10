@@ -9,7 +9,7 @@
 #include "SDL_image.h"
 
 void init() {
-    IMG_Init (IMG_INIT_JPG | IMG_INIT_PNG);
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
     SDL_Init(SDL_INIT_EVERYTHING);
 }
 
@@ -39,17 +39,21 @@ int main(int argc, char* argv[]) {
     map.SetStartMap();
 
     // not sure how I feel about the map updating through the player class but fuck it right
-    Player player1(MAP_WIDTH/2, MAP_HEIGHT/2, map);
+    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
+    RGBColor player1Color = {255, 120, 10};
+    Player player1(player1HitBox, player1Color, map);
 
     // short walls are 25 long
     // long walls on bot/top are 50 long
     // long back wall is 75 long
 
-    Wall lowerFront = Wall(205, 255, 25, true, map);
-    Wall bottom = Wall(155, 280, 50, false, map);
-    Wall back = Wall(155, 205, 75, true, map);
-    Wall top = Wall(155, 205, 50, false, map);
-    Wall upperFront = Wall(205, 205, 25, true, map);
+    RGBColor wallColor = {112, 112, 112};
+
+    Wall lowerFront = Wall({205, 255}, 25, true, wallColor, map);
+    Wall bottom = Wall({155, 280}, 50, false, wallColor, map);
+    Wall back = Wall({155, 205}, 75, true, wallColor, map);
+    Wall top = Wall({155, 205}, 50, false, wallColor, map);
+    Wall upperFront = Wall({205, 205}, 25, true, wallColor, map);
 
     display.Update(map); // first draw of the map the screen (should include player initial pos)
 
@@ -61,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     bool runLoop = true;
     SDL_Event ev;
-    const int speed = 20;
+    const int speed = 1;
     while (runLoop) {
         while (SDL_PollEvent(&ev) != 0) {
             switch(ev.type) {
@@ -103,20 +107,20 @@ int main(int argc, char* argv[]) {
 
 
 // stuff I made, and stopped using, but don't wanna throw away yet so I can reference it
-namespace Junkyard {
-    void DrawPlayer(Player player, SDL_Surface* winSurface) {
-        SDL_Rect rect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
-        SDL_FillRect( winSurface, &rect, SDL_MapRGB( winSurface->format, 255, 90, 120 ));
-    }
+// namespace Junkyard {
+//     void DrawPlayer(Player player, SDL_Surface* winSurface) {
+//         SDL_Rect rect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
+//         SDL_FillRect( winSurface, &rect, SDL_MapRGB( winSurface->format, 255, 90, 120 ));
+//     }
 
-    void InitSurface(Player player1, SDL_Surface* winSurface) {
-        const int stride = 5;
-        for (int i = 0; i < MAP_WIDTH; i+=stride) {
-            for (int j = 0; j < MAP_HEIGHT; j+=stride) {
-                SDL_Rect rect {i, j, stride, stride};
-                SDL_FillRect(winSurface, &rect, i*MAP_HEIGHT + j);
-            }
-        }
-        DrawPlayer(player1, winSurface);
-    }
-};
+//     void InitSurface(Player player1, SDL_Surface* winSurface) {
+//         const int stride = 5;
+//         for (int i = 0; i < MAP_WIDTH; i+=stride) {
+//             for (int j = 0; j < MAP_HEIGHT; j+=stride) {
+//                 SDL_Rect rect {i, j, stride, stride};
+//                 SDL_FillRect(winSurface, &rect, i*MAP_HEIGHT + j);
+//             }
+//         }
+//         DrawPlayer(player1, winSurface);
+//     }
+// };
