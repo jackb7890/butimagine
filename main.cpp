@@ -42,6 +42,9 @@ int main(int argc, char* argv[]) {
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
     RGBColor player1Color = {255, 120, 10};
     Player player1(player1HitBox, player1Color, &map);
+    map.Add(player1);
+
+    display.Update(map); // first draw of the map the screen (should include player initial pos)
 
     // short walls are 25 long
     // long walls on bot/top are 50 long
@@ -50,18 +53,27 @@ int main(int argc, char* argv[]) {
     RGBColor wallColor = {112, 112, 112};
 
     Wall lowerFront = Wall({205, 255}, 25, true, wallColor, &map);
-    Wall bottom = Wall({155, 280}, 50, false, wallColor, &map);
-    Wall back = Wall({155, 205}, 75, true, wallColor, &map);
-    Wall top = Wall({155, 205}, 50, false, wallColor, &map);
-    Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
-
-    display.Update(map); // first draw of the map the screen (should include player initial pos)
-
+    map.Add(lowerFront);
     display.Update(lowerFront);
+    Wall bottom = Wall({155, 280}, 50, false, wallColor, &map);
+    map.Add(bottom);
     display.Update(bottom);
+    Wall back = Wall({155, 205}, 75, true, wallColor, &map);
+    map.Add(back);
     display.Update(back);
+    Wall top = Wall({155, 205}, 50, false, wallColor, &map);
+    map.Add(top);
     display.Update(top);
+    Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
+    map.Add(upperFront);
     display.Update(upperFront);
+
+    
+
+    display.Update(map);
+    
+    
+    
 
     bool runLoop = true;
     SDL_Event ev;
