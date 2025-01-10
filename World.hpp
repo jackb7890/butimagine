@@ -123,7 +123,7 @@ class MapEntity {
 class Wall : public MapEntity {
     private:
     bool isVert;
-    int thickness = 2;
+    const static int thickness = 2;
 
     public:
     // default color 112,112,112 is gray
@@ -146,7 +146,6 @@ class Player : public MapEntity {
 struct Map {
     int numberOfEntities = 0;
     Arr2d<MapEntity> grid;
-    Arr2d<int> collisionGrid;
 
     // npcs
 

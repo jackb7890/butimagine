@@ -67,30 +67,21 @@ void Map::Clear(MapEntity entity) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = MapEntity();
         }
     }
+}
 
-    if (entity.hasCollision) {
-        // clear collosion grid
-        for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
-            for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-                collisionGrid(i % MAP_WIDTH, j % MAP_HEIGHT) = -1;
-            }
-        }
-    }
+void Map::Add(Player player) {
+    Add((MapEntity) player);
+}
+
+void Map::Add(Wall wall) {
+    Add((MapEntity) wall);
 }
 
 // Adds an entity to the map
-void Map::Add(MapEntity const entity) {
+void Map::Add(MapEntity entity) {
     for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
         for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = entity;
-        }
-    }
-    
-    if (entity.hasCollision) {
-        for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
-            for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-                collisionGrid(i % MAP_WIDTH, j % MAP_HEIGHT) = entity.ID;
-            }
         }
     }
 }
@@ -100,7 +91,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     int yBound = movingPiece.origin.y + movingPiece.dim.depth;
     for (int x = movingPiece.origin.x; x < xBound; x++) {
         for (int y = movingPiece.origin.y; y < yBound; y++) {
-             MapEntity& possibleEntity = collisionGrid(x % MAP_WIDTH, y % MAP_HEIGHT);
+             MapEntity& possibleEntity = grid(x % MAP_WIDTH, y % MAP_HEIGHT);
             if (possibleEntity.valid && possibleEntity.hasCollision &&
                 possibleEntity.ID != ID) {
                 return true;
@@ -119,10 +110,14 @@ Display::~Display() {
 }
 
 void Display::Update(Map map, bool updateScreen) {
-    for (int i = 0; i < MAP_WIDTH; i++) {
-        for (int j = 0; j < MAP_HEIGHT; j++) {
+    int i, j;
+    for (i = 0; i < MAP_WIDTH; i++) {
+        for (j = 0; j < MAP_HEIGHT; j++) {
             SDL_Rect point {i, j, 1, 1};
             MapEntity entity = map.grid(i, j);
+            if (i == 155 && j == 280) {
+                printf("k");
+            }
             if (entity.valid) {
                 unsigned color = SDL_MapRGB(surface->format, entity.color.r, entity.color.g, entity.color.b);
                 SDL_FillRect(surface, &point, color);
@@ -172,13 +167,12 @@ void Display::Update(MapEntity entity, bool updateScreen) {
 MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
     hitbox(_hb), color(_c), map(_map), hasCollision(true) {
     ID = map->numberOfEntities++;
-    map->Add(*this);
 }
 
 Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map) : 
-    MapEntity(HitBox(_pos, GridDimension(-1 /* placeholder because thickness isn't initazlied*/, _length)), _c, _map),
+    MapEntity(HitBox(_pos, GridDimension(thickness, _length)), _c, _map),
     isVert(_isV) {
-    SetWidth(thickness); // fix the place holder
+    // SetWidth(thickness); // fix the place holder
     if (!isVert) {
         std::swap(hitbox.dim.depth, hitbox.dim.width);
     }
