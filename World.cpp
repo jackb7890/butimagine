@@ -19,19 +19,8 @@ void MapEntity::Move(int xD, int yD) {
         return;
     }
 
-    if (newPos.x > MAP_WIDTH) {
-        newPos.x = oldPos.x % MAP_WIDTH;
-    }
-    else if (newPos.x < 0) {
-        newPos.x = MAP_WIDTH + (oldPos.x % MAP_WIDTH);
-    }
-
-    if (newPos.y > MAP_HEIGHT) {
-        newPos.y = oldPos.y % MAP_HEIGHT;
-    }
-    else if (newPos.y < 0) {
-        newPos.y = MAP_HEIGHT + (oldPos.y % MAP_HEIGHT);
-    }
+    newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
+    newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
 
     map->Clear(*this);
     SetPos(newPos);
@@ -97,7 +86,8 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     int yBound = movingPiece.origin.y + movingPiece.dim.depth;
     for (int x = movingPiece.origin.x; x < xBound; x++) {
         for (int y = movingPiece.origin.y; y < yBound; y++) {
-             MapEntity& possibleEntity = grid(x % MAP_WIDTH, y % MAP_HEIGHT);
+                        
+            MapEntity& possibleEntity = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
             if (possibleEntity.valid && possibleEntity.hasCollision &&
                 possibleEntity.ID != ID) {
                 return true;
@@ -139,7 +129,7 @@ void Display::Erase(Player player, bool updateScreen) {
 
     for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
         for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
-            MapEntity background = map->background(i, j);
+            MapEntity background = map->background(i % MAP_WIDTH, j % MAP_HEIGHT);
             SDL_Rect rect = background.GetSDLRect();
             SDL_FillRect(surface, &rect, background.color.ConvertToSDL(surface));
         }
