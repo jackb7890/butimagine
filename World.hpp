@@ -18,36 +18,51 @@ struct GridPos {
     inline GridPos(int _x, int _y) : x(_x), y(_y) {}
 };
 
+struct GridDimension {
+    int width;
+    int depth;
+
+    inline GridDimension() : width(0), depth(0) {}
+    inline GridDimension(int _w, int _d) : width(_w), depth(_d) {}
+};
+
+struct HitBox {
+    GridPos origin;
+    GridDimension dim;
+
+    inline HitBox(GridPos _pos, GridDimension _dim) :
+        origin(_pos), dim(_dim) {}
+    inline HitBox(int _x, int _y, int _w, int _d) :
+        origin(_x, _y), dim(_w, _d) {}
+};
+
 struct RGBColor {
     int r;
     int g;
     int b;
 
-    RGBColor(int _r, int _g, int _b) :
-        r(_r), g(_g), b(_b) {}
+    inline RGBColor() :
+        r(255), g(255), b(255) {}
+    inline RGBColor(int _r, int _g, int _b) :
+        r(_r), g(_g), b(_b) {
+        // eventually make the asserts debug only so they don't slow down the program
+        assert(0 <= r && r <= 255);
+        assert(0 <= g && g <= 255);
+        assert(0 <= b && b <= 255);
+
+    }
 };
 
-struct Wall {
-    bool isVert;
-    GridPos origin;
-    int width = 2;
-    int length;
+class MapEntity {
+    // base class for things that go on the map
+    // for collosion detection sake, assume everything is rectangular for now
+    // if mfers want triangles do it yourself
+
+    public:
+    HitBox hitbox;
     RGBColor color;
+    bool hasCollision;
 
-    Map& map;
-
-    // default color 112,112,112 is gray
-    Wall(int _x, int _y, int _l, bool _isV, Map& _map) : 
-        origin(_x, _y), length(_l), isVert(_isV), 
-        color(RGBColor(112, 112, 112)), map(_map) {}
-
-    Wall(int _x, int _y, int _l, RGBColor _c, bool _isV, Map& _map) : 
-        origin(_x, _y), length(_l), isVert(_isV), 
-        color(_c), map(_map) {}
-};
-
-struct Player {
-    private:
     // Currently the way it works is player has 2 positions.
     // the second position is to store the players updated position
     // That way we can keep track of the old position and remove it from the screen
@@ -55,28 +70,75 @@ struct Player {
     // Because then the Display::Update(Player) func will "erase" pixels thinking the player
     // was there, however, the pixels were never drawn to the display
     bool hasMovedOffScreen = false;
-
-    public:
-    GridPos position;
     GridPos oldPos;
-    int width = 10;
-    int height = 10;
-    int health = 100;
-    int runEnergy = 100;
-    int playerID = INT_MAX/2; //using this as their color
-    
+
     Map& map;
 
-    Player::Player(int _x, int _y, Map& _map);
+    public:
+    MapEntity(HitBox _hb, RGBColor _c, Map& _map);
 
-    void Player::MoveHoriz(int xD);
-    void Player::MoveVert(int yD);
+    inline GridPos GetCurrentPos() {
+        return hitbox.origin;
+    }
 
+    inline int GetWidth() {
+        return hitbox.dim.width;
+    }
+
+    inline int GetDepth() {
+        return hitbox.dim.depth;
+    }
+
+    inline void SetWidth(int w) {
+        hitbox.dim.width = w;
+    }
+
+    inline void SetDepth(int d) {
+        hitbox.dim.depth = d;
+    }
+
+    inline void SetPos(int x, int y) {
+        hitbox.origin.x = x;
+        hitbox.origin.y = y;
+    }
+
+    inline void SetPos(GridPos pos) {
+        hitbox.origin = pos;
+    }
+
+    inline SDL_Rect GetSDLRect() {
+        return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
+    }
+
+    void MoveHoriz(int xD);
+    void MoveVert(int yD);
+};
+
+class Wall : public MapEntity {
+    private:
+    bool isVert;
+    int thickness = 2;
+
+    public:
+    // default color 112,112,112 is gray
+    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map& _map);
+};
+
+class Player : public MapEntity {
+    public:
+    
+    int health = 100;
+    int runEnergy = 100;
+
+    inline Player(HitBox _hb, RGBColor _c, Map& _map) :
+        MapEntity(_hb, _c, _map) {}
+
+    // pretty sure we can remove this but not checking rn
     friend struct Display;
 };
 
 struct Map {
-    Arr2d<int> grid;
+    Arr2d<MapEntity*> grid;
 
     // npcs
 
@@ -107,6 +169,9 @@ struct Map {
     void Add(Player player);
 
     void Add(Wall wall);
+
+    void Add(MapEntity* entity);
+    void Clear(MapEntity* entity);
 };
 
 struct Display {
@@ -124,4 +189,6 @@ struct Display {
     void Update(Player player, bool updateScreen = true);
 
     void Update(Wall wall, bool updateScreen = true);
+
+    void Update(MapEntity entity, bool updateScreen = true);
 };
