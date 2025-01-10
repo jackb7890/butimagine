@@ -30,6 +30,8 @@ struct HitBox {
     GridPos origin;
     GridDimension dim;
 
+    inline HitBox() :
+        origin(0, 0), dim(1, 1) {}
     inline HitBox(GridPos _pos, GridDimension _dim) :
         origin(_pos), dim(_dim) {}
     inline HitBox(int _x, int _y, int _w, int _d) :
@@ -59,9 +61,11 @@ class MapEntity {
     // if mfers want triangles do it yourself
 
     public:
+    bool valid;
     HitBox hitbox;
     RGBColor color;
     bool hasCollision;
+    int ID;
 
     // Currently the way it works is player has 2 positions.
     // the second position is to store the players updated position
@@ -72,20 +76,21 @@ class MapEntity {
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    Map& map;
+    Map* map;
 
     public:
-    MapEntity(HitBox _hb, RGBColor _c, Map& _map);
+    MapEntity(HitBox _hb, RGBColor _c, Map* _map);
+    inline MapEntity() : valid(false) {}
 
-    inline GridPos GetCurrentPos() {
+    inline GridPos GetCurrentPos() const {
         return hitbox.origin;
     }
 
-    inline int GetWidth() {
+    inline int GetWidth() const {
         return hitbox.dim.width;
     }
 
-    inline int GetDepth() {
+    inline int GetDepth() const {
         return hitbox.dim.depth;
     }
 
@@ -106,12 +111,13 @@ class MapEntity {
         hitbox.origin = pos;
     }
 
-    inline SDL_Rect GetSDLRect() {
+    inline SDL_Rect GetSDLRect() const {
         return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
     }
 
     void MoveHoriz(int xD);
     void MoveVert(int yD);
+    void Move(int xD, int yD);
 };
 
 class Wall : public MapEntity {
@@ -121,7 +127,7 @@ class Wall : public MapEntity {
 
     public:
     // default color 112,112,112 is gray
-    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map& _map);
+    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
 };
 
 class Player : public MapEntity {
@@ -130,7 +136,7 @@ class Player : public MapEntity {
     int health = 100;
     int runEnergy = 100;
 
-    inline Player(HitBox _hb, RGBColor _c, Map& _map) :
+    inline Player(HitBox _hb, RGBColor _c, Map* _map) :
         MapEntity(_hb, _c, _map) {}
 
     // pretty sure we can remove this but not checking rn
@@ -138,7 +144,9 @@ class Player : public MapEntity {
 };
 
 struct Map {
-    Arr2d<MapEntity*> grid;
+    int numberOfEntities = 0;
+    Arr2d<MapEntity> grid;
+    Arr2d<int> collisionGrid;
 
     // npcs
 
@@ -170,8 +178,10 @@ struct Map {
 
     void Add(Wall wall);
 
-    void Add(MapEntity* entity);
-    void Clear(MapEntity* entity);
+    void Add(MapEntity entity);
+    void Clear(MapEntity entity);
+
+    bool CheckForCollision(const HitBox& movingPiece, int ID);
 };
 
 struct Display {
