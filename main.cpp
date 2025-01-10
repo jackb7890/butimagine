@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     bool runLoop = true;
     SDL_Event ev;
-    const int speed = 20;
+    const int speed = 1;
     while (runLoop) {
         while (SDL_PollEvent(&ev) != 0) {
             switch(ev.type) {

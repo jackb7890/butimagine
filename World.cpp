@@ -9,7 +9,7 @@ void MapEntity::MoveHoriz(int xD) {
         newX = oldPos.x % MAP_WIDTH;
     }
     else if (newX < 0) {
-        newX = MAP_HEIGHT + (oldPos.x % MAP_HEIGHT);
+        newX = MAP_WIDTH + (oldPos.x % MAP_WIDTH);
     }
 
     map.Clear(this);
@@ -26,7 +26,7 @@ void MapEntity::MoveVert(int yD) {
         newY = oldPos.y % MAP_HEIGHT;
     }
     else if (newY < 0) {
-        newY = MAP_WIDTH + (oldPos.y % MAP_WIDTH);
+        newY = MAP_HEIGHT + (oldPos.y % MAP_HEIGHT);
     }
 
     map.Clear(this);
