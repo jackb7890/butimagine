@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <string>
 #include <iostream>
+#include <cmath>
 
 #define SDL_MAIN_HANDLED 1
 
@@ -83,6 +84,9 @@ int main(int argc, char* argv[]) {
     int tempXelocity = 0;
     int tempYelocity = 0;
     int speed = 5;
+    int accumulatedSpeedX = 0;
+    int accumulatedSpeedY = 0;
+    double scale = 5.0;
 
     enum Velocity {XPOS, YPOS, XNEG, YNEG};
     std::array<bool, 4> vels;
@@ -121,7 +125,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             break;
-           case SDL_KEYUP:
+            case SDL_KEYUP:
             {
                 SDL_Keycode key = HandleKeyDnEv(ev.key);
                 switch (key) {
@@ -156,35 +160,39 @@ int main(int argc, char* argv[]) {
         //A- Note that when I made this an actual loop instead of an if it didn't really work as intended
         //A- Movement should also only happen if there's an actual reason to move (velocity not being 0)
         if (vels[XPOS] && !vels[XNEG]) {
-            tempXelocity += speed;
+            accumulatedSpeedX += speed;
+            tempXelocity = scale * std::log(std::abs(accumulatedSpeedX));
         }
         if (vels[XNEG] && !vels[XPOS]) {
-            tempXelocity -= speed;
+            accumulatedSpeedX -= speed;
+            tempXelocity = -scale * std::log(std::abs(accumulatedSpeedX));
         }
         if (vels[YPOS] && !vels[YNEG]) {
-            tempYelocity += speed;
+            accumulatedSpeedY += speed;
+            tempYelocity = scale * std::log(std::abs(accumulatedSpeedY));
         }
         if (vels[YNEG] && !vels[YPOS]) {
-            tempYelocity -= speed;
+            accumulatedSpeedY -= speed;
+            tempYelocity = -scale * std::log(std::abs(accumulatedSpeedY));
         }
 
         // deceleration combinations
         // slow down when theres 
 
         if (!vels[XPOS] && !vels[XNEG]) {
-            if (tempXelocity >= 0 && tempXelocity < speed) {
+            if (tempXelocity >= 0 && tempXelocity < 1) {
                 tempXelocity = 0;
             }
             else {
-                tempXelocity -= tempXelocity > 0 ? speed : -speed;
+                tempXelocity -= tempXelocity > 0 ? 1 : -1;
             }
         }
         if (!vels[YPOS] && !vels[YNEG]) {
-            if (tempYelocity >= 0 && tempYelocity < speed) {
+            if (tempYelocity >= 0 && tempYelocity < 1) {
                 tempYelocity = 0;
             }
             else {
-                tempYelocity -= tempYelocity > 0 ? speed : -speed;
+                tempYelocity -= tempYelocity > 0 ? 1 : -1;
             }
         }
 
