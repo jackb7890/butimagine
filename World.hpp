@@ -30,13 +30,16 @@ struct HitBox {
     GridPos origin;
     GridDimension dim;
 
+    inline HitBox() :
+        origin(0, 0), dim(1, 1) {}
     inline HitBox(GridPos _pos, GridDimension _dim) :
         origin(_pos), dim(_dim) {}
     inline HitBox(int _x, int _y, int _w, int _d) :
         origin(_x, _y), dim(_w, _d) {}
 };
 
-struct RGBColor {
+class RGBColor {
+    public:
     int r;
     int g;
     int b;
@@ -51,6 +54,8 @@ struct RGBColor {
         assert(0 <= b && b <= 255);
 
     }
+
+    unsigned ConvertToSDL(SDL_Surface* surface);
 };
 
 class MapEntity {
@@ -59,9 +64,11 @@ class MapEntity {
     // if mfers want triangles do it yourself
 
     public:
+    bool valid;
     HitBox hitbox;
     RGBColor color;
     bool hasCollision;
+    int ID;
 
     // Currently the way it works is player has 2 positions.
     // the second position is to store the players updated position
@@ -72,20 +79,25 @@ class MapEntity {
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    Map& map;
+    Map* map;
 
     public:
-    MapEntity(HitBox _hb, RGBColor _c, Map& _map);
+    MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
+    inline MapEntity() : valid(false) {}
 
-    inline GridPos GetCurrentPos() {
+    inline GridPos GetCurrentPos() const {
         return hitbox.origin;
     }
 
-    inline int GetWidth() {
+    inline GridPos GetOldPos() const {
+        return oldPos;
+    }
+
+    inline int GetWidth() const {
         return hitbox.dim.width;
     }
 
-    inline int GetDepth() {
+    inline int GetDepth() const {
         return hitbox.dim.depth;
     }
 
@@ -106,22 +118,23 @@ class MapEntity {
         hitbox.origin = pos;
     }
 
-    inline SDL_Rect GetSDLRect() {
+    inline SDL_Rect GetSDLRect() const {
         return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
     }
 
     void MoveHoriz(int xD);
     void MoveVert(int yD);
+    void Move(int xD, int yD);
 };
 
 class Wall : public MapEntity {
     private:
     bool isVert;
-    int thickness = 2;
+    const static int thickness = 2;
 
     public:
     // default color 112,112,112 is gray
-    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map& _map);
+    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
 };
 
 class Player : public MapEntity {
@@ -130,7 +143,7 @@ class Player : public MapEntity {
     int health = 100;
     int runEnergy = 100;
 
-    inline Player(HitBox _hb, RGBColor _c, Map& _map) :
+    inline Player(HitBox _hb, RGBColor _c, Map* _map) :
         MapEntity(_hb, _c, _map) {}
 
     // pretty sure we can remove this but not checking rn
@@ -138,7 +151,9 @@ class Player : public MapEntity {
 };
 
 struct Map {
-    Arr2d<MapEntity*> grid;
+    int numberOfEntities = 0;
+    Arr2d<MapEntity> grid;
+    Arr2d<MapEntity> background;
 
     // npcs
 
@@ -149,7 +164,7 @@ struct Map {
     // Drawing each pixel based on each entry of grid for the map
     // will be slow compared to if we can do some SDL_FillRects, but
     // idk how to we'd do that
-    void SetStartMap();
+    void CreateBackground();
 
     // Clears the map at area covered by player
     void Clear(Player player);
@@ -170,19 +185,22 @@ struct Map {
 
     void Add(Wall wall);
 
-    void Add(MapEntity* entity);
-    void Clear(MapEntity* entity);
+    void Add(MapEntity entity);
+    void Clear(MapEntity entity);
+
+    bool CheckForCollision(const HitBox& movingPiece, int ID);
 };
 
 struct Display {
     SDL_Window* window = nullptr;
     SDL_Surface* surface = nullptr;
+    Map* map = nullptr;
 
-    Display(SDL_Window* _w);
+    Display(SDL_Window* _w, Map* map);
 
     ~Display();
 
-    void Update(Map map, bool updateScreen = true);
+    void Update(bool updateScreen = true);
 
     void Erase(Player player, bool updateScreen = true);
 
