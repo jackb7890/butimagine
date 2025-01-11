@@ -80,12 +80,13 @@ int main(int argc, char* argv[]) {
     const Uint32 TICKS_PER_FRAME = 1000 / TARGET_FPS;
 
     //A- Velocity like position should be tracked by the player struct but i'm not doing that rn
-    float tempXelocity = 0.0f;
-    float tempYelocity = 0.0f;
-    float speed = 5.0f;
+    int tempXelocity = 0;
+    int tempYelocity = 0;
+    int speed = 5;
 
     enum Velocity {XPOS, YPOS, XNEG, YNEG};
     std::array<bool, 4> vels;
+    vels.fill(false);
     while (runLoop) {
         //A- Timing starts at beginnig of core loop
         //A- SDL_GetTicks() is the global timer in ms
@@ -119,6 +120,7 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
+            break;
            case SDL_KEYUP:
             {
                 SDL_Keycode key = HandleKeyDnEv(ev.key);
@@ -140,6 +142,7 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
+            break;
             default:
                 break;
             }
@@ -164,16 +167,25 @@ int main(int argc, char* argv[]) {
         if (vels[YNEG] && !vels[YPOS]) {
             tempYelocity -= speed;
         }
-        if (!vels[XPOS] && !vels[XNEG]) {
-            tempXelocity -= speed;
-        }
 
         // deceleration combinations
+        // slow down when theres 
+
         if (!vels[XPOS] && !vels[XNEG]) {
-            tempXelocity -= tempXelocity > 0 ? speed : -speed;
+            if (tempXelocity >= 0 && tempXelocity < speed) {
+                tempXelocity = 0;
+            }
+            else {
+                tempXelocity -= tempXelocity > 0 ? speed : -speed;
+            }
         }
         if (!vels[YPOS] && !vels[YNEG]) {
-            tempYelocity -= tempYelocity > 0 ? speed : -speed;
+            if (tempYelocity >= 0 && tempYelocity < speed) {
+                tempYelocity = 0;
+            }
+            else {
+                tempYelocity -= tempYelocity > 0 ? speed : -speed;
+            }
         }
 
         if (tempXelocity != 0 || tempYelocity != 0) {
