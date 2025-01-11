@@ -69,7 +69,6 @@ int main(int argc, char* argv[]) {
 
     bool runLoop = true;
     SDL_Event ev;
-    const int speed = 20;
 
     //A- Using "gravity" as a constant deceleration force
     const float GRAVITY = 1.0f;
@@ -83,7 +82,10 @@ int main(int argc, char* argv[]) {
     //A- Velocity like position should be tracked by the player struct but i'm not doing that rn
     float tempXelocity = 0.0f;
     float tempYelocity = 0.0f;
+    float speed = 5.0f;
 
+    enum Velocity {XPOS, YPOS, XNEG, YNEG};
+    std::array<bool, 4> vels;
     while (runLoop) {
         //A- Timing starts at beginnig of core loop
         //A- SDL_GetTicks() is the global timer in ms
@@ -102,16 +104,37 @@ int main(int argc, char* argv[]) {
                 switch (key) {
                     //A- Since (I) want the player to be moving without direct input, WASD changes the player's velocity instead of their position
                 case SDLK_w:
-                    tempYelocity -= 5.0f;
+                    vels[YNEG] = true;
                     break;
                 case SDLK_a:
-                    tempXelocity -= 5.0f;
+                    vels[XNEG] = true;
                     break;
                 case SDLK_s:
-                    tempYelocity += 5.0f;
+                    vels[YPOS] = true;
                     break;
                 case SDLK_d:
-                    tempXelocity += 5.0f;
+                    vels[XPOS] = true;
+                    break;
+                default:
+                    break;
+                }
+            }
+           case SDL_KEYUP:
+            {
+                SDL_Keycode key = HandleKeyDnEv(ev.key);
+                switch (key) {
+                    //A- Since (I) want the player to be moving without direct input, WASD changes the player's velocity instead of their position
+                case SDLK_w:
+                    vels[YNEG] = false;
+                    break;
+                case SDLK_a:
+                    vels[XNEG] = false;
+                    break;
+                case SDLK_s:
+                    vels[YPOS] = false;
+                    break;
+                case SDLK_d:
+                    vels[XPOS] = false;
                     break;
                 default:
                     break;
@@ -129,6 +152,30 @@ int main(int argc, char* argv[]) {
         //A- Movement needs to happen independent of inputs, so another ""loop"" to move the player is needed
         //A- Note that when I made this an actual loop instead of an if it didn't really work as intended
         //A- Movement should also only happen if there's an actual reason to move (velocity not being 0)
+        if (vels[XPOS] && !vels[XNEG]) {
+            tempXelocity += speed;
+        }
+        if (vels[XNEG] && !vels[XPOS]) {
+            tempXelocity -= speed;
+        }
+        if (vels[YPOS] && !vels[YNEG]) {
+            tempYelocity += speed;
+        }
+        if (vels[YNEG] && !vels[YPOS]) {
+            tempYelocity -= speed;
+        }
+        if (!vels[XPOS] && !vels[XNEG]) {
+            tempXelocity -= speed;
+        }
+
+        // deceleration combinations
+        if (!vels[XPOS] && !vels[XNEG]) {
+            tempXelocity -= tempXelocity > 0 ? speed : -speed;
+        }
+        if (!vels[YPOS] && !vels[YNEG]) {
+            tempYelocity -= tempYelocity > 0 ? speed : -speed;
+        }
+
         if (tempXelocity != 0 || tempYelocity != 0) {
 
             //A- This block supposedly keeps physics independent of the current FPS
@@ -136,7 +183,6 @@ int main(int argc, char* argv[]) {
             //A- That said this wasn't actually needed & just made things inconsistant.
             //Uint32 time = SDL_GetTicks();
             //float dT = (time - player1.lastUpdate) / 1000.0f;
-            float deceleration = GRAVITY /* * dT */;
             player1.MoveVert(static_cast<int>(tempYelocity));
             player1.MoveHoriz(static_cast<int>(tempXelocity));
 
@@ -146,29 +192,6 @@ int main(int argc, char* argv[]) {
             //A- While also making sure that we don't cross over 0 in our calculations
             //A- (Like 5 velocity - 10 deceleration would equal -5 velocity, we don't want that)
 
-            //A- So first check if we would overshoot by adding deceleration
-            if ((tempXelocity + deceleration) < 0) {
-                //A- If we're still under 0 after adding, we can safely add
-                tempXelocity += deceleration;
-            }
-            //A- Same for subtracting from a positive velocity
-            else if ((tempXelocity - deceleration) > 0) {
-                tempXelocity -= deceleration;
-            }
-            //A- If either case would overshoot, just set it to 0
-            else {
-                tempXelocity = 0;
-            }
-            //A- Repeat for Y axis
-            if ((tempYelocity + deceleration) < 0) {
-                tempYelocity += deceleration;
-            }
-            else if ((tempYelocity - deceleration) > 0) {
-                tempYelocity -= deceleration;
-            }
-            else {
-                tempYelocity = 0;
-            }
             //A- Update for (disabled) dT
             //player1.lastUpdate = time;
         }
