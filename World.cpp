@@ -6,7 +6,7 @@ Player::Player(int _x, int _y, Map& _map) : position(_x, _y), map(_map) {
 
 void Player::MoveHoriz(int xD) {
     hasMovedOffScreen = true;
-    oldPos = position;
+    oldPos.x = position.x;
     map.Clear(*this);
     position.x += xD;
     if (position.x > MAP_WIDTH) {
@@ -20,7 +20,7 @@ void Player::MoveHoriz(int xD) {
 
 void Player::MoveVert(int yD) {
     hasMovedOffScreen = true;
-    oldPos = position;
+    oldPos.y = position.y;
     map.Clear(*this);
     position.y += yD;
     if (position.y > MAP_HEIGHT) {

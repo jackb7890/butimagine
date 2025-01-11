@@ -75,7 +75,10 @@ int main(int argc, char* argv[]) {
     const float GRAVITY = 1.0f;
 
     Uint32 totalFrames = 0;
-    Uint32 totalFrameTicks = 0;
+    Uint32 FPSTicks = SDL_GetTicks();
+    //A- Change target fps = fps cap. Change if you want to change the fps
+    const Uint32 TARGET_FPS = 20;
+    const Uint32 TICKS_PER_FRAME = 1000 / TARGET_FPS;
 
     //A- Velocity like position should be tracked by the player struct but i'm not doing that rn
     float tempXelocity = 0.0f;
@@ -88,7 +91,6 @@ int main(int argc, char* argv[]) {
         //A- A "Frame" is just one itteration of the core game loop. So FPS is just how many times the game is looping per second.
         //A- Since this is the start of the (main) loop we can increase frames by 1 then use that number later to get our FPS
         //A- Disabled cause the FPS trackers are broken
-        //totalFrames++;
         while (SDL_PollEvent(&ev) != 0) {
             switch (ev.type) {
             case SDL_QUIT:
@@ -119,6 +121,11 @@ int main(int argc, char* argv[]) {
                 break;
             }
         }
+        float avgFPS = totalFrames / (((Uint32)SDL_GetTicks() - FPSTicks) / 1000.f);
+        if (avgFPS > 2000000)
+        {
+            avgFPS = 0;
+        }
         //A- Movement needs to happen independent of inputs, so another ""loop"" to move the player is needed
         //A- Note that when I made this an actual loop instead of an if it didn't really work as intended
         //A- Movement should also only happen if there's an actual reason to move (velocity not being 0)
@@ -127,12 +134,12 @@ int main(int argc, char* argv[]) {
             //A- This block supposedly keeps physics independent of the current FPS
             //A- Very important as otherwise faster FPS = faster gravity (bad)
             //A- That said this wasn't actually needed & just made things inconsistant.
-            Uint32 time = SDL_GetTicks();
+            //Uint32 time = SDL_GetTicks();
             //float dT = (time - player1.lastUpdate) / 1000.0f;
             float deceleration = GRAVITY /* * dT */;
-
-            player1.MoveHoriz(static_cast<int>(tempXelocity));
             player1.MoveVert(static_cast<int>(tempYelocity));
+            player1.MoveHoriz(static_cast<int>(tempXelocity));
+
             //A- The problem with x y velocity is we're dealing with + and - numbers
             //A- Deceleration variable will always be a positive number
             //A- We need Deceleration to always work towards 0, so that no matter what direction we're moving we slow down.
@@ -164,26 +171,17 @@ int main(int argc, char* argv[]) {
             }
             //A- Update for (disabled) dT
             //player1.lastUpdate = time;
-
-            display.Update(player1);
-
-            //A- Delay between physics process, meant to be a FPS cap for the whole program
-            //A- I think it only partially works
-            //A- Tutorial website shows it OUTSIDE of the core loop, but that doesn't work at all.
-            //A- 33.333f = Max 30 FPS
-            float elapsed = (time - startTick) / (float)SDL_GetPerformanceFrequency() * 1000.0f;
-            SDL_Delay(floor(33.333f - elapsed));
         }
+        display.Update(player1);
+        totalFrames++;
         Uint32 endTick = SDL_GetTicks();
-        //A- These are supposed to track FPS and average FPS but they just... don't work
-        //A- Current fps is almost always inf
-        //A- Average fps just slowly increases over time
-        //A- Though I think they don't work because the program is mostly idle, so it's processing way too fast & breaking the floats.
-
-        //float frameTime = (endTick - startTick) / 1000.0f;
-        //totalFrameTicks += (endTick - startTick);
-        //string fps = "Current FPS: " + to_string(1.0f / frameTime);
-        //string avg = "Average FPS: " + to_string(1000.0f / ((float)totalFrameTicks / totalFrames));
+        //A- If frame finished early (which it will)
+        int frameTicks = endTick - startTick;
+        if (frameTicks < TICKS_PER_FRAME){
+            //A- Wait according to FPS cap
+            SDL_Delay(TICKS_PER_FRAME - frameTicks);
+        }
+        cout << avgFPS << endl;
     }
     cleanup();
     return 0;
