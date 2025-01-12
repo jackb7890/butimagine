@@ -70,40 +70,40 @@ int main(int argc, char* argv[]) {
     bool runLoop = true;
     SDL_Event ev;
 
-    //A- Using "gravity" as a constant deceleration force
-    const float GRAVITY = 1.0f;
-
     Uint32 totalFrames = 0;
     Uint32 FPSTicks = SDL_GetTicks();
-    //A- Change target fps = fps cap. Change if you want to change the fps
-    const Uint32 TARGET_FPS = 20;
+    //A- Target fps = fps cap. Change if you want to change the fps
+    const Uint32 TARGET_FPS = 60;
     const Uint32 TICKS_PER_FRAME = 1000 / TARGET_FPS;
 
     //A- Velocity like position should be tracked by the player struct but i'm not doing that rn
-    int tempXelocity = 0;
-    int tempYelocity = 0;
-    int speed = 5;
+    int Xelocity = 0;
+    int Yelocity = 0;
+    int speed = 20;
+    const float GRAVITY = 12.0f;
 
+    //A- An array of bools to track the 4 directions a player can move
     enum Velocity {XPOS, YPOS, XNEG, YNEG};
     std::array<bool, 4> vels;
     vels.fill(false);
+
     while (runLoop) {
         //A- Timing starts at beginnig of core loop
         //A- SDL_GetTicks() is the global timer in ms
         Uint32 startTick = SDL_GetTicks();
-        //A- A "Frame" is just one itteration of the core game loop. So FPS is just how many times the game is looping per second.
-        //A- Since this is the start of the (main) loop we can increase frames by 1 then use that number later to get our FPS
-        //A- Disabled cause the FPS trackers are broken
         while (SDL_PollEvent(&ev) != 0) {
             switch (ev.type) {
             case SDL_QUIT:
                 runLoop = HandleQuitEv();
                 break;
+            //A- Instead of directly increasing/decreasing velocity, pressing a key sets a flag to true, while releasing it sets the flag to false
+            //A- We had an issue before where holding a key down didn't register until it's been held for a full second
+            //A- With this method, A key is considred to always be held down until a key up input is read
+            //A- Changing directions and holding multiple directions now works as intended
             case SDL_KEYDOWN:
             {
                 SDL_Keycode key = HandleKeyDnEv(ev.key);
                 switch (key) {
-                    //A- Since (I) want the player to be moving without direct input, WASD changes the player's velocity instead of their position
                 case SDLK_w:
                     vels[YNEG] = true;
                     break;
@@ -121,11 +121,10 @@ int main(int argc, char* argv[]) {
                 }
             }
             break;
-           case SDL_KEYUP:
+            case SDL_KEYUP:
             {
                 SDL_Keycode key = HandleKeyDnEv(ev.key);
                 switch (key) {
-                    //A- Since (I) want the player to be moving without direct input, WASD changes the player's velocity instead of their position
                 case SDLK_w:
                     vels[YNEG] = false;
                     break;
@@ -147,76 +146,74 @@ int main(int argc, char* argv[]) {
                 break;
             }
         }
+        //A- Calc the average FPS, useful for debugging the framerate cap
+        //A- Very first frame will be way higher than it should be, which is what the if corrects.
         float avgFPS = totalFrames / (((Uint32)SDL_GetTicks() - FPSTicks) / 1000.f);
         if (avgFPS > 2000000)
         {
             avgFPS = 0;
         }
-        //A- Movement needs to happen independent of inputs, so another ""loop"" to move the player is needed
-        //A- Note that when I made this an actual loop instead of an if it didn't really work as intended
-        //A- Movement should also only happen if there's an actual reason to move (velocity not being 0)
+
+        //A- Changes velocity accoring to what buttons are pressed
         if (vels[XPOS] && !vels[XNEG]) {
-            tempXelocity += speed;
+            Xelocity += speed;
         }
         if (vels[XNEG] && !vels[XPOS]) {
-            tempXelocity -= speed;
+            Xelocity -= speed;
         }
         if (vels[YPOS] && !vels[YNEG]) {
-            tempYelocity += speed;
+            Yelocity += speed;
         }
         if (vels[YNEG] && !vels[YPOS]) {
-            tempYelocity -= speed;
+            Yelocity -= speed;
         }
 
         // deceleration combinations
-        // slow down when theres 
+        // slow down when theres no buttons being pressed
 
         if (!vels[XPOS] && !vels[XNEG]) {
-            if (tempXelocity >= 0 && tempXelocity < speed) {
-                tempXelocity = 0;
+            if (Xelocity >= 0 && Xelocity < GRAVITY) {
+                Xelocity = 0;
             }
             else {
-                tempXelocity -= tempXelocity > 0 ? speed : -speed;
+                Xelocity -= Xelocity > 0 ? GRAVITY : -GRAVITY;
             }
         }
         if (!vels[YPOS] && !vels[YNEG]) {
-            if (tempYelocity >= 0 && tempYelocity < speed) {
-                tempYelocity = 0;
+            if (Yelocity >= 0 && Yelocity < GRAVITY) {
+                Yelocity = 0;
             }
             else {
-                tempYelocity -= tempYelocity > 0 ? speed : -speed;
+                Yelocity -= Yelocity > 0 ? GRAVITY : -GRAVITY;
             }
         }
+        //A- This block supposedly keeps physics independent of the current FPS
+        //A- Very important as otherwise faster FPS = faster movement (bad)
+        //A- Doesn't seem to work, or doesn't work as much as intended, still figuring out why
+        //A- Currently player still moves faster at a faster FPS, but maybe not by as much(?)
+        Uint32 time = SDL_GetTicks();
+        float dT = (time - player1.lastUpdate) / 1000.0f;
 
-        if (tempXelocity != 0 || tempYelocity != 0) {
-
-            //A- This block supposedly keeps physics independent of the current FPS
-            //A- Very important as otherwise faster FPS = faster gravity (bad)
-            //A- That said this wasn't actually needed & just made things inconsistant.
-            //Uint32 time = SDL_GetTicks();
-            //float dT = (time - player1.lastUpdate) / 1000.0f;
-            player1.MoveVert(static_cast<int>(tempYelocity));
-            player1.MoveHoriz(static_cast<int>(tempXelocity));
-
-            //A- The problem with x y velocity is we're dealing with + and - numbers
-            //A- Deceleration variable will always be a positive number
-            //A- We need Deceleration to always work towards 0, so that no matter what direction we're moving we slow down.
-            //A- While also making sure that we don't cross over 0 in our calculations
-            //A- (Like 5 velocity - 10 deceleration would equal -5 velocity, we don't want that)
-
-            //A- Update for (disabled) dT
-            //player1.lastUpdate = time;
+        //A- Move the player if velocity isn't 0
+        if (Xelocity != 0 || Yelocity != 0) {
+            player1.MoveVert(Yelocity * dT);
+            player1.MoveHoriz(Xelocity * dT);
         }
+        //A- Re-render the player
         display.Update(player1);
+        //A- Update for DT
+        player1.lastUpdate = SDL_GetTicks();
+
+        //A- End of loop, increase frame counter & get end time.
         totalFrames++;
         Uint32 endTick = SDL_GetTicks();
-        //A- If frame finished early (which it will)
+
+        //A- If frame finished earlier than FPS cap (which it will)
         int frameTicks = endTick - startTick;
         if (frameTicks < TICKS_PER_FRAME){
-            //A- Wait according to FPS cap
+            //A- Delay next frame according to FPS cap
             SDL_Delay(TICKS_PER_FRAME - frameTicks);
         }
-        cout << avgFPS << endl;
     }
     cleanup();
     return 0;
