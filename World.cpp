@@ -1,85 +1,103 @@
 #include "World.hpp"
+#include <algorithm>
 
-Player::Player(int _x, int _y, Map& _map) : position(_x, _y), map(_map) {
-    map.Add(*this);
+unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
+    return SDL_MapRGB(surface->format, r, g, b);
 }
 
-void Player::MoveHoriz(int xD) {
+void MapEntity::Move(int xD, int yD) {
     hasMovedOffScreen = true;
-    oldPos.x = position.x;
-    map.Clear(*this);
-    position.x += xD;
-    if (position.x > MAP_WIDTH) {
-        position.x = position.x % MAP_WIDTH;
+    oldPos = GetCurrentPos();
+    GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
+    int smallerXCoord = std::min(oldPos.x, newPos.x);
+    int smallerYCoord = std::min(oldPos.y, newPos.y);
+    int xCollision = GetWidth() + std::abs(xD);
+    int yCollision = GetDepth() + std::abs(yD);
+    const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
+
+    if (map->CheckForCollision(collisionPath, ID)) {
+        return;
     }
-    else if (position.x < 0) {
-        position.x = MAP_WIDTH + (position.x % MAP_WIDTH);
-    }
-    map.Add(*this);
+
+    newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
+    newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
+
+    map->Clear(*this);
+    SetPos(newPos);
+    map->Add(*this);
 }
 
-void Player::MoveVert(int yD) {
-    hasMovedOffScreen = true;
-    oldPos.y = position.y;
-    map.Clear(*this);
-    position.y += yD;
-    if (position.y > MAP_HEIGHT) {
-        position.y = position.y % MAP_HEIGHT;
-    }
-    else if (position.y < 0) {
-        position.y = MAP_HEIGHT + (position.y % MAP_HEIGHT);
-    }
-    map.Add(*this);
+void MapEntity::MoveHoriz(int xD) {
+    Move(xD, 0);
+}
+
+void MapEntity::MoveVert(int yD) {
+    Move(0, yD);
 }
 
 Map::Map () {
-    grid = Arr2d<int>(MAP_WIDTH, MAP_HEIGHT);
+    numberOfEntities = 0;
+    grid = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
+    background = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
 }
 
 // Drawing each pixel based on each entry of grid for the map
 // will be slow compared to if we can do some SDL_FillRects, but
 // idk how to we'd do that
-void Map::SetStartMap() {
-    // random stuff to start it out
-    const int stride = 5;
-    for (int i = 0; i < MAP_WIDTH; i+=stride) {
-        for (int j = 0; j < MAP_HEIGHT; j+=stride) {
-            grid(i,j) = i*MAP_HEIGHT + j;
+void Map::CreateBackground() {
+    for (int i = 0; i < MAP_WIDTH; i++) {
+        for (int j = 0; j < MAP_HEIGHT; j++) {
+            HitBox hb = HitBox(i, j, 1, 1);
+            int index = i*MAP_HEIGHT+j;
+            RGBColor color = RGBColor(index % 255, (index / 255) % 255, (index / 65025) % 255);
+            background(i,j) = MapEntity(hb, color, this, false /* don't give background collision */);
         }
     }
 }
 
-// Clears the map at area covered by player
-void Map::Clear(Player player) {
-    for (int i = player.position.x; i < player.position.x + player.width; i++) {
-        for (int j = player.position.y; j < player.position.y + player.height; j++) {
-            grid(i % MAP_WIDTH,j % MAP_HEIGHT) = 0;
+// Clears an entity on the map
+void Map::Clear(MapEntity entity) {
+    for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
+        for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = background(i % MAP_WIDTH, j % MAP_HEIGHT);
         }
     }
 }
 
-// Adds a player to the map
 void Map::Add(Player player) {
-    for (int i = player.position.x; i < player.position.x + player.width; i++) {
-        for (int j = player.position.y; j < player.position.y + player.height; j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = player.playerID;
-        }
-    }
+    Add((MapEntity) player);
 }
 
-// Adds a wall to the map
 void Map::Add(Wall wall) {
-    int width = wall.width;
-    int length = wall.length;
-    if (!wall.isVert) std::swap(width, length);
-    for (int i = wall.origin.x; i < wall.origin.x + width; i++) {
-        for (int j = wall.origin.y; j < wall.origin.y + length; j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = wall.color.r;
+    Add((MapEntity) wall);
+}
+
+// Adds an entity to the map
+void Map::Add(MapEntity entity) {
+    for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
+        for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = entity;
         }
     }
 }
 
-Display::Display(SDL_Window* _w) : window(_w) {
+bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
+    int xBound = movingPiece.origin.x + movingPiece.dim.width;
+    int yBound = movingPiece.origin.y + movingPiece.dim.depth;
+    for (int x = movingPiece.origin.x; x < xBound; x++) {
+        for (int y = movingPiece.origin.y; y < yBound; y++) {
+                        
+            MapEntity& possibleEntity = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
+            if (possibleEntity.valid && possibleEntity.hasCollision &&
+                possibleEntity.ID != ID) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+Display::Display(SDL_Window* _w, Map* _map) : window(_w), map(_map) {
     surface = SDL_GetWindowSurface(window);
 }
 
@@ -87,11 +105,19 @@ Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::Update(Map map, bool updateScreen) {
+void Display::Update(bool updateScreen) {
     for (int i = 0; i < MAP_WIDTH; i++) {
         for (int j = 0; j < MAP_HEIGHT; j++) {
             SDL_Rect point {i, j, 1, 1};
-            SDL_FillRect(surface, &point, map.grid(i,j));
+            MapEntity entity = map->grid(i, j);
+
+            if (entity.valid) {
+                SDL_FillRect(surface, &point, entity.color.ConvertToSDL(surface));
+            }
+            else {
+                MapEntity bg = map->background(i, j);
+                SDL_FillRect(surface, &point, bg.color.ConvertToSDL(surface));
+            }
         }
     }
     if (updateScreen) {
@@ -100,8 +126,15 @@ void Display::Update(Map map, bool updateScreen) {
 }
 
 void Display::Erase(Player player, bool updateScreen) {
-    SDL_Rect blankRect = {player.oldPos.x, player.oldPos.y, player.width, player.height};
-    SDL_FillRect(surface, &blankRect, 0);
+
+    for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
+        for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
+            MapEntity background = map->background(i % MAP_WIDTH, j % MAP_HEIGHT);
+            SDL_Rect rect = background.GetSDLRect();
+            SDL_FillRect(surface, &rect, background.color.ConvertToSDL(surface));
+        }
+    }
+
     if (updateScreen) {
         SDL_UpdateWindowSurface(window);
     }
@@ -111,8 +144,7 @@ void Display::Update(Player player, bool updateScreen) {
     if (player.hasMovedOffScreen) {
         Erase(player, false /* false so we don't update in Erase and update again here*/);
     }
-    SDL_Rect playerRect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
-    SDL_FillRect(surface, &playerRect, player.playerID);
+    Update((MapEntity) player, updateScreen);
     player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
     if (updateScreen) {
         SDL_UpdateWindowSurface(window);
@@ -120,11 +152,27 @@ void Display::Update(Player player, bool updateScreen) {
 }
 
 void Display::Update(Wall wall, bool updateScreen) {
-    SDL_Rect wallRect = wall.isVert ? 
-        SDL_Rect {wall.origin.x, wall.origin.y, wall.width, wall.length} :
-        SDL_Rect {wall.origin.x, wall.origin.y, wall.length, wall.width};
-    SDL_FillRect(surface, &wallRect, SDL_MapRGB(surface->format, wall.color.r, wall.color.g, wall.color.b));
+    Update((MapEntity) wall, updateScreen);
+}
+
+void Display::Update(MapEntity entity, bool updateScreen) {
+    SDL_Rect rect = entity.GetSDLRect();
+    SDL_FillRect(surface, &rect, entity.color.ConvertToSDL(surface));
     if (updateScreen) {
         SDL_UpdateWindowSurface(window);
+    }
+}
+
+MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :
+    hitbox(_hb), color(_c), map(_map), hasCollision(_hasCol) {
+    ID = map->numberOfEntities++;
+}
+
+Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map) : 
+    MapEntity(HitBox(_pos, GridDimension(thickness, _length)), _c, _map),
+    isVert(_isV) {
+    // SetWidth(thickness); // fix the place holder
+    if (!isVert) {
+        std::swap(hitbox.dim.depth, hitbox.dim.width);
     }
 }

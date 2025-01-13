@@ -15,7 +15,7 @@
 using namespace std;
 
 void init() {
-    IMG_Init (IMG_INIT_JPG | IMG_INIT_PNG);
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
     SDL_Init(SDL_INIT_EVERYTHING);
     //A- Note the global timer starts at SDL initilization
 }
@@ -40,33 +40,45 @@ int main(int argc, char* argv[]) {
         printf("Failed to create a window! Error: %s\n", SDL_GetError());
     }
 
-    Display display(win);
-
     Map map;
-    map.SetStartMap();
+
+    Display display(win, &map);
+
+    map.CreateBackground();
 
     // not sure how I feel about the map updating through the player class but fuck it right
-    Player player1(MAP_WIDTH/2, MAP_HEIGHT/2, map);
-    player1.born = SDL_GetTicks();
+    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
+    RGBColor player1Color = {120, 200, 200};
+    Player player1(player1HitBox, player1Color, &map);
+    map.Add(player1);
+
+    display.Update(); // first draw of the map the screen (should include player initial pos)
+
 
     // short walls are 25 long
     // long walls on bot/top are 50 long
     // long back wall is 75 long
 
-    Wall lowerFront = Wall(205, 255, 25, true, map);
-    Wall bottom = Wall(155, 280, 50, false, map);
-    Wall back = Wall(155, 205, 75, true, map);
-    Wall top = Wall(155, 205, 50, false, map);
-    Wall upperFront = Wall(205, 205, 25, true, map);
+    RGBColor wallColor = {170, 170, 170};
 
-    display.Update(map); // first draw of the map the screen (should include player initial pos)
-
+    Wall lowerFront = Wall({205, 255}, 25, true, wallColor, &map);
+    map.Add(lowerFront);
     display.Update(lowerFront);
+    Wall bottom = Wall({155, 280}, 50, false, wallColor, &map);
+    map.Add(bottom);
     display.Update(bottom);
+    Wall back = Wall({155, 205}, 75, true, wallColor, &map);
+    map.Add(back);
     display.Update(back);
+    Wall top = Wall({155, 205}, 50, false, wallColor, &map);
+    map.Add(top);
     display.Update(top);
-    display.Update(upperFront);
+    Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
+    map.Add(upperFront);
+    display.Update(upperFront); 
 
+    display.Update(); // this updates the map stored within display
+    
     bool runLoop = true;
     SDL_Event ev;
 
@@ -220,20 +232,20 @@ int main(int argc, char* argv[]) {
 }
 
 // stuff I made, and stopped using, but don't wanna throw away yet so I can reference it
-namespace Junkyard {
-    void DrawPlayer(Player player, SDL_Surface* winSurface) {
-        SDL_Rect rect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
-        SDL_FillRect( winSurface, &rect, SDL_MapRGB( winSurface->format, 255, 90, 120 ));
-    }
+// namespace Junkyard {
+//     void DrawPlayer(Player player, SDL_Surface* winSurface) {
+//         SDL_Rect rect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
+//         SDL_FillRect( winSurface, &rect, SDL_MapRGB( winSurface->format, 255, 90, 120 ));
+//     }
 
-    void InitSurface(Player player1, SDL_Surface* winSurface) {
-        const int stride = 5;
-        for (int i = 0; i < MAP_WIDTH; i+=stride) {
-            for (int j = 0; j < MAP_HEIGHT; j+=stride) {
-                SDL_Rect rect {i, j, stride, stride};
-                SDL_FillRect(winSurface, &rect, i*MAP_HEIGHT + j);
-            }
-        }
-        DrawPlayer(player1, winSurface);
-    }
-};
+//     void InitSurface(Player player1, SDL_Surface* winSurface) {
+//         const int stride = 5;
+//         for (int i = 0; i < MAP_WIDTH; i+=stride) {
+//             for (int j = 0; j < MAP_HEIGHT; j+=stride) {
+//                 SDL_Rect rect {i, j, stride, stride};
+//                 SDL_FillRect(winSurface, &rect, i*MAP_HEIGHT + j);
+//             }
+//         }
+//         DrawPlayer(player1, winSurface);
+//     }
+// };

@@ -21,3 +21,5 @@ struct Arr2d {
     }
 
 };
+
+int Wrap(int oldIndex, int change, int bound);
