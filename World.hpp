@@ -5,8 +5,8 @@
 
 #include "util.hpp"
 
-#define MAP_WIDTH 640
-#define MAP_HEIGHT 480
+#define MAP_WIDTH 1280
+#define MAP_HEIGHT 720
 
 struct Map;
 struct Display;
@@ -142,6 +142,9 @@ class Player : public MapEntity {
     
     int health = 100;
     int runEnergy = 100;
+    Uint32 born = 0;
+    Uint32 lastUpdate = 0;
+
 
     inline Player(HitBox _hb, RGBColor _c, Map* _map) :
         MapEntity(_hb, _c, _map) {}
