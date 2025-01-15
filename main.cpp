@@ -14,14 +14,32 @@
 
 using namespace std;
 
+//A- Declare pointers in main(?)
+SDL_Window* window;
+SDL_Renderer* renderer;
+
 void init() {
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
     SDL_Init(SDL_INIT_EVERYTHING);
-    //A- Note the global timer starts at SDL initilization
+    //A- Window should be the same as it was before the rendering swap
+    window = SDL_CreateWindow("My window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAP_WIDTH, MAP_HEIGHT, NULL);
+    if (!window) {
+        printf("Failed to create window! Error: %s\n", SDL_GetError());
+    }
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+        printf("Failed to create renderer! Error: %s\n", SDL_GetError());
+    }
+    SDL_RenderClear(renderer);
 }
 
 void cleanup() {
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     SDL_Quit();
+    //A- Idk is we need these NULL but the tutorial had them
+    renderer = NULL;
+    window = NULL;
 }
 
 bool HandleQuitEv(void) {
@@ -35,18 +53,11 @@ SDL_Keycode HandleKeyDnEv(SDL_KeyboardEvent ev) {
 int main(int argc, char* argv[]) {
     init();
 
-    SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN );
-    if ( !win ) {
-        printf("Failed to create a window! Error: %s\n", SDL_GetError());
-    }
-
     Map map;
-
-    Display display(win, &map);
+    Display display(window, renderer, &map);
 
     map.CreateBackground();
 
-    // not sure how I feel about the map updating through the player class but fuck it right
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
     RGBColor player1Color = {120, 200, 200};
     Player player1(player1HitBox, player1Color, &map);
@@ -208,8 +219,9 @@ int main(int argc, char* argv[]) {
 
         //A- Move the player if velocity isn't 0
         if (Xelocity != 0 || Yelocity != 0) {
-            player1.MoveVert(Yelocity * dT);
-            player1.MoveHoriz(Xelocity * dT);
+            //A- I saw you added move() instead of move horz/vert so I changed this
+            //A- Side effect - you can't slide against walls, hitting any wall will stop all movement
+            player1.Move(Xelocity * dT, Yelocity * dT);
         }
         //A- Re-render the player
         display.Update(player1);
