@@ -10,6 +10,7 @@
 #define SDL_MAIN_HANDLED 1
 
 #include "SDL.h"
+#include "SDL_image.h"
 #include "SDL_net.h"
 #include "networking.hpp"
 
@@ -31,17 +32,6 @@
 
 const char * serverIP = "";
 const size_t serverPort = 8099;
-
-void init() {
-    if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_EVENTS) != 0) {
-        printf("ER: SDL_Init: %sn", SDL_GetError());
-        assert(false);
-    }
-}
-
-void cleanup() {
-    SDL_Quit();
-}
 
 struct MovementCode {
     enum MovementKey {W, A, S, D};
@@ -102,6 +92,10 @@ struct MovementCode {
     }
 };
 
+// TODO: move these to driver
+SDL_Window* window;
+SDL_Renderer* renderer;
+
 struct ClientDriver {
     public:
     MovementCode currentMovementInfo;
@@ -117,6 +111,47 @@ struct ClientDriver {
 };
 
 ClientDriver driver;
+
+void init() {
+
+    // initialize SDL subsystems
+    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) != 0) {
+        Log::error("ER: SDL_Init: %sn", SDL_GetError());
+    }
+
+    // initialize user screen
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+
+    //A- Window should be the same as it was before the rendering swap
+    window = SDL_CreateWindow("My window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAP_WIDTH, MAP_HEIGHT, NULL);
+    if (!window) {
+        Log::error("Failed to create window! Error: %s\n", SDL_GetError());
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+        Log::error("Failed to create renderer! Error: %s\n", SDL_GetError());
+    }
+
+    driver.display = Display(window, renderer, &driver.map);
+
+    SDL_RenderClear(renderer);
+    // finished initializing user screen
+}
+
+void cleanup() {
+
+    // cleanup user screen
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    //A- Idk is we need these NULL but the tutorial had them
+    renderer = NULL;
+    window = NULL;
+
+    // cleanup SDL subsystems
+    SDL_Quit();
+}
 
 using namespace std;
 
@@ -348,18 +383,9 @@ void GetAllEntities() {
     Log::emit("Finished GetAllEntites - success!");
 }
 
-void setup_screen() {
-    SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN );
-    if ( !win ) {
-        Log::error("Failed to create a window! Error: %s\n", SDL_GetError());
-    }
-    driver.display = Display(win, &driver.map);
-}
-
 int main() {
-    init();
 
-    setup_screen();
+    init();
 
     driver.clientInfo = Client("localhost");
     if (!driver.clientInfo.Connect()) {
@@ -390,7 +416,7 @@ int main() {
         }
 
         // finally, update the screen
-        driver.display.PublishNextFrame(driver.map.allEntities);
+        driver.display.DrawFrame(driver.map.allEntities);
     }
 
     cleanup();
