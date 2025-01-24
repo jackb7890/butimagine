@@ -92,45 +92,49 @@ MapEntity* Map::GetEntity(size_t id) {
     return nullptr;
 }
 
-Display::Display(SDL_Window* _w, Map* _map) : window(_w), map(_map) {
-}
-
-SDL_Surface* Display::GetCurrentSurface() {
-    return SDL_GetWindowSurface(window);
+//A- Renderer added to display struct
+Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {
+    //A- Surface isn't used anymore, can probably remove
+    surface = SDL_GetWindowSurface(window);
 }
 
 Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::DrawBackground() {
-    SDL_Rect bg = {0, 0, MAP_WIDTH, MAP_HEIGHT};
-    SDL_Surface* surface = GetCurrentSurface();
-    unsigned color = RGBColor(0, 0, 0).ConvertToSDL(surface);
-    SDL_FillRect(surface, &bg, color);
-}
+void Display::DrawEntity(MapEntity entity) {
+    SDL_Rect point = SDL_Rect {
+        entity.hitbox.origin.x,
+        entity.hitbox.origin.y,
+        entity.hitbox.dim.width,
+        entity.hitbox.dim.depth
+    };
 
-void Display::Publish() {
-    SDL_UpdateWindowSurface(window);
-}
-
-void Display::DrawEntity(MapEntity* entity) {
-    SDL_Rect rect = entity->GetSDLRect();
-    SDL_Surface* surface = GetCurrentSurface();
-    SDL_FillRect(surface, &rect, entity->color.ConvertToSDL(surface));
-}
-
-void Display::DrawEntities(std::vector<MapEntity*> entities) {
-    for (auto entity : entities) {
-        Display::DrawEntity(entity);
+    if (entity.valid) {
+        //A- Unlike SDL_FillRect from the window based rendering,
+        //A- RenderFillRect doesn't have a color input.
+        //A- Color is set beforehand by SetRenderDrawColor
+        //A- It's also one field for each RGB, so use (map)entity.color.(r/g/b) instead of RGBColor.ConvertToSDL()
+        SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+        SDL_RenderFillRect(renderer, &point);
     }
-    Display::Publish();
 }
 
-void Display::PublishNextFrame(std::vector<MapEntity*> entities) {
-    Display::DrawBackground();
-    Display::DrawEntities(entities);
-    Display::Publish();
+void Display::DrawBackground() {
+    SDL_Rect rect = SDL_Rect { 0, 0, map->width, map->height };
+    RGBColor color = RGBColor { 0, 0, 0 };
+
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+void Display::DrawFrame(std::vector<MapEntity*> entities) {
+
+    DrawBackground();
+
+    for (auto entity : entities) {
+        Display::DrawEntity(*entity);
+    }
 }
 
 MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :

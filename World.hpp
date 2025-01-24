@@ -166,6 +166,10 @@ template <typename T>
 concept MapEntityT = std::is_base_of<MapEntity, T>::value;
 
 struct Map {
+
+    static constexpr unsigned int width = MAP_WIDTH;
+    static constexpr unsigned int height = MAP_HEIGHT;
+
     int numberOfEntities = 0;
     Arr2d<MapEntityList> grid;
 
@@ -237,22 +241,22 @@ struct Map {
     void Clear(MapEntity* entity);
 
     bool CheckForCollision(const HitBox& movingPiece, size_t ID);
-
 };
 
 // TODO move this to util
 struct Display {
     SDL_Window* window = nullptr;
+    //A- Rendeder added to display
+    SDL_Renderer* renderer = nullptr;
+    SDL_Surface* surface = nullptr;
     Map* map = nullptr;
 
     Display() {};
-    Display(SDL_Window* _w, Map* map);
+    Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
+
     ~Display();
 
-    SDL_Surface* GetCurrentSurface();
     void DrawBackground();
-    void Publish();
-    void DrawEntity(MapEntity* entity);
-    void DrawEntities(std::vector<MapEntity*> entities);
-    void PublishNextFrame(std::vector<MapEntity*> entities);
+    void DrawEntity(MapEntity entity);
+    void DrawFrame(std::vector<MapEntity*> entities);
 };
