@@ -49,7 +49,7 @@ void Map::CreateBackground() {
         for (int j = 0; j < MAP_HEIGHT; j++) {
             HitBox hb = HitBox(i, j, 1, 1);
             int index = i*MAP_HEIGHT+j;
-            RGBColor color = RGBColor(index % 255, (index / 255) % 255, (index / 65025) % 255);
+            RGBColor color = RGBColor(index % 255 / 2, (1 / (index+1)) % 255, (index / 10000) % 255);
             background(i,j) = MapEntity(hb, color, this, false /* don't give background collision */);
         }
     }
@@ -97,7 +97,9 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     return false;
 }
 
-Display::Display(SDL_Window* _w, Map* _map) : window(_w), map(_map) {
+//A- Renderer added to display struct
+Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {
+    //A- Surface isn't used anymore, can probably remove
     surface = SDL_GetWindowSurface(window);
 }
 
@@ -112,16 +114,23 @@ void Display::Update(bool updateScreen) {
             MapEntity entity = map->grid(i, j);
 
             if (entity.valid) {
-                SDL_FillRect(surface, &point, entity.color.ConvertToSDL(surface));
+                //A- Unlike SDL_FillRect from the window based rendering,
+                //A- RenderFillRect doesn't have a color input.
+                //A- Color is set beforehand by SetRenderDrawColor
+                //A- It's also one field for each RGB, so use (map)entity.color.(r/g/b) instead of RGBColor.ConvertToSDL()
+                SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+                SDL_RenderFillRect(renderer, &point);
             }
             else {
                 MapEntity bg = map->background(i, j);
-                SDL_FillRect(surface, &point, bg.color.ConvertToSDL(surface));
+                SDL_SetRenderDrawColor(renderer, bg.color.r, bg.color.g, bg.color.b, 255);
+                SDL_RenderFillRect(renderer, &point);
             }
         }
     }
     if (updateScreen) {
-        SDL_UpdateWindowSurface(window);
+        //A- All UpdateWindowSurface calls were changed to RenderPresent
+        SDL_RenderPresent(renderer);
     }
 }
 
@@ -131,12 +140,14 @@ void Display::Erase(Player player, bool updateScreen) {
         for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
             MapEntity background = map->background(i % MAP_WIDTH, j % MAP_HEIGHT);
             SDL_Rect rect = background.GetSDLRect();
-            SDL_FillRect(surface, &rect, background.color.ConvertToSDL(surface));
+            SDL_SetRenderDrawColor(renderer, background.color.r, background.color.g, background.color.b, 255);
+            SDL_RenderFillRect(renderer, &rect);
         }
     }
 
     if (updateScreen) {
-        SDL_UpdateWindowSurface(window);
+        //A-
+        SDL_RenderPresent(renderer);
     }
 }
 
@@ -147,7 +158,8 @@ void Display::Update(Player player, bool updateScreen) {
     Update((MapEntity) player, updateScreen);
     player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
     if (updateScreen) {
-        SDL_UpdateWindowSurface(window);
+        //A-
+        SDL_RenderPresent(renderer);
     }
 }
 
@@ -157,9 +169,11 @@ void Display::Update(Wall wall, bool updateScreen) {
 
 void Display::Update(MapEntity entity, bool updateScreen) {
     SDL_Rect rect = entity.GetSDLRect();
-    SDL_FillRect(surface, &rect, entity.color.ConvertToSDL(surface));
+    SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+    SDL_RenderFillRect(renderer, &rect);
     if (updateScreen) {
-        SDL_UpdateWindowSurface(window);
+        //A-
+        SDL_RenderPresent(renderer);
     }
 }
 

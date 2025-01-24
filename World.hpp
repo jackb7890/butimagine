@@ -196,10 +196,12 @@ struct Map {
 
 struct Display {
     SDL_Window* window = nullptr;
+    //A- Rendeder added to display
+    SDL_Renderer* renderer = nullptr;
     SDL_Surface* surface = nullptr;
     Map* map = nullptr;
 
-    Display(SDL_Window* _w, Map* map);
+    Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
 
     ~Display();
 
