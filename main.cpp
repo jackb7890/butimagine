@@ -102,8 +102,12 @@ int main(int argc, char* argv[]) {
     //A- Velocity like position should be tracked by the player struct but i'm not doing that rn
     int Xelocity = 0;
     int Yelocity = 0;
-    int speed = 20;
-    const float GRAVITY = 12.0f;
+    int speed = 10;
+    const float GRAVITY = 8.0f;
+
+    //A- Speed cap, if you want to use it.
+    bool capSpeed = TRUE;
+    int speedCap = 300;
 
     //A- An array of bools to track the 4 directions a player can move
     enum Velocity {XPOS, YPOS, XNEG, YNEG};
@@ -219,6 +223,20 @@ int main(int argc, char* argv[]) {
 
         //A- Move the player if velocity isn't 0
         if (Xelocity != 0 || Yelocity != 0) {
+            if (capSpeed) {
+                if (Xelocity > 0 && Xelocity > speedCap) {
+                    Xelocity = speedCap;
+                }
+                if (Xelocity < 0 && Xelocity < -speedCap) {
+                    Xelocity = -speedCap;
+                }
+                if (Yelocity > 0 && Yelocity > speedCap) {
+                    Yelocity = speedCap;
+                }
+                if (Yelocity < 0 && Yelocity < -speedCap) {
+                    Yelocity = -speedCap;
+                }
+            }
             //A- I saw you added move() instead of move horz/vert so I changed this
             //A- Side effect - you can't slide against walls, hitting any wall will stop all movement
             player1.Move(Xelocity * dT, Yelocity * dT);
