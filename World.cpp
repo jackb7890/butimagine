@@ -15,8 +15,15 @@ void MapEntity::Move(int xD, int yD) {
     int yCollision = GetDepth() + std::abs(yD);
     const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
 
-    if (map->CheckForCollision(collisionPath, ID)) {
-        return;
+    //A- I added a check to see if the object that is moving has collision.
+    //A- Ideally both objects need to have collision on for them to collide.
+    if (this->hasCollision == true) {
+        if (map->CheckForCollision(collisionPath, ID)) {
+            //A- Collisions set velocity to 0. Makes bumping into walls less annoying
+            this->X_velocity = 0.0;
+            this->Y_velocity = 0.0;
+            return;
+        }
     }
 
     newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
@@ -27,12 +34,15 @@ void MapEntity::Move(int xD, int yD) {
     map->Add(*this);
 }
 
-void MapEntity::MoveHoriz(int xD) {
-    Move(xD, 0);
-}
-
-void MapEntity::MoveVert(int yD) {
-    Move(0, yD);
+//A- I get intrusive thoughts and add forced movement despite having 0 use for it yet.
+void MapEntity::ForceMove(int xD, int yD) {
+    //A- If the object *does* have collision, this just turns it off temporarily to move it, then turns it back on.
+    if (this->hasCollision == true) {
+        this->hasCollision = false;
+        Move(xD, yD);
+        this->hasCollision = true;
+    }
+    else Move(xD, yD);
 }
 
 Map::Map () {
@@ -45,21 +55,22 @@ Map::Map () {
 // will be slow compared to if we can do some SDL_FillRects, but
 // idk how to we'd do that
 void Map::CreateBackground() {
-    for (int i = 0; i < MAP_WIDTH; i++) {
-        for (int j = 0; j < MAP_HEIGHT; j++) {
-            HitBox hb = HitBox(i, j, 1, 1);
-            int index = i*MAP_HEIGHT+j;
+    //A- I changed the i and j to x and y, to make it a bit less confusing
+    for (int x = 0; x < MAP_WIDTH; x++) {
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            HitBox hb = HitBox(x, y, 1, 1);
+            int index = x*MAP_HEIGHT+y;
             RGBColor color = RGBColor(index % 255 / 2, (1 / (index+1)) % 255, (index / 10000) % 255);
-            background(i,j) = MapObject(hb, color, this, false /* don't give background collision */);
+            background(x,y) = MapObject(hb, color, this, false /* don't give background collision */);
         }
     }
 }
 
 // Clears an object on the map
 void Map::Clear(MapObject entity) {
-    for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
-        for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = background(i % MAP_WIDTH, j % MAP_HEIGHT);
+    for (int x = entity.GetCurrentPos().x; x < entity.GetCurrentPos().x + entity.GetWidth(); x++) {
+        for (int y = entity.GetCurrentPos().y; y < entity.GetCurrentPos().y + entity.GetDepth(); y++) {
+            grid(x % MAP_WIDTH, y % MAP_HEIGHT) = background(x % MAP_WIDTH, y % MAP_HEIGHT);
         }
     }
 }
@@ -97,11 +108,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     return false;
 }
 
-//A- Renderer added to display struct
-Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {
-    //A- Surface isn't used anymore, can probably remove
-    surface = SDL_GetWindowSurface(window);
-}
+Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {}
 
 Display::~Display() {
     SDL_DestroyWindow(window);

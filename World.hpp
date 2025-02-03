@@ -136,9 +136,8 @@ class MapEntity : public MapObject {
     inline GridPos GetOldPos() const {
         return oldPos;
     }
-
-    void MoveHoriz(int xD);
-    void MoveVert(int yD);
+    //A- Force move ignores all collision
+    void ForceMove(int xD, int yD);
     void Move(int xD, int yD);
 };
 
@@ -211,10 +210,9 @@ struct Map {
 };
 
 struct Display {
+    //A- Tutorial said it was a good idea to have a single static renderer
+    SDL_Renderer* renderer;
     SDL_Window* window = nullptr;
-    //A- Rendeder added to display
-    SDL_Renderer* renderer = nullptr;
-    SDL_Surface* surface = nullptr;
     Map* map = nullptr;
 
     Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);

@@ -10,18 +10,17 @@
 #include "SDL_image.h"
 #include "time.h"
 
-#include "World.hpp"
+#include "TileMap.hpp"
+#include "TextureManager.hpp"
 
 using namespace std;
 
-//A- Declare pointers in main(?)
-SDL_Window* window;
-SDL_Renderer* renderer;
+SDL_Window* window = nullptr;
+SDL_Renderer* renderer = nullptr;
 
 void init() {
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
     SDL_Init(SDL_INIT_EVERYTHING);
-    //A- Window should be the same as it was before the rendering swap
     window = SDL_CreateWindow("My window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAP_WIDTH, MAP_HEIGHT, NULL);
     if (!window) {
         printf("Failed to create window! Error: %s\n", SDL_GetError());
@@ -37,7 +36,6 @@ void cleanup() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    //A- Idk is we need these NULL but the tutorial had them
     renderer = NULL;
     window = NULL;
 }
@@ -61,9 +59,15 @@ int main(int argc, char* argv[]) {
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
     RGBColor player1Color = {120, 200, 200};
     Player player1(player1HitBox, player1Color, &map);
+    HitBox tilehb = { 100, 100, 32, 32 };
+    SDL_Texture* tiletex = TextureManager::LoadTexture("assets/tiles/grass.png", renderer);
+    Tile tile1(tilehb, tiletex, 15);
+    tile1.map = &map;
+    tile1.valid = 1;
+    std::cout << tile1.valid << std::endl;
     map.Add(player1);
+    map.Add(tile1);
 
-    display.Update(); // first draw of the map the screen (should include player initial pos)
 
 
     // short walls are 25 long
@@ -74,19 +78,14 @@ int main(int argc, char* argv[]) {
 
     Wall lowerFront = Wall({205, 255}, 25, true, wallColor, &map);
     map.Add(lowerFront);
-    display.Update(lowerFront);
     Wall bottom = Wall({155, 280}, 50, false, wallColor, &map);
     map.Add(bottom);
-    display.Update(bottom);
     Wall back = Wall({155, 205}, 75, true, wallColor, &map);
     map.Add(back);
-    display.Update(back);
     Wall top = Wall({155, 205}, 50, false, wallColor, &map);
     map.Add(top);
-    display.Update(top);
     Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
     map.Add(upperFront);
-    display.Update(upperFront); 
 
     display.Update(); // this updates the map stored within display
     
@@ -99,9 +98,8 @@ int main(int argc, char* argv[]) {
     const Uint32 TARGET_FPS = 60;
     const Uint32 TICKS_PER_FRAME = 1000 / TARGET_FPS;
 
-    //A- Velocity like position should be tracked by the player struct but i'm not doing that rn
-    int Xelocity = 0;
-    int Yelocity = 0;
+    player1.X_velocity = 0.0;
+    player1.Y_velocity = 0.0;
     int speed = 10;
     const float GRAVITY = 8.0f;
 
@@ -183,35 +181,35 @@ int main(int argc, char* argv[]) {
 
         //A- Changes velocity accoring to what buttons are pressed
         if (vels[XPOS] && !vels[XNEG]) {
-            Xelocity += speed;
+            player1.X_velocity += speed;
         }
         if (vels[XNEG] && !vels[XPOS]) {
-            Xelocity -= speed;
+            player1.X_velocity -= speed;
         }
         if (vels[YPOS] && !vels[YNEG]) {
-            Yelocity += speed;
+            player1.Y_velocity += speed;
         }
         if (vels[YNEG] && !vels[YPOS]) {
-            Yelocity -= speed;
+            player1.Y_velocity -= speed;
         }
 
         // deceleration combinations
         // slow down when theres no buttons being pressed
 
         if (!vels[XPOS] && !vels[XNEG]) {
-            if (Xelocity >= 0 && Xelocity < GRAVITY) {
-                Xelocity = 0;
+            if (player1.X_velocity >= 0 && player1.X_velocity < GRAVITY) {
+                player1.X_velocity = 0.0;
             }
             else {
-                Xelocity -= Xelocity > 0 ? GRAVITY : -GRAVITY;
+                player1.X_velocity -= player1.X_velocity > 0 ? GRAVITY : -GRAVITY;
             }
         }
         if (!vels[YPOS] && !vels[YNEG]) {
-            if (Yelocity >= 0 && Yelocity < GRAVITY) {
-                Yelocity = 0;
+            if (player1.Y_velocity >= 0 && player1.Y_velocity < GRAVITY) {
+                player1.Y_velocity = 0.0;
             }
             else {
-                Yelocity -= Yelocity > 0 ? GRAVITY : -GRAVITY;
+                player1.Y_velocity -= player1.Y_velocity > 0 ? GRAVITY : -GRAVITY;
             }
         }
         //A- This block supposedly keeps physics independent of the current FPS
@@ -222,24 +220,24 @@ int main(int argc, char* argv[]) {
         float dT = (time - player1.lastUpdate) / 1000.0f;
 
         //A- Move the player if velocity isn't 0
-        if (Xelocity != 0 || Yelocity != 0) {
+        if (player1.X_velocity != 0.0 || player1.Y_velocity != 0.0) {
             if (capSpeed) {
-                if (Xelocity > 0 && Xelocity > speedCap) {
-                    Xelocity = speedCap;
+                if (player1.X_velocity > 0 && player1.X_velocity > speedCap) {
+                    player1.X_velocity = speedCap;
                 }
-                if (Xelocity < 0 && Xelocity < -speedCap) {
-                    Xelocity = -speedCap;
+                if (player1.X_velocity < 0 && player1.X_velocity < -speedCap) {
+                    player1.X_velocity = -speedCap;
                 }
-                if (Yelocity > 0 && Yelocity > speedCap) {
-                    Yelocity = speedCap;
+                if (player1.Y_velocity > 0 && player1.Y_velocity > speedCap) {
+                    player1.Y_velocity = speedCap;
                 }
-                if (Yelocity < 0 && Yelocity < -speedCap) {
-                    Yelocity = -speedCap;
+                if (player1.Y_velocity < 0 && player1.Y_velocity < -speedCap) {
+                    player1.Y_velocity = -speedCap;
                 }
             }
             //A- I saw you added move() instead of move horz/vert so I changed this
             //A- Side effect - you can't slide against walls, hitting any wall will stop all movement
-            player1.Move(Xelocity * dT, Yelocity * dT);
+            player1.Move(player1.X_velocity * dT, player1.Y_velocity * dT);
         }
         //A- Re-render the player
         display.Update(player1);
