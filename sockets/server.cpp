@@ -1,7 +1,7 @@
 #include "SDL2/SDL_net.h"
 #include <cstdio>
 #include <string.h>
-
+// tutorial maybe https://stephenmeier.net/2015/12/23/sdl-2-0-tutorial-04-networking/
 struct Packet {
     union {
         unsigned short bits : 16;
@@ -92,7 +92,7 @@ struct NetworkHelper {
     }
 
     bool TryAddClient() {
-        if (!soc1Setup) {
+        if (soc1Setup) {
             return false;
         }
 
