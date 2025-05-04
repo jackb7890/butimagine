@@ -22,6 +22,47 @@ void cleanup() {
     SDL_Quit();
 }
 
+/*
+Simplest client server interaction
+
+1. Client sends keystroke
+ - one of wasd, indicating movement
+
+2. Server is listening or keeping a queue of incoming client packets
+
+3. Server moves the player entity associated with the client according to wasd
+ - What other data structures besides the geomap grid needs updating for client movement?
+ - There should be a clear point in the code when the full game state for a frame has been updated
+
+4.5 This could lead to interactions, like collosision with a wall, or teleport to a new area.
+ - How do we go about processing thee?
+ 4.5.1 - update server side data structures
+ 4.5.2 - determine what clients need to get updates from this change, and what those updates need to be
+ 4.5.3 - For movement, return confirmed movement update (player X moved N tiles north)
+            - if this client is on any other clients screen, send those clients updates of the movement change
+            - any interaction should be taken care of server side, not when client b gets client a's movement update
+            - this brings up the question of client state and server state
+                - we don't want to have to send everything across ports, so only send important stuff
+                - for less important stuff, this might fall out of sync with the server.
+                    - example: cosmetic butterfly entity has some nontrivial movement based on the state of the game
+                        . we will probably compute butterfly entity's movement and how it updates it's state (position, alive, etc)
+                        all on the client side, rather than send that info over. So that means client A and client B are computing the butterfly separately
+                        on their local device, and if the algorithm is nontrivial, they could get different answers for their new butterfly. Now there's an inconsistency
+                        in the multiplayer game state since theoritically every client should be witnessing the same state (living in the same universe).
+                        When these cases arise, since we are limiting this to not-important data we will simply ignore the issue until it inevitibly causes a problem.
+                        We delay until then, saving latency ( we could also do something like verification in the server's free time between client requests to iron out these in lulls)
+                        When we absolutely have to face the contradiciton between the two client's game states, we can just choose whatever the butterfly ended up as on the server's game state.
+
+- I don't know how else to do this game but to have the world as a state and moving from one state to another is the smallest type of change that can happen
+    - so that means I need to take extra care to make sure all the versions of the game running between clients+server are synchronized. aka everyone is on game state N at the same time, and
+    - has not committed any changes past that (its possible we could optimize the clients to do look ahead computations of future game states that it can already compute and trash these results if necessary)
+
+4.6 Server finishes sending all updates to clients
+
+4.7 Server moves to the next game tick
+
+*/
+
 int main() {
     // General init (base SDL_init stuff so far)
     init();
