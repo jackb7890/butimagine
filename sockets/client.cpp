@@ -53,7 +53,7 @@ int main() {
     int d_sleepsLeft = 10;
     while (true && d_sleepsLeft > 0) {
         d_sleepsLeft--;
-        Data d = Data::CreateDummyData();
+        Data d = Data::CreateTestData();
         ntwk.SendData(ntwk.serverSoc, d);
         this_thread::sleep_for(chrono::milliseconds(1000));
     }
