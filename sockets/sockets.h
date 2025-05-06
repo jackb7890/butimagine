@@ -2,23 +2,25 @@
 #include <cstdio>
 #include <string>
 
-struct FlagsType {
-    static const int Handshake = 0x8000;
+struct Log {
+    static void emit(const char* str, ...) {
+        #ifdef LOG_M_DBG
+            printf(str, format, ...);
+        #else
+            return;
+        #endif
+    }
+};
+
+class FlagsType {
+    public:
+    static const int QuitBit = 0x8000;
     union {
         unsigned short bits : 16;
         struct _flags {
-            unsigned short isHandshake : 1;
-
-            unsigned short wKeyPress : 1;
-            unsigned short wKeyRelease : 1;
-            unsigned short aKeyPress : 1;
-            unsigned short aKeyRelease : 1;
-            unsigned short sKeyPress : 1;
-            unsigned short sKeyRelease : 1;
-            unsigned short dKeyPress : 1;
-            unsigned short dKeyRelease : 1;
-
-            unsigned short unused : 7;
+            unsigned short quit : 1;
+            unsigned short move : 1;
+            unsigned short unused : 14;
         } flags;
     };
 
@@ -28,19 +30,18 @@ struct FlagsType {
         return sizeof(flags);
     }
     
-    inline bool IsQuitCode();
+    bool IsQuit();
+    bool IsMove();
+    void SetQuit();
+    void SetMove();
 
-    inline int WKeyPress();
-
-    inline int WKeyRelease();
-
-    inline void Init(uint16_t flagdata);
+    void Init(uint16_t flagdata);
     
     FlagsType();
 };
 
-struct Data {
-
+class Data {
+public:
     bool isValid;
     uint8_t* data;
     FlagsType dataFlags;
@@ -50,10 +51,16 @@ struct Data {
     Data(uint8_t* rawTempData, int _size);
 
     bool GetRawData(uint8_t* out);
-    static Data CreateDummyData();
     static Data CreateTestData();
+    static Data CreateHollowData();
+
+    // Movement data functions
+    void AppendMovementData(int8_t x, int8_t y);
 
     ~Data();
+
+    private:
+    void AppendByte(uint8_t byte);
 };
 
 // Not meant to make objects of this type
@@ -69,7 +76,7 @@ class NetworkHelperBase {
     IPaddress serverIp;
     TCPsocket serverSoc;
 
-    int SendData(TCPsocket& socket, Data data);
+    int SendData(TCPsocket& socket, Data& data);
     Data RecvData(TCPsocket& socket);
     void CloseSocket(TCPsocket* socket);
     
