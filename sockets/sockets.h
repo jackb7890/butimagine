@@ -51,6 +51,7 @@ struct Data {
 
     bool GetRawData(uint8_t* out);
     static Data CreateDummyData();
+    static Data CreateTestData();
 
     ~Data();
 };
