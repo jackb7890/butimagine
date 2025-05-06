@@ -22,16 +22,6 @@ void cleanup() {
     SDL_Quit();
 }
 
-struct Log {
-    static void emit(const char* str, ...) {
-        #ifdef LOG_M_DBG
-            printf(str, format, ...);
-        #else
-            return;
-        #endif
-    }
-};
-
 #include <vector>
 int main(int argc, char * argv[]) {
     std::vector<std::string> args;
@@ -60,8 +50,8 @@ int main(int argc, char * argv[]) {
         return -1;
     }
     
-    int d_sleepsLeft = 5;
-    const int WAIT_TIME = 5000; // ms
+    int d_sleepsLeft = 100;
+    const int WAIT_TIME = 1000; // ms
     bool runLoop = true;
 
     while (runLoop && d_sleepsLeft > 0) {
