@@ -22,7 +22,35 @@ void cleanup() {
     SDL_Quit();
 }
 
-int main() {
+struct Log {
+    static void emit(const char* str, ...) {
+        #ifdef LOG_M_DBG
+            printf(str, format, ...);
+        #else
+            return;
+        #endif
+    }
+};
+
+#include <vector>
+int main(int argc, char * argv[]) {
+    std::vector<std::string> args;
+    if (argc > 2) {
+        for (int i = 0; i < argc - 2; i++) {
+            if (!argv[i]) {
+                Log::emit("error reading args to main\n");
+            }
+            args.push_back(argv[i]);
+        }
+    }
+
+
+    int timeoutTime = 50'000; // in ms, so 50 seconds
+    if (!args.empty()) {
+        timeoutTime = stoi(args[0]);
+    }
+    Log::emit("timeout set to %dms\n", timeoutTime);
+
     // General init (base SDL_init stuff so far)
     init();
     {

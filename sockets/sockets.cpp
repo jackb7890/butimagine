@@ -65,6 +65,10 @@ Data Data::CreateDummyData() {
     return data;
 }
 
+Data Data::CreateTestData() {
+    return Data(reinterpret_cast<uint8_t*>("jack"), 5);
+}
+
 Data::~Data() {
     if (data) {
         free(data);
