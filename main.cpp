@@ -12,6 +12,9 @@
 
 #include "World.hpp"
 
+#include "SDL_net.h"
+#include "sockets/sockets.h"
+
 using namespace std;
 
 void init() {
@@ -24,7 +27,7 @@ void cleanup() {
     SDL_Quit();
 }
 
-bool HandleQuitEv(void) {
+bool HandleQuitEv(Data& tickData) {
     return false;
 }
 
@@ -34,6 +37,14 @@ SDL_Keycode HandleKeyDnEv(SDL_KeyboardEvent ev) {
 
 int main(int argc, char* argv[]) {
     init();
+
+    // Init network connection
+    NetworkHelperClient ntwk("localhost");
+    if (!ntwk.Init()) {
+        Log::emit("Failed client init\n");
+        __debugbreak();
+        return -1;
+    }
 
     SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN );
     if ( !win ) {
@@ -100,13 +111,15 @@ int main(int argc, char* argv[]) {
     vels.fill(false);
 
     while (runLoop) {
+        Data& tickData = Data::CreateHollowData();
         //A- Timing starts at beginnig of core loop
         //A- SDL_GetTicks() is the global timer in ms
         Uint32 startTick = SDL_GetTicks();
         while (SDL_PollEvent(&ev) != 0) {
             switch (ev.type) {
             case SDL_QUIT:
-                runLoop = HandleQuitEv();
+                runLoop = HandleQuitEv(tickData);
+                tickData.dataFlags.SetQuit();
                 break;
             //A- Instead of directly increasing/decreasing velocity, pressing a key sets a flag to true, while releasing it sets the flag to false
             //A- We had an issue before where holding a key down didn't register until it's been held for a full second
@@ -117,15 +130,19 @@ int main(int argc, char* argv[]) {
                 SDL_Keycode key = HandleKeyDnEv(ev.key);
                 switch (key) {
                 case SDLK_w:
+                    tickData.dataFlags.SetMove();
                     vels[YNEG] = true;
                     break;
                 case SDLK_a:
+                    tickData.dataFlags.SetMove();
                     vels[XNEG] = true;
                     break;
                 case SDLK_s:
+                    tickData.dataFlags.SetMove();
                     vels[YPOS] = true;
                     break;
                 case SDLK_d:
+                    tickData.dataFlags.SetMove();
                     vels[XPOS] = true;
                     break;
                 default:
@@ -206,6 +223,8 @@ int main(int argc, char* argv[]) {
         Uint32 time = SDL_GetTicks();
         float dT = (time - player1.lastUpdate) / 1000.0f;
 
+        tickData.AppendMovementData(Xelocity * dT, Yelocity * dT);
+
         //A- Move the player if velocity isn't 0
         if (Xelocity != 0 || Yelocity != 0) {
             player1.MoveVert(Yelocity * dT);
@@ -226,6 +245,8 @@ int main(int argc, char* argv[]) {
             //A- Delay next frame according to FPS cap
             SDL_Delay(TICKS_PER_FRAME - frameTicks);
         }
+
+        ntwk.SendData(ntwk.serverSoc, tickData);
     }
     cleanup();
     return 0;

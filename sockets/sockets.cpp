@@ -4,19 +4,23 @@
 
 // FlagsType
 
-inline bool FlagsType::IsQuitCode() {
-    return bits == 0; 
+bool FlagsType::IsQuit() {
+    return flags.quit != 0;
 }
 
-inline int FlagsType::WKeyPress() {
-    return flags.wKeyPress;
+bool FlagsType::IsMove() {
+    return flags.move != 0;
 }
 
-inline int FlagsType::WKeyRelease() {
-    return flags.wKeyRelease;
+void FlagsType::SetQuit() {
+    flags.quit = 1;
 }
 
-inline void FlagsType::Init(uint16_t flagdata) {
+void FlagsType::SetMove() {
+    flags.move = 1;
+}
+
+void FlagsType::Init(uint16_t flagdata) {
     bits = flagdata;
 }
 
@@ -28,19 +32,18 @@ FlagsType::FlagsType() {
 
 Data::Data() : data(nullptr), isValid(false), size(0) {}
 
-Data::Data(uint8_t* rawTempData, int _size) {
+Data::Data(uint8_t* rawTempData, int size) {
     // first 16-bits of one TCP message are going to stand for some status flags
-    dataFlags.Init(*reinterpret_cast<uint16_t*>(rawTempData));
-    int actualDataIndx = FlagsType::GetFlagsSize();
-
-    size = _size - actualDataIndx;
+    dataFlags = 0;
 
     // assert this
     if (data != nullptr) {
         // assert
     }
     data = (uint8_t*) malloc((size)*sizeof(uint8_t));
-    memcpy(data, rawTempData + actualDataIndx, size);
+    memcpy(data, rawTempData, size);
+    this->size = size;
+    this->isValid = true;
 }
 
 bool Data::GetRawData(uint8_t* out) {
@@ -56,10 +59,10 @@ bool Data::GetRawData(uint8_t* out) {
     return true;
 }
 
-Data Data::CreateDummyData() {
+Data Data::CreateHollowData() {
     Data data;
     data.data = nullptr;
-    data.dataFlags = FlagsType((FlagsType::Handshake));
+    data.dataFlags = 0;
     data.size = 0;
     data.isValid = true;
     return data;
@@ -67,6 +70,21 @@ Data Data::CreateDummyData() {
 
 Data Data::CreateTestData() {
     return Data(reinterpret_cast<uint8_t*>("jack"), 5);
+}
+
+void Data::AppendByte(uint8_t byte) {
+    // ASSERT data != nullptr
+    *(data + size) = byte;
+    size++;
+}
+
+void Data::AppendMovementData(int8_t x, int8_t y) {
+    if (size == 0) {
+        // starting new list of datas
+        data = (uint8_t *)malloc(2);
+    }
+    AppendByte(x);
+    AppendByte(y);
 }
 
 Data::~Data() {
@@ -93,7 +111,7 @@ NetworkHelperBase::~NetworkHelperBase() {
     }
 }
 
-int NetworkHelperBase::SendData(TCPsocket& socket, Data data) {
+int NetworkHelperBase::SendData(TCPsocket& socket, Data& data) {
     uint8_t temp_data[MAX_PACKETS];
     if (!data.GetRawData(&temp_data[0])) {
         printf("Error in GetRawData\n");
@@ -114,6 +132,7 @@ Data NetworkHelperBase::RecvData(TCPsocket& socket) {
     int num_recv = SDLNet_TCP_Recv(socket, temp_data, MAX_PACKETS);
 
     if(num_recv <= 0) {
+        printf("num received: %d\n", num_recv);
         printf("Tried Receiving data on client socket, but there TCP_Recv read no data\n Error: ");
         const char* err = SDLNet_GetError();
         if(strlen(err) == 0) {
@@ -124,6 +143,7 @@ Data NetworkHelperBase::RecvData(TCPsocket& socket) {
 
         return Data(); // empty constructor returns a non-valid Data object
     } else {
+        printf("got Datas received: %d\n", num_recv);
         return Data(&temp_data[0], num_recv);
     }
 }
