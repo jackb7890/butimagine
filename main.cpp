@@ -127,22 +127,18 @@ int main(int argc, char* argv[]) {
             //A- Changing directions and holding multiple directions now works as intended
             case SDL_KEYDOWN:
             {
-                SDL_Keycode key = HandleKeyDnEv(ev.key);
+                SDL_Keycode key = ev.key.keysym.sym;
                 switch (key) {
                 case SDLK_w:
-                    tickData.dataFlags.SetMove();
                     vels[YNEG] = true;
                     break;
                 case SDLK_a:
-                    tickData.dataFlags.SetMove();
                     vels[XNEG] = true;
                     break;
                 case SDLK_s:
-                    tickData.dataFlags.SetMove();
                     vels[YPOS] = true;
                     break;
                 case SDLK_d:
-                    tickData.dataFlags.SetMove();
                     vels[XPOS] = true;
                     break;
                 default:
@@ -185,6 +181,9 @@ int main(int argc, char* argv[]) {
 
         //A- Changes velocity accoring to what buttons are pressed
         if (vels[XPOS] && !vels[XNEG]) {
+            tickData.dataFlags.SetMove();
+            tickData.dataFlags.SetMove();
+            tickData.AppendMovementData(speed, Yelocity * dT);
             Xelocity += speed;
         }
         if (vels[XNEG] && !vels[XPOS]) {
@@ -223,10 +222,10 @@ int main(int argc, char* argv[]) {
         Uint32 time = SDL_GetTicks();
         float dT = (time - player1.lastUpdate) / 1000.0f;
 
-        tickData.AppendMovementData(Xelocity * dT, Yelocity * dT);
-
         //A- Move the player if velocity isn't 0
         if (Xelocity != 0 || Yelocity != 0) {
+            tickData.dataFlags.SetMove();
+            tickData.AppendMovementData(Xelocity, Yelocity);
             player1.MoveVert(Yelocity * dT);
             player1.MoveHoriz(Xelocity * dT);
         }
