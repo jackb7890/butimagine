@@ -59,12 +59,15 @@ int main(int argc, char* argv[]) {
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
     RGBColor player1Color = {120, 200, 200};
     Player player1(player1HitBox, player1Color, &map);
+
+    //A- As I remember the only way I could get a tile to render with our current setup was to really force it.
     HitBox tilehb = { 100, 100, 32, 32 };
+    //A- The texture doesn't render, if I remember it's because the Display class never looks for textures.
     SDL_Texture* tiletex = TextureManager::LoadTexture("assets/tiles/grass.png", renderer);
     Tile tile1(tilehb, tiletex, 15);
     tile1.map = &map;
+    //A- I also had to force it to be valid to render. I don't remember why.
     tile1.valid = 1;
-    std::cout << tile1.valid << std::endl;
     map.Add(player1);
     map.Add(tile1);
 

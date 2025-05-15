@@ -58,14 +58,6 @@ class RGBColor {
     unsigned ConvertToSDL(SDL_Surface* surface);
 };
 
-//A- So the thought began with me wanting to have velocity tracked by the player object
-//A- instead of it just being calculated in main. However since the player
-//A- (was) a MapEntity, i'd have to add the variables to the mapEntity class.
-//A- Unfortunantly *everything* that we render to the screen is a MapEntity, including walls and the background.
-//A- Walls don't need a velocity, this isn't terraria.
-//A- The solution is to split things that don't move (now called MapObjects), and things that do (now MapEntities)
-//A- MapEntities extends MapObjects, any movement based code will go into MapEntites.
-//A- Aka MapEntities are MapObjects, but MapObjects are not MapEntites.
 class MapObject {
     // base class for things that go on the map
     // for collosion detection sake, assume everything is rectangular for now
@@ -118,7 +110,6 @@ class MapObject {
     }
 };
 
-//A- In game design, an "entity" is usually a living thing, or at least something that moves.
 class MapEntity : public MapObject {
     public:
 
@@ -131,8 +122,6 @@ class MapEntity : public MapObject {
     inline MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
         MapObject(_hb, _c, _map) {}
 
-    //A- also not 100% on what inline does, a tutorial showed what, but not why or when.
-    //A- Kind of like all of c++
     inline GridPos GetOldPos() const {
         return oldPos;
     }

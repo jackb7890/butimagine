@@ -56,6 +56,7 @@ Map::Map () {
 // idk how to we'd do that
 void Map::CreateBackground() {
     //A- I changed the i and j to x and y, to make it a bit less confusing
+    //A- I know I and J are standard for loops but oh well deal with it >:(
     for (int x = 0; x < MAP_WIDTH; x++) {
         for (int y = 0; y < MAP_HEIGHT; y++) {
             HitBox hb = HitBox(x, y, 1, 1);
@@ -108,6 +109,16 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     return false;
 }
 
+//A- To my understanding, everything we render is through the display class(?), which is built around the "map" struct.
+//A- In order to get my tile/map to work, we either need to redesign this to not rely on "map" structs for rendering,
+//A- or create a new rendering system that uses tilemaps instead.
+//A- Or as a 3rd option, we redesign the tilemap to be some kind of extension of the map struct.
+//A- Personally I think changing display is the best option.
+//A- To my understanding (again), the map is created via 1x1 pixel gameObjects to make a background.
+//A- Other gameObjects are then created *inside* the map, overwriting whatever background pixels were there before.
+//A- The display::update is making that change to the map, then rendering the updared map in the same function.
+//A- "fixing" the display class may be as easy as just seperating the rendering part of all these functions
+//A- from the updating part. And also making it not require a Map object in the ctour.
 Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {}
 
 Display::~Display() {
