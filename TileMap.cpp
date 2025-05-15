@@ -1,6 +1,5 @@
 #include "TileMap.hpp"
 #include "TextureManager.hpp"
-#include "World.hpp"
 
 Tile::Tile(HitBox _hb, SDL_Texture* _tex, int _col) {
 	this->SetCollisionType(_col);

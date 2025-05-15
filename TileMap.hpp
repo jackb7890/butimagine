@@ -11,7 +11,6 @@
 
 const int TILESWIDTH = MAP_WIDTH / TILE_RES;
 const int TILESHEIGHT = MAP_HEIGHT / TILE_RES;
-//A- I don't like having another renderer here but I can't fix that rn
 
 class Tile : public MapObject{
 	public:

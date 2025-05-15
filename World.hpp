@@ -126,7 +126,7 @@ class MapEntity : public MapObject {
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    //A- I Don't know any better so the MapEntity constructor just calls the MapObject const.
+    //A- I Don't know any better so the MapEntity constructor just calls the MapObject ctour.
     //A- Not having this broke the Player constructor
     inline MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
         MapObject(_hb, _c, _map) {}

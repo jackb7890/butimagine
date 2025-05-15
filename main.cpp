@@ -222,16 +222,16 @@ int main(int argc, char* argv[]) {
         //A- Move the player if velocity isn't 0
         if (player1.X_velocity != 0.0 || player1.Y_velocity != 0.0) {
             if (capSpeed) {
-                if (player1.X_velocity > 0 && player1.X_velocity > speedCap) {
+                if (player1.X_velocity > speedCap) {
                     player1.X_velocity = speedCap;
                 }
-                if (player1.X_velocity < 0 && player1.X_velocity < -speedCap) {
+                if (player1.X_velocity < -speedCap) {
                     player1.X_velocity = -speedCap;
                 }
-                if (player1.Y_velocity > 0 && player1.Y_velocity > speedCap) {
+                if (player1.Y_velocity > speedCap) {
                     player1.Y_velocity = speedCap;
                 }
-                if (player1.Y_velocity < 0 && player1.Y_velocity < -speedCap) {
+                if (player1.Y_velocity < -speedCap) {
                     player1.Y_velocity = -speedCap;
                 }
             }
