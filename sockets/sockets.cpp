@@ -30,42 +30,28 @@ FlagsType::FlagsType() {
 
 // Data
 
-Data::Data() : data(nullptr), isValid(false), size(0) {}
+Data::Data() {}
 
 Data::Data(uint8_t* rawTempData, int size) {
     // first 16-bits of one TCP message are going to stand for some status flags
     dataFlags = 0;
 
-    // assert this
-    if (data != nullptr) {
-        // assert
+    for (int i = 0; i < size; i++) {
+        AppendByte(*rawTempData++);
     }
-    data = (uint8_t*) malloc((size)*sizeof(uint8_t));
-    memcpy(data, rawTempData, size);
-    this->size = size;
-    this->isValid = true;
 }
 
-bool Data::GetRawData(uint8_t* out) {
-    if (!isValid) {
-        return false;
-    }
-    if (!out) {
-        return false;
-    }
-
+void Data::GetRawData(uint8_t* out, int maxsize) {
     *reinterpret_cast<uint16_t*>(out) = dataFlags.bits;
-    memcpy(out + FlagsType::GetFlagsSize(), data, size);
-    return true;
+    for (int i = 0; (i < data.size()) && (i < maxsize); i++) {
+        *out = data[i];
+    }
 }
 
 Data Data::CreateHollowData() {
-    Data data;
-    data.data = nullptr;
-    data.dataFlags = 0;
-    data.size = 0;
-    data.isValid = true;
-    return data;
+    Data myData;
+    myData.dataFlags = 0;
+    return myData;
 }
 
 Data Data::CreateTestData() {
@@ -73,24 +59,24 @@ Data Data::CreateTestData() {
 }
 
 void Data::AppendByte(uint8_t byte) {
-    // ASSERT data != nullptr
-    *(data + size) = byte;
-    size++;
+    data.push_back(byte);
 }
 
 void Data::AppendMovementData(int8_t x, int8_t y) {
-    if (size == 0) {
-        // starting new list of datas
-        data = (uint8_t *)malloc(2);
-    }
+    // assert ismove flag?
+    dataFlags.SetMove();
     AppendByte(x);
     AppendByte(y);
 }
 
-Data::~Data() {
-    if (data) {
-        free(data);
+void Data::AppendKeyDown(SDL_Keycode key) {
+    char * keybytes = reinterpret_cast<char*>(&key);
+    for (int i = 0; i < sizeof(SDL_Keycode); i++) {
+        AppendByte(*keybytes++);
     }
+}
+
+Data::~Data() {
 }
 
 // NetworkHelperBase
@@ -113,13 +99,10 @@ NetworkHelperBase::~NetworkHelperBase() {
 
 int NetworkHelperBase::SendData(TCPsocket& socket, Data& data) {
     uint8_t temp_data[MAX_PACKETS];
-    if (!data.GetRawData(&temp_data[0])) {
-        printf("Error in GetRawData\n");
-        return -1;
-    }
+    data.GetRawData(&temp_data[0], MAX_PACKETS);
 
-    int num_sent = SDLNet_TCP_Send(socket, temp_data, data.size);
-    if(num_sent < data.size) {
+    int num_sent = SDLNet_TCP_Send(socket, temp_data, data.data.size());
+    if(num_sent < data.data.size()) {
         printf("ER: SDLNet_TCP_Send: %s\n", SDLNet_GetError());
         return -1;
     }

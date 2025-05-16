@@ -167,7 +167,7 @@ struct Map {
     // Drawing each pixel based on each entry of grid for the map
     // will be slow compared to if we can do some SDL_FillRects, but
     // idk how to we'd do that
-    void CreateBackground();
+    void InitializeWorld();
 
     // Clears the map at area covered by player
     void Clear(Player player);

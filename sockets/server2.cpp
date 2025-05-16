@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <string>
 #include <iostream>
+#include <vector>
 
 #define SDL_MAIN_HANDLED 1
 
@@ -35,27 +36,66 @@ SDL_Keycode HandleKeyDnEv(SDL_KeyboardEvent ev) {
     return ev.keysym.sym;
 }
 
+std::array<Player, MAX_SOCKETS-1> clientPlayers;
+
+void ProcessMoveData(Data& data, int client) {
+    // assert size is big enough
+    if (data.size() > 0) {
+        int8_t x, y;
+        x = data[0];
+        y = (data.size() > 1) ? data[1] : 0;
+        clientPlayers[client].Xelocity += x;
+        clientPlayers[client].Yelocity += y;
+
+    }
+}
+
+void ProcessData(Data& data, int client) {
+    if (data.IsMove()) {
+        ProcessMoveData(data, client);
+    }
+}
+
 int main(int argc, char* argv[]) {
+    // process args
+    std::vector<std::string> args;
+    if (argc > 2) {
+        for (int i = 0; i < argc - 2; i++) {
+            if (!argv[i]) {
+                Log::emit("error reading args to main\n");
+            }
+            args.push_back(argv[i]);
+        }
+    }
+
+
+    int timeoutTime = 50'000; // in ms, so 50 seconds
+    if (!args.empty()) {
+        timeoutTime = stoi(args[0]);
+    }
+    Log::emit("timeout set to %dms\n", timeoutTime);
+
+
     init();
 
     // Init network connection
-    NetworkHelperClient ntwk("localhost");
+    NetworkHelperClient ntwk();
     if (!ntwk.Init()) {
-        Log::emit("Failed client init\n");
+        Log::emit("Failed server init\n");
         __debugbreak();
         return -1;
     }
 
     SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN );
     if ( !win ) {
-        printf("Failed to create a window! Error: %s\n", SDL_GetError());
+        Log::emit("Failed to create a window! Error: %s\n", SDL_GetError());
     }
 
     Map map;
 
     Display display(win, &map);
 
-    map.CreateBackground();
+    map.InitializeWorld();
 
     // not sure how I feel about the map updating through the player class but fuck it right
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
@@ -111,6 +151,53 @@ int main(int argc, char* argv[]) {
     vels.fill(false);
 
     while (runLoop) {
+
+        int clients_ready = SDLNet_CheckSockets(ntwk.socket_set, WAIT_TIME);
+
+        if (clients_ready == -1) {
+            Log::emit("Error returned by SDLNet_CheckSockets\n");
+        }
+        else if (clients_ready == 0) {
+            Log::emit("No clients ready at this time\n");
+            // no clients ready, process things in server work queue
+        }
+        else if (clients_ready > 0) {
+            // clients are ready
+            Log::emit("Client(s) are ready\n");
+            if(SDLNet_SocketReady(ntwk.serverSoc)) {
+                // client connection ocurred
+                Log::emit("Server socket is ready\n)");
+                ntwk.TryAddClient();
+            }
+
+            for (int socketIndx = 0; socketIndx < ntwk.MAX_SOCKETS; socketIndx++) {
+                if (!SDLNet_SocketReady(ntwk.clientSockets[socketIndx])) {
+                    continue;
+                }
+
+                Log::emit("Client socket is ready\n)");
+
+                Data data = ntwk.RecvData(ntwk.clientSockets[socketIndx]);
+
+                // RespondToClients()
+            
+                // switch(data.dataFlags.bits) {
+                    // case FLAG_WOOD_UPDATE: {
+                    //     Data dataToSend; // TODO: fill this in with real data
+                    //     ntwk.SendData(socketIndx, dataToSend);
+                    // } break;
+            
+                    // case FLAG_QUIT: {
+                    //     runLoop = false;
+                    //     printf("DB: shutdown by client id: %dn", socketIndx);
+                    // } break;
+                //}        
+            }
+        }
+
+
+
+        // ---------------------------------------
         Data& tickData = Data::CreateHollowData();
         //A- Timing starts at beginnig of core loop
         //A- SDL_GetTicks() is the global timer in ms

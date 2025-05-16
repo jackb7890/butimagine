@@ -83,9 +83,6 @@ int main(int argc, char * argv[]) {
                 printf("Client socket is ready\n)");
 
                 Data data = ntwk.RecvData(ntwk.clientSockets[socketIndx]);
-                if(!data.isValid) {
-                    continue;
-                }
             
                 // switch(data.dataFlags.bits) {
                     // case FLAG_WOOD_UPDATE: {
