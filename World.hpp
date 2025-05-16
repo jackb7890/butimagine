@@ -208,13 +208,17 @@ struct Display {
 
     ~Display();
 
-    void Update(bool updateScreen = true);
+    void Update();
 
-    void Erase(Player player, bool updateScreen = true);
+    void Erase(Player player);
 
-    void Update(Player player, bool updateScreen = true);
+    void Update(Player player);
 
-    void Update(Wall wall, bool updateScreen = true);
+    void Update(Wall wall);
 
-    void Update(MapObject object, bool updateScreen = true);
+    void Update(MapObject object);
+
+    void Update(TileMap tilemap);
+
+    void Render(bool updateScreen = true);
 };

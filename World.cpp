@@ -125,7 +125,7 @@ Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::Update(bool updateScreen) {
+void Display::Update() {
     for (int i = 0; i < MAP_WIDTH; i++) {
         for (int j = 0; j < MAP_HEIGHT; j++) {
             SDL_Rect point {i, j, 1, 1};
@@ -146,13 +146,9 @@ void Display::Update(bool updateScreen) {
             }
         }
     }
-    if (updateScreen) {
-        //A- All UpdateWindowSurface calls were changed to RenderPresent
-        SDL_RenderPresent(renderer);
-    }
 }
 
-void Display::Erase(Player player, bool updateScreen) {
+void Display::Erase(Player player) {
 
     for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
         for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
@@ -162,35 +158,32 @@ void Display::Erase(Player player, bool updateScreen) {
             SDL_RenderFillRect(renderer, &rect);
         }
     }
-
-    if (updateScreen) {
-        //A-
-        SDL_RenderPresent(renderer);
-    }
 }
 
-void Display::Update(Player player, bool updateScreen) {
+void Display::Update(Player player) {
     if (player.hasMovedOffScreen) {
         Erase(player, false /* false so we don't update in Erase and update again here*/);
     }
-    Update((MapEntity) player, updateScreen);
+    Update((MapEntity) player);
     player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
-    if (updateScreen) {
-        //A-
-        SDL_RenderPresent(renderer);
-    }
 }
 
-void Display::Update(Wall wall, bool updateScreen) {
-    Update((MapObject) wall, updateScreen);
+void Display::Update(Wall wall) {
+    Update((MapObject) wall);
 }
 
-void Display::Update(MapObject object, bool updateScreen) {
+void Display::Update(MapObject object) {
     SDL_Rect rect = object.GetSDLRect();
     SDL_SetRenderDrawColor(renderer, object.color.r, object.color.g, object.color.b, 255);
     SDL_RenderFillRect(renderer, &rect);
+}
+
+void Display::Update(TileMap tilemap) {
+
+}
+
+void Display::Render(bool updateScreen) {
     if (updateScreen) {
-        //A-
         SDL_RenderPresent(renderer);
     }
 }
