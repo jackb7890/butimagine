@@ -1,11 +1,12 @@
 #include "SDL_net.h"
 #include <cstdio>
 #include <string>
+#include <vector>
 
 struct Log {
     static void emit(const char* str, ...) {
         #ifdef LOG_M_DBG
-            printf(str, format, ...);
+            printf(str, ...);
         #else
             return;
         #endif
@@ -42,20 +43,19 @@ class FlagsType {
 
 class Data {
 public:
-    bool isValid;
-    uint8_t* data;
+    std::vector<uint8_t> data;
     FlagsType dataFlags;
-    int size; // size of data, not including the flag data
     Data();
 
     Data(uint8_t* rawTempData, int _size);
 
-    bool GetRawData(uint8_t* out);
+    void GetRawData(uint8_t* out, int maxsize = 256);
     static Data CreateTestData();
     static Data CreateHollowData();
 
     // Movement data functions
     void AppendMovementData(int8_t x, int8_t y);
+    void AppendKeyDown(SDL_Keycode key);
 
     ~Data();
 
