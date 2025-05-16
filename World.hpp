@@ -172,11 +172,10 @@ struct Map {
         allEntities.clear();
     }
 
-    //Removes most recently added MapEntity.
-    //Pop does not return the last element, just deletes it.
-    inline void PopEntity() {
-        allEntities.pop_back();
-    }
+    // Drawing each pixel based on each entry of grid for the map
+    // will be slow compared to if we can do some SDL_FillRects, but
+    // idk how to we'd do that
+    void InitializeWorld();
 
     void AddToGrid(MapEntity& entity);
 
