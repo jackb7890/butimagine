@@ -1,12 +1,22 @@
 #pragma once
 
 #define SDL_MAIN_HANDLED 1
-#include "SDL.h"
 
+#include <iostream>
+#include <fstream>
+#include "SDL.h"
+#include "SDL_image.h"
+
+#include "TextureManager.hpp"
 #include "util.hpp"
 
 #define MAP_WIDTH 1280
 #define MAP_HEIGHT 720
+//Tile resolution in pixels
+#define TILE_RES 32;
+
+const int TILESWIDTH = MAP_WIDTH / TILE_RES;
+const int TILESHEIGHT = MAP_HEIGHT / TILE_RES;
 
 struct Map;
 struct Display;
@@ -61,20 +71,39 @@ class RGBColor {
 class MapObject {
     // base class for things that go on the map
     // for collosion detection sake, assume everything is rectangular for now
-    // if mfers want triangles do it yourself
-    //A- Variables regarding updated positions or movement was moved to MapEntity.
-    //A- MapObjects DO NOT MOVE. Great for things like walls or the background.
+
+    //A- I was originally going to remove "Map" variable from MapObject.
+    //A- But it turns out we do need it because that's how we check for collision.
+    //A- "MapEntity" from before has been removed. Instead we're using a flag for immobile.
+    //A- Objects are assumed immobile. Immobile objects can NEVER move.
 
     public:
     bool valid;
     HitBox hitbox;
     RGBColor color;
     bool hasCollision;
-    int ID;
     Map* map;
+    int ID = 0;
+    bool immobile;
 
-    MapObject(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
+    //A- It would be silly but is there a way to only declare these variables if immobile is false?
+    //A- idk if that could or should be done in the hpp.
+    //A- Otherwise we'd have to check if an object is immobile for every movement function.
+    //A- It'd be easier for these to just not exist if an object is immobile.
+    double X_velocity, Y_velocity;
+    bool hasMovedOffScreen = false;
+    GridPos oldPos;
+
     inline MapObject() : valid(false) {}
+
+    inline MapObject(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
+        hitbox(_hb), color(_c), hasCollision(_hasCol), immobile(_im) {
+    }
+
+    MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol = true, bool _im = true);
+    MapObject(HitBox _hb, SDL_Texture* tex, bool _hasCol = true, bool _im = true);
+    MapObject(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true, bool _im = true);
+
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
@@ -108,24 +137,11 @@ class MapObject {
     inline SDL_Rect GetSDLRect() const {
         return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
     }
-};
-
-class MapEntity : public MapObject {
-    public:
-
-    double X_velocity,Y_velocity;
-    bool hasMovedOffScreen = false;
-    GridPos oldPos;
-
-    //A- I Don't know any better so the MapEntity constructor just calls the MapObject ctour.
-    //A- Not having this broke the Player constructor
-    inline MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
-        MapObject(_hb, _c, _map) {}
 
     inline GridPos GetOldPos() const {
         return oldPos;
     }
-    //A- Force move ignores all collision
+
     void ForceMove(int xD, int yD);
     void Move(int xD, int yD);
 };
@@ -137,24 +153,20 @@ class Wall : public MapObject {
 
     public:
     // default color 112,112,112 is gray
-    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
+    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c);
 };
 
-class Player : public MapEntity {
+class Player : public MapObject {
 
-    public:
+public:
     int health = 100;
     int runEnergy = 100;
     Uint32 born = 0;
     Uint32 lastUpdate = 0;
 
-    
-    inline Player(HitBox _hb, RGBColor _c, Map* _map) :
-        //A- I tried to change this to MapObject, but it complained that it wasn't inherited
-        //A- So I guess it can't see past MapEntity? Even though it should?
-        MapEntity(_hb, _c, _map) {}
-
-    friend struct Display;
+    inline Player(HitBox _hb, RGBColor _c, Map* _m) :
+        MapObject(_hb, _c, _m, true, false) {
+    }
 };
 
 struct Map {
@@ -210,7 +222,7 @@ struct Display {
 
     void Update();
 
-    void Erase(Player player);
+    void Erase(Player player, bool renderChange = true);
 
     void Update(Player player);
 
@@ -218,7 +230,128 @@ struct Display {
 
     void Update(MapObject object);
 
-    void Update(TileMap tilemap);
-
-    void Render(bool updateScreen = true);
+    void Render();
 };
+
+class Tile : public MapObject {
+public:
+    Uint8 collisionType;
+    SDL_Texture* texture;
+
+    Tile(HitBox _hb, SDL_Texture* _tex, int _col);
+    ~Tile();
+
+    inline int GetCollisionType() {
+        return collisionType;
+    }
+
+    inline GridPos GetTilePosition() {
+        int x = hitbox.origin.x % TILE_RES;
+        int y = hitbox.origin.y % TILE_RES;
+        return GridPos(x, y);
+    }
+
+    inline void SetCollisionType(int col = 15) {
+        collisionType = col % 16;
+    }
+
+    inline void SetTexture(const char* filepath, SDL_Renderer* ren) {
+        texture = TextureManager::LoadTexture(filepath, ren);
+    }
+
+    inline void SetTexture(SDL_Texture* tex) {
+        texture = tex;
+    }
+
+};
+
+//Should read, load, & render the tile based map
+//Helper functions to check tiles, collision(?), coords
+class TileMap {
+public:
+    TileMap();
+    ~TileMap();
+
+    //read map file
+    //Should return the array from the map file(?)
+    int ReadMapFile();
+
+    //generate tilemap based on map file
+    //Probably have it use ReadMapFile, should have everything ready for rendering  
+    void GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]);
+
+    //render textures to screen
+    //used in place of Display struct in World.h
+    void DisplayMap();
+
+    //Debug display what tile player is on
+    bool DebugHighlightCurrentTile();
+
+    //get tile object is on
+    //overload to get player, walls, etc.
+    void GetObjectTile();
+
+    //collision logic
+    //There are 16 possible collision combinations for a tile (4^2)
+    //Somehow I think binary is the easiest way to assign & remember collision (internally)
+    //Having 1 variable determine collision makes assigning easy
+    //Having it be binary based makes calculations easy
+    // 0 0 0 0, in order of Left, Top, Bottom, Right
+    /*	0 = 0000 = No collision
+    *	1 = 1000 = Left
+    *	2 = 0100 = Top
+    *	3 = 1100 = Left, Top
+    *	4 = 0010 = Bottom
+    *	5 = 1010 = Left, Bottom
+    *	6 =	0110 = Top, Bottom
+    *	7 = 1110 = Left, Top, Bottom
+    *	8 = 0001 = Right
+    *	9 = 1001 = Left, Right
+    *	10= 0101 = Top, Right
+    *	11= 1101 = Left, Top, Right
+    *	12= 0011 = Bottom, Right
+    *	13= 1011 = Left, Bottom , Right
+    *	14= 0111 = Top, Bottom, Right
+    *	15= 1111 = All
+    */
+    //For calcualting;
+    //	Left	= Odd number
+    //	Top		= %4 is >= 2
+    //	Bottom	= %8 is >= 4
+    //	Right	= >= 8
+
+    //As a final example to this shear lack of any actual code
+    //If we look at a collision value of 11
+    // 1. 11 is odd, so we know there's collision on the left
+    // 2. 11 %4 = 3, so we know there's collision on the top
+    // 3. 11 %8 = 3, so we know there's no bottom collision
+    // 4. 11 is >= 8, so we know there's collision on the right.
+
+private:
+    SDL_Rect* src, dest;
+    SDL_Texture* grass;
+    int map[TILESWIDTH][TILESHEIGHT];
+};
+
+
+//notes
+
+//We currently render GameObjects, which are SDL_Rects with some properties
+//There's currently no way to generate a game object from a texture
+//We need to generate a tile as a game object
+//TileMap should be an array of Tile game objects
+//Only way to render something to the screen is Display.update
+//Display.update heavily relies on the background game object
+//Background is an array of 1x1 game objects, aka pixels
+//Every pixel in background is a gameobject
+//We need to change the way things are rendered so it's at least background > objects > gui
+//Currently it's pixel by pixel, if there's no gameobject at that coordinate it uses the background object at that coord
+//Display is the renderer, window, and map
+//Map is a 2d grid(x,y coords) and a background
+
+//So what we need to do
+//Have each tile be a game object, that lets us do collision & texture easily
+//Have Tilemap create & track tiles based on a map file (or algoritm)
+//Change our rendering to allow for a tilemap background
+//Adjust for rendering bugs
+//simplify display.update(?)

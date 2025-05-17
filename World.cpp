@@ -5,37 +5,51 @@ unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
 }
 
-void MapEntity::Move(int xD, int yD) {
-    hasMovedOffScreen = true;
-    oldPos = GetCurrentPos();
-    GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
-    int smallerXCoord = std::min(oldPos.x, newPos.x);
-    int smallerYCoord = std::min(oldPos.y, newPos.y);
-    int xCollision = GetWidth() + std::abs(xD);
-    int yCollision = GetDepth() + std::abs(yD);
-    const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
+MapObject::MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol, bool _im) :
+    hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol), immobile(_im) {
+    ID = map->numberOfEntities++;
+}
 
-    //A- I added a check to see if the object that is moving has collision.
-    //A- Ideally both objects need to have collision on for them to collide.
-    if (this->hasCollision == true) {
-        if (map->CheckForCollision(collisionPath, ID)) {
-            //A- Collisions set velocity to 0. Makes bumping into walls less annoying
-            this->X_velocity = 0.0;
-            this->Y_velocity = 0.0;
-            return;
+//Player::Player(HitBox _hb, RGBColor _c, Map* _m) {
+//    MapObject(_hb, _c, _m, true, false);
+//}
+
+void MapObject::Move(int xD, int yD) {
+    if (!immobile) {
+        hasMovedOffScreen = true;
+        oldPos = GetCurrentPos();
+        GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
+        int smallerXCoord = std::min(oldPos.x, newPos.x);
+        int smallerYCoord = std::min(oldPos.y, newPos.y);
+        int xCollision = GetWidth() + std::abs(xD);
+        int yCollision = GetDepth() + std::abs(yD);
+        const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
+
+        //A- I added a check to see if the object that is moving has collision.
+        //A- Ideally both objects need to have collision on for them to collide.
+        if (this->hasCollision) {
+            if (map->CheckForCollision(collisionPath, ID)) {
+                //A- Collisions set velocity to 0. Makes bumping into walls less annoying
+                this->X_velocity = 0.0;
+                this->Y_velocity = 0.0;
+                return;
+            }
         }
+
+        newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
+        newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
+        map->Clear(*this);
+        SetPos(newPos);
+        map->Add(*this);
     }
-
-    newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
-    newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
-
-    map->Clear(*this);
-    SetPos(newPos);
-    map->Add(*this);
+    else {
+        //A "this" just prints the memory address. I know there's a better way but too lazy to look that up.
+        std::cout << "Attempt to move immobile MapObject; " << this << std::endl;
+    }
 }
 
 //A- I get intrusive thoughts and add forced movement despite having 0 use for it yet.
-void MapEntity::ForceMove(int xD, int yD) {
+void MapObject::ForceMove(int xD, int yD) {
     //A- If the object *does* have collision, this just turns it off temporarily to move it, then turns it back on.
     if (this->hasCollision == true) {
         this->hasCollision = false;
@@ -146,9 +160,10 @@ void Display::Update() {
             }
         }
     }
+    Render();
 }
 
-void Display::Erase(Player player) {
+void Display::Erase(Player player, bool renderChange) {
 
     for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
         for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
@@ -158,46 +173,67 @@ void Display::Erase(Player player) {
             SDL_RenderFillRect(renderer, &rect);
         }
     }
+    if (renderChange) {
+        Render();
+    }
 }
 
 void Display::Update(Player player) {
     if (player.hasMovedOffScreen) {
-        Erase(player, false /* false so we don't update in Erase and update again here*/);
+        Erase(player, false);
     }
-    Update((MapEntity) player);
+    Update((MapObject) player);
     player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
+    Render();
 }
 
 void Display::Update(Wall wall) {
     Update((MapObject) wall);
+    Render();
 }
 
 void Display::Update(MapObject object) {
     SDL_Rect rect = object.GetSDLRect();
     SDL_SetRenderDrawColor(renderer, object.color.r, object.color.g, object.color.b, 255);
     SDL_RenderFillRect(renderer, &rect);
+    Render();
 }
 
-void Display::Update(TileMap tilemap) {
-
+void Display::Render() {
+    SDL_RenderPresent(renderer);
 }
 
-void Display::Render(bool updateScreen) {
-    if (updateScreen) {
-        SDL_RenderPresent(renderer);
-    }
-}
-
-MapObject::MapObject(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :
-    hitbox(_hb), color(_c), map(_map), hasCollision(_hasCol) {
-    ID = map->numberOfEntities++;
-}
-
-Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map) : 
-    MapObject(HitBox(_pos, GridDimension(thickness, _length)), _c, _map),
+Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c) : 
+    MapObject(HitBox(_pos, GridDimension(thickness, _length)), _c),
     isVert(_isV) {
     // SetWidth(thickness); // fix the place holder
     if (!isVert) {
         std::swap(hitbox.dim.depth, hitbox.dim.width);
     }
+}
+
+Tile::Tile(HitBox _hb, SDL_Texture* _tex, int _col) {
+	this->SetCollisionType(_col);
+	this->SetTexture(_tex);
+	this->hitbox = _hb;
+}
+
+Tile::~Tile() {
+	SDL_DestroyTexture(texture);
+}
+
+TileMap::TileMap() {
+	
+}
+
+//int TileMap::ReadMapFile() {
+
+//}
+
+void TileMap::GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]) {
+
+}
+
+void TileMap::DisplayMap() {
+
 }

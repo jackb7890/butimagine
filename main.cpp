@@ -10,8 +10,7 @@
 #include "SDL_image.h"
 #include "time.h"
 
-#include "TileMap.hpp"
-#include "TextureManager.hpp"
+#include "World.hpp"
 
 using namespace std;
 
@@ -65,13 +64,10 @@ int main(int argc, char* argv[]) {
     //A- The texture doesn't render, if I remember it's because the Display class never looks for textures.
     SDL_Texture* tiletex = TextureManager::LoadTexture("assets/tiles/grass.png", renderer);
     Tile tile1(tilehb, tiletex, 15);
-    tile1.map = &map;
     //A- I also had to force it to be valid to render. I don't remember why.
     tile1.valid = 1;
     map.Add(player1);
     map.Add(tile1);
-
-
 
     // short walls are 25 long
     // long walls on bot/top are 50 long
@@ -79,15 +75,15 @@ int main(int argc, char* argv[]) {
 
     RGBColor wallColor = {170, 170, 170};
 
-    Wall lowerFront = Wall({205, 255}, 25, true, wallColor, &map);
+    Wall lowerFront = Wall({205, 255}, 25, true, wallColor);
     map.Add(lowerFront);
-    Wall bottom = Wall({155, 280}, 50, false, wallColor, &map);
+    Wall bottom = Wall({155, 280}, 50, false, wallColor);
     map.Add(bottom);
-    Wall back = Wall({155, 205}, 75, true, wallColor, &map);
+    Wall back = Wall({155, 205}, 75, true, wallColor);
     map.Add(back);
-    Wall top = Wall({155, 205}, 50, false, wallColor, &map);
+    Wall top = Wall({155, 205}, 50, false, wallColor);
     map.Add(top);
-    Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
+    Wall upperFront = Wall({205, 205}, 25, true, wallColor);
     map.Add(upperFront);
 
     display.Update(); // this updates the map stored within display
@@ -116,7 +112,7 @@ int main(int argc, char* argv[]) {
     vels.fill(false);
 
     while (runLoop) {
-        //A- Timing starts at beginnig of core loop
+        //A- Timing starts at beginning of core loop
         //A- SDL_GetTicks() is the global timer in ms
         Uint32 startTick = SDL_GetTicks();
         while (SDL_PollEvent(&ev) != 0) {
@@ -257,6 +253,7 @@ int main(int argc, char* argv[]) {
             //A- Delay next frame according to FPS cap
             SDL_Delay(TICKS_PER_FRAME - frameTicks);
         }
+        std::cout << frameTicks << std::endl;
     }
     cleanup();
     return 0;
