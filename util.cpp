@@ -1,3 +1,5 @@
+#include "util.hpp"
+
 int Wrap(int oldIndex, int change, int bound) {
     int newIndex = oldIndex + change;
     if (newIndex >= bound) {
@@ -10,3 +12,4 @@ int Wrap(int oldIndex, int change, int bound) {
         return oldIndex + change;
     }
 }
+

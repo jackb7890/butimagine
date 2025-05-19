@@ -44,7 +44,7 @@ Map::Map () {
 // Drawing each pixel based on each entry of grid for the map
 // will be slow compared to if we can do some SDL_FillRects, but
 // idk how to we'd do that
-void Map::CreateBackground() {
+void Map::InitializeWorld() {
     for (int i = 0; i < MAP_WIDTH; i++) {
         for (int j = 0; j < MAP_HEIGHT; j++) {
             HitBox hb = HitBox(i, j, 1, 1);

@@ -14,6 +14,7 @@
 
 #include "SDL_net.h"
 #include "sockets/sockets.h"
+#include "util.hpp"
 
 using namespace std;
 
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     Display display(win, &map);
 
-    map.CreateBackground();
+    map.InitializeWorld();
 
     // not sure how I feel about the map updating through the player class but fuck it right
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};

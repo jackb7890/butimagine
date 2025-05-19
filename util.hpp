@@ -23,3 +23,14 @@ struct Arr2d {
 };
 
 int Wrap(int oldIndex, int change, int bound);
+
+struct Log {
+    template<typename First, typename ...Args>
+    static void emit(First str, Args... args) {
+        #ifdef LOG
+            printf(str, args...);
+        #else
+            return;
+        #endif
+    }
+};
