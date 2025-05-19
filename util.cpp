@@ -7,8 +7,6 @@ int Wrap(int oldIndex, int change, int bound) {
         return bound + (newIndex % bound);
     }
     else {
-        //A- This returns oldIndex + change, which is what newIndex already is.
-        //A- Lmk if there's a reason why it shouldn't be return newIndex;
-        return oldIndex + change;
+        return newIndex;
     }
 }

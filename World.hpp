@@ -58,10 +58,12 @@ class RGBColor {
     unsigned ConvertToSDL(SDL_Surface* surface);
 };
 
-class MapEntity {
+class MapObject {
     // base class for things that go on the map
     // for collosion detection sake, assume everything is rectangular for now
     // if mfers want triangles do it yourself
+    //A- Variables regarding updated positions or movement was moved to MapEntity.
+    //A- MapObjects DO NOT MOVE. Great for things like walls or the background.
 
     public:
     bool valid;
@@ -69,28 +71,13 @@ class MapEntity {
     RGBColor color;
     bool hasCollision;
     int ID;
-
-    // Currently the way it works is player has 2 positions.
-    // the second position is to store the players updated position
-    // That way we can keep track of the old position and remove it from the screen
-    // There will be problems if you move the player multiple times without drawing to the screen
-    // Because then the Display::Update(Player) func will "erase" pixels thinking the player
-    // was there, however, the pixels were never drawn to the display
-    bool hasMovedOffScreen = false;
-    GridPos oldPos;
-
     Map* map;
 
-    public:
-    MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
-    inline MapEntity() : valid(false) {}
+    MapObject(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
+    inline MapObject() : valid(false) {}
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
-    }
-
-    inline GridPos GetOldPos() const {
-        return oldPos;
     }
 
     inline int GetWidth() const {
@@ -121,13 +108,29 @@ class MapEntity {
     inline SDL_Rect GetSDLRect() const {
         return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
     }
+};
 
-    void MoveHoriz(int xD);
-    void MoveVert(int yD);
+class MapEntity : public MapObject {
+    public:
+
+    double X_velocity,Y_velocity;
+    bool hasMovedOffScreen = false;
+    GridPos oldPos;
+
+    //A- I Don't know any better so the MapEntity constructor just calls the MapObject ctour.
+    //A- Not having this broke the Player constructor
+    inline MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
+        MapObject(_hb, _c, _map) {}
+
+    inline GridPos GetOldPos() const {
+        return oldPos;
+    }
+    //A- Force move ignores all collision
+    void ForceMove(int xD, int yD);
     void Move(int xD, int yD);
 };
 
-class Wall : public MapEntity {
+class Wall : public MapObject {
     private:
     bool isVert;
     const static int thickness = 2;
@@ -138,25 +141,26 @@ class Wall : public MapEntity {
 };
 
 class Player : public MapEntity {
+
     public:
-    
     int health = 100;
     int runEnergy = 100;
     Uint32 born = 0;
     Uint32 lastUpdate = 0;
 
-
+    
     inline Player(HitBox _hb, RGBColor _c, Map* _map) :
+        //A- I tried to change this to MapObject, but it complained that it wasn't inherited
+        //A- So I guess it can't see past MapEntity? Even though it should?
         MapEntity(_hb, _c, _map) {}
 
-    // pretty sure we can remove this but not checking rn
     friend struct Display;
 };
 
 struct Map {
     int numberOfEntities = 0;
-    Arr2d<MapEntity> grid;
-    Arr2d<MapEntity> background;
+    Arr2d<MapObject> grid;
+    Arr2d<MapObject> background;
 
     // npcs
 
@@ -188,17 +192,16 @@ struct Map {
 
     void Add(Wall wall);
 
-    void Add(MapEntity entity);
-    void Clear(MapEntity entity);
+    void Add(MapObject entity);
+    void Clear(MapObject entity);
 
     bool CheckForCollision(const HitBox& movingPiece, int ID);
 };
 
 struct Display {
+    //A- Tutorial said it was a good idea to have a single static renderer
+    SDL_Renderer* renderer;
     SDL_Window* window = nullptr;
-    //A- Rendeder added to display
-    SDL_Renderer* renderer = nullptr;
-    SDL_Surface* surface = nullptr;
     Map* map = nullptr;
 
     Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
@@ -213,5 +216,5 @@ struct Display {
 
     void Update(Wall wall, bool updateScreen = true);
 
-    void Update(MapEntity entity, bool updateScreen = true);
+    void Update(MapObject object, bool updateScreen = true);
 };
