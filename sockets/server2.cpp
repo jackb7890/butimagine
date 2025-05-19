@@ -11,12 +11,14 @@
 #include "SDL_image.h"
 #include "time.h"
 
-#include "World.hpp"
+#include "../World.hpp"
 
 #include "SDL_net.h"
-#include "sockets/sockets.h"
+#include "sockets.h"
 
 using namespace std;
+
+#pragma warning(disable : 4244)
 
 void init() {
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
@@ -36,31 +38,33 @@ SDL_Keycode HandleKeyDnEv(SDL_KeyboardEvent ev) {
     return ev.keysym.sym;
 }
 
-std::array<Player, MAX_SOCKETS-1> clientPlayers;
-
-void ProcessMoveData(Data& data, int client) {
+void ProcessMoveData(std::vector<Player>& clientPlayers, Data& data, int client) {
     // assert size is big enough
-    if (data.size() > 0) {
+    if (data.data.size() > 0) {
         int8_t x, y;
-        x = data[0];
-        y = (data.size() > 1) ? data[1] : 0;
-        clientPlayers[client].Xelocity += x;
-        clientPlayers[client].Yelocity += y;
+        x = data.data[0];
+        y = (data.data.size() > 1) ? data.data[1] : 0;
+        
+        clientPlayers[client].Move(x, y);
 
     }
 }
 
 void ProcessData(Data& data, int client) {
-    if (data.IsMove()) {
-        ProcessMoveData(data, client);
-    }
+    // if (data.IsMove()) {
+    //     ProcessMoveData(data, client);
+    // }
 }
 
 int main(int argc, char* argv[]) {
+    const int MAX_PLAYERS = NetworkHelperServer::MAX_SOCKETS-1;
+    std::vector<Player> clientPlayers;
+    
+    Log::emit("argc: %d", argc);
     // process args
     std::vector<std::string> args;
-    if (argc > 2) {
-        for (int i = 0; i < argc - 2; i++) {
+    if (argc > 1) {
+        for (int i = 1; i <= argc - 1; i++) {
             if (!argv[i]) {
                 Log::emit("error reading args to main\n");
             }
@@ -68,19 +72,20 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    
+
 
     int timeoutTime = 50'000; // in ms, so 50 seconds
-    if (!args.empty()) {
+    if (args.size() != 0) {
         timeoutTime = stoi(args[0]);
     }
     Log::emit("timeout set to %dms\n", timeoutTime);
 
-
     init();
 
     // Init network connection
-    NetworkHelperClient ntwk();
-    if (!ntwk.Init()) {
+    NetworkHelperServer ntwk;
+    if (!(ntwk.Init())) {
         Log::emit("Failed server init\n");
         __debugbreak();
         return -1;
@@ -104,7 +109,6 @@ int main(int argc, char* argv[]) {
     map.Add(player1);
 
     display.Update(); // first draw of the map the screen (should include player initial pos)
-
 
     // short walls are 25 long
     // long walls on bot/top are 50 long
@@ -149,8 +153,13 @@ int main(int argc, char* argv[]) {
     enum Velocity {XPOS, YPOS, XNEG, YNEG};
     std::array<bool, 4> vels;
     vels.fill(false);
-
+    const int WAIT_TIME = 300;
     while (runLoop) {
+
+        if (timeoutTime <= 0) {
+            runLoop = false;
+        }
+        timeoutTime--;
 
         int clients_ready = SDLNet_CheckSockets(ntwk.socket_set, WAIT_TIME);
 
@@ -179,6 +188,9 @@ int main(int argc, char* argv[]) {
 
                 Data data = ntwk.RecvData(ntwk.clientSockets[socketIndx]);
 
+                // if (data.IsMove()) {
+
+                // }
                 // RespondToClients()
             
                 // switch(data.dataFlags.bits) {

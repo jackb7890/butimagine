@@ -44,7 +44,22 @@ Map::Map () {
     grid = Arr2d<MapEntity*>(MAP_WIDTH, MAP_HEIGHT);
 }
 
-void Map::AddToGrid(MapEntity& entity) {
+// Drawing each pixel based on each entry of grid for the map
+// will be slow compared to if we can do some SDL_FillRects, but
+// idk how to we'd do that
+void Map::InitializeWorld() {
+    for (int i = 0; i < MAP_WIDTH; i++) {
+        for (int j = 0; j < MAP_HEIGHT; j++) {
+            HitBox hb = HitBox(i, j, 1, 1);
+            int index = i*MAP_HEIGHT+j;
+            RGBColor color = RGBColor(index % 255, (index / 255) % 255, (index / 65025) % 255);
+            background(i,j) = MapEntity(hb, color, this, false /* don't give background collision */);
+        }
+    }
+}
+
+// Clears an entity on the map
+void Map::Clear(MapEntity entity) {
     for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
         for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = &entity;

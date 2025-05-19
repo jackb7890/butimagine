@@ -3,16 +3,6 @@
 #include <string>
 #include <vector>
 
-struct Log {
-    static void emit(const char* str, ...) {
-        #ifdef LOG_M_DBG
-            printf(str, ...);
-        #else
-            return;
-        #endif
-    }
-};
-
 class FlagsType {
     public:
     static const int QuitBit = 0x8000;
