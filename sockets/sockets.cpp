@@ -101,7 +101,7 @@ int NetworkHelperBase::SendData(TCPsocket& socket, Data& data) {
     uint8_t temp_data[MAX_PACKETS];
     data.GetRawData(&temp_data[0], MAX_PACKETS);
 
-    int num_sent = SDLNet_TCP_Send(socket, temp_data, data.data.size());
+    int num_sent = SDLNet_TCP_Send(socket, temp_data, (int)data.data.size());
     if(num_sent < data.data.size()) {
         printf("ER: SDLNet_TCP_Send: %s\n", SDLNet_GetError());
         return -1;
