@@ -59,34 +59,15 @@ int main(int argc, char* argv[]) {
     RGBColor player1Color = {120, 200, 200};
     Player player1(player1HitBox, player1Color, &map);
 
-    //A- As I remember the only way I could get a tile to render with our current setup was to really force it.
-    HitBox tilehb = { 100, 100, 32, 32 };
-    //A- The texture doesn't render, if I remember it's because the Display class never looks for textures.
-    SDL_Texture* tiletex = TextureManager::LoadTexture("assets/tiles/grass.png", renderer);
-    Tile tile1(tilehb, tiletex, 15);
-    //A- I also had to force it to be valid to render. I don't remember why.
-    tile1.valid = 1;
-    map.Add(player1);
-    map.Add(tile1);
-
-    // short walls are 25 long
-    // long walls on bot/top are 50 long
-    // long back wall is 75 long
-
-    RGBColor wallColor = {170, 170, 170};
-
-    Wall lowerFront = Wall({205, 255}, 25, true, wallColor);
-    map.Add(lowerFront);
-    Wall bottom = Wall({155, 280}, 50, false, wallColor);
-    map.Add(bottom);
-    Wall back = Wall({155, 205}, 75, true, wallColor);
-    map.Add(back);
-    Wall top = Wall({155, 205}, 50, false, wallColor);
-    map.Add(top);
-    Wall upperFront = Wall({205, 205}, 25, true, wallColor);
-    map.Add(upperFront);
+    HitBox testHB = { MAP_WIDTH / 3, MAP_HEIGHT / 2, 10, 100 };
+    RGBColor testC = { 0, 200, 0 };
+    MapObject testObject(testHB, testC, &map, true, true);
+    map.Add(testObject);
 
     display.Update(); // this updates the map stored within display
+
+    //A- 5/20/25 - This will not actually render the player, since the player was not added to the map
+    //A- The player will be rendered later in the game loop.
     
     bool runLoop = true;
     SDL_Event ev;
@@ -94,7 +75,7 @@ int main(int argc, char* argv[]) {
     Uint32 totalFrames = 0;
     Uint32 FPSTicks = SDL_GetTicks();
     //A- Target fps = fps cap. Change if you want to change the fps
-    const Uint32 TARGET_FPS = 60;
+    const Uint32 TARGET_FPS = 30;
     const Uint32 TICKS_PER_FRAME = 1000 / TARGET_FPS;
 
     player1.X_velocity = 0.0;
@@ -215,6 +196,10 @@ int main(int argc, char* argv[]) {
         //A- Very important as otherwise faster FPS = faster movement (bad)
         //A- Doesn't seem to work, or doesn't work as much as intended, still figuring out why
         //A- Currently player still moves faster at a faster FPS, but maybe not by as much(?)
+
+        //A- Update^ Player seemingly moves faster/slower because inputs/velocity changes are also limited by framerate.
+        //A- So both the "physics" and rendering are limited by framerate, when it's just supposed to be rendering.
+        //A- No fix currently
         Uint32 time = SDL_GetTicks();
         float dT = (time - player1.lastUpdate) / 1000.0f;
 
@@ -234,8 +219,6 @@ int main(int argc, char* argv[]) {
                     player1.Y_velocity = -speedCap;
                 }
             }
-            //A- I saw you added move() instead of move horz/vert so I changed this
-            //A- Side effect - you can't slide against walls, hitting any wall will stop all movement
             player1.Move(player1.X_velocity * dT, player1.Y_velocity * dT);
         }
         //A- Re-render the player
@@ -253,7 +236,6 @@ int main(int argc, char* argv[]) {
             //A- Delay next frame according to FPS cap
             SDL_Delay(TICKS_PER_FRAME - frameTicks);
         }
-        std::cout << frameTicks << std::endl;
     }
     cleanup();
     return 0;

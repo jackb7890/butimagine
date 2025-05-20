@@ -78,11 +78,11 @@ class MapObject {
     //A- Objects are assumed immobile. Immobile objects can NEVER move.
 
     public:
-    bool valid;
     HitBox hitbox;
     RGBColor color;
+    SDL_Texture* texture;
     bool hasCollision;
-    Map* map;
+    Map* map = nullptr;
     int ID = 0;
     bool immobile;
 
@@ -94,7 +94,7 @@ class MapObject {
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    inline MapObject() : valid(false) {}
+    inline MapObject() {}
 
     inline MapObject(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
         hitbox(_hb), color(_c), hasCollision(_hasCol), immobile(_im) {
@@ -104,6 +104,7 @@ class MapObject {
     MapObject(HitBox _hb, SDL_Texture* tex, bool _hasCol = true, bool _im = true);
     MapObject(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true, bool _im = true);
 
+    bool Valid();
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
@@ -174,44 +175,21 @@ struct Map {
     Arr2d<MapObject> grid;
     Arr2d<MapObject> background;
 
-    // npcs
-
-    // walls
-
     Map ();
 
-    // Drawing each pixel based on each entry of grid for the map
-    // will be slow compared to if we can do some SDL_FillRects, but
-    // idk how to we'd do that
+    //A- Creates each pixel as a game object & fills the map with them
     void CreateBackground();
 
-    // Clears the map at area covered by player
-    void Clear(Player player);
-
-    // These add functions add data that get's drawn differently
-    // than drawing via display.Update(wall) or for player.
-    // For example, if we add a wall to the map, it will store wall.color.r
-    // in the map, and when we display.Update(map) it will use wall.color.r to color that pixel
-    // But if we do display.Update(wall) it will use the full rgb color correctly.
-
-    // I think to fix this we should start storing entire objects in the grid,
-    // and to do that, we will need to make them the same type. So that means we gotta
-    // add inheritence aka a parent class for wall and player called like MapEntry or something
-    // Then we have a grid full of MapEntry objects, some of which are players, some of which are walls.
-
-    // Adds a player to the map
+    //A- These two currently don't do anything unique
     void Add(Player player);
-
     void Add(Wall wall);
 
-    void Add(MapObject entity);
-    void Clear(MapObject entity);
+    void Add(MapObject object);
 
     bool CheckForCollision(const HitBox& movingPiece, int ID);
 };
 
 struct Display {
-    //A- Tutorial said it was a good idea to have a single static renderer
     SDL_Renderer* renderer;
     SDL_Window* window = nullptr;
     Map* map = nullptr;
@@ -232,6 +210,7 @@ struct Display {
 
     void Render();
 };
+
 
 class Tile : public MapObject {
 public:
@@ -332,26 +311,3 @@ private:
     SDL_Texture* grass;
     int map[TILESWIDTH][TILESHEIGHT];
 };
-
-
-//notes
-
-//We currently render GameObjects, which are SDL_Rects with some properties
-//There's currently no way to generate a game object from a texture
-//We need to generate a tile as a game object
-//TileMap should be an array of Tile game objects
-//Only way to render something to the screen is Display.update
-//Display.update heavily relies on the background game object
-//Background is an array of 1x1 game objects, aka pixels
-//Every pixel in background is a gameobject
-//We need to change the way things are rendered so it's at least background > objects > gui
-//Currently it's pixel by pixel, if there's no gameobject at that coordinate it uses the background object at that coord
-//Display is the renderer, window, and map
-//Map is a 2d grid(x,y coords) and a background
-
-//So what we need to do
-//Have each tile be a game object, that lets us do collision & texture easily
-//Have Tilemap create & track tiles based on a map file (or algoritm)
-//Change our rendering to allow for a tilemap background
-//Adjust for rendering bugs
-//simplify display.update(?)

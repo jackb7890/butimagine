@@ -10,9 +10,12 @@ MapObject::MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol, bool _im) :
     ID = map->numberOfEntities++;
 }
 
-//Player::Player(HitBox _hb, RGBColor _c, Map* _m) {
-//    MapObject(_hb, _c, _m, true, false);
-//}
+bool MapObject::Valid() {
+    if (this->ID && this->map) {
+        return true;
+    }
+    return false;
+}
 
 void MapObject::Move(int xD, int yD) {
     if (!immobile) {
@@ -38,9 +41,9 @@ void MapObject::Move(int xD, int yD) {
 
         newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
         newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
-        map->Clear(*this);
+        //map->Delete(*this);
         SetPos(newPos);
-        map->Add(*this);
+        //map->Add(*this);
     }
     else {
         //A "this" just prints the memory address. I know there's a better way but too lazy to look that up.
@@ -48,7 +51,6 @@ void MapObject::Move(int xD, int yD) {
     }
 }
 
-//A- I get intrusive thoughts and add forced movement despite having 0 use for it yet.
 void MapObject::ForceMove(int xD, int yD) {
     //A- If the object *does* have collision, this just turns it off temporarily to move it, then turns it back on.
     if (this->hasCollision == true) {
@@ -65,27 +67,13 @@ Map::Map () {
     background = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
 }
 
-// Drawing each pixel based on each entry of grid for the map
-// will be slow compared to if we can do some SDL_FillRects, but
-// idk how to we'd do that
 void Map::CreateBackground() {
-    //A- I changed the i and j to x and y, to make it a bit less confusing
-    //A- I know I and J are standard for loops but oh well deal with it >:(
     for (int x = 0; x < MAP_WIDTH; x++) {
         for (int y = 0; y < MAP_HEIGHT; y++) {
             HitBox hb = HitBox(x, y, 1, 1);
             int index = x*MAP_HEIGHT+y;
             RGBColor color = RGBColor(index % 255 / 2, (1 / (index+1)) % 255, (index / 10000) % 255);
             background(x,y) = MapObject(hb, color, this, false /* don't give background collision */);
-        }
-    }
-}
-
-// Clears an object on the map
-void Map::Clear(MapObject entity) {
-    for (int x = entity.GetCurrentPos().x; x < entity.GetCurrentPos().x + entity.GetWidth(); x++) {
-        for (int y = entity.GetCurrentPos().y; y < entity.GetCurrentPos().y + entity.GetDepth(); y++) {
-            grid(x % MAP_WIDTH, y % MAP_HEIGHT) = background(x % MAP_WIDTH, y % MAP_HEIGHT);
         }
     }
 }
@@ -100,9 +88,11 @@ void Map::Add(Wall wall) {
 
 // Adds an object to the map
 void Map::Add(MapObject object) {
-    for (int i = object.GetCurrentPos().x; i < object.GetCurrentPos().x + object.GetWidth(); i++) {
-        for (int j = object.GetCurrentPos().y; j < object.GetCurrentPos().y + object.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = object;
+    if (object.Valid()) {
+        for (int i = object.GetCurrentPos().x; i < object.GetCurrentPos().x + object.GetWidth(); i++) {
+            for (int j = object.GetCurrentPos().y; j < object.GetCurrentPos().y + object.GetDepth(); j++) {
+                grid(i % MAP_WIDTH, j % MAP_HEIGHT) = object;
+            }
         }
     }
 }
@@ -114,7 +104,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
         for (int y = movingPiece.origin.y; y < yBound; y++) {
                         
             MapObject& possibleEntity = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
-            if (possibleEntity.valid && possibleEntity.hasCollision &&
+            if (possibleEntity.Valid() && possibleEntity.hasCollision &&
                 possibleEntity.ID != ID) {
                 return true;
             }
@@ -123,16 +113,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     return false;
 }
 
-//A- To my understanding, everything we render is through the display class(?), which is built around the "map" struct.
-//A- In order to get my tile/map to work, we either need to redesign this to not rely on "map" structs for rendering,
-//A- or create a new rendering system that uses tilemaps instead.
-//A- Or as a 3rd option, we redesign the tilemap to be some kind of extension of the map struct.
-//A- Personally I think changing display is the best option.
-//A- To my understanding (again), the map is created via 1x1 pixel gameObjects to make a background.
-//A- Other gameObjects are then created *inside* the map, overwriting whatever background pixels were there before.
-//A- The display::update is making that change to the map, then rendering the updared map in the same function.
-//A- "fixing" the display class may be as easy as just seperating the rendering part of all these functions
-//A- from the updating part. And also making it not require a Map object in the ctour.
+
 Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {}
 
 Display::~Display() {
@@ -145,7 +126,7 @@ void Display::Update() {
             SDL_Rect point {i, j, 1, 1};
             MapObject object = map->grid(i, j);
 
-            if (object.valid) {
+            if (object.Valid()) {
                 //A- Unlike SDL_FillRect from the window based rendering,
                 //A- RenderFillRect doesn't have a color input.
                 //A- Color is set beforehand by SetRenderDrawColor
@@ -212,6 +193,7 @@ Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c) :
     }
 }
 
+/*
 Tile::Tile(HitBox _hb, SDL_Texture* _tex, int _col) {
 	this->SetCollisionType(_col);
 	this->SetTexture(_tex);
@@ -237,3 +219,4 @@ void TileMap::GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]) {
 void TileMap::DisplayMap() {
 
 }
+*/

@@ -1,0 +1,42 @@
+Random notes & things I plan on doing will go here.
+
+
+-Remove dependency of "map" structs from display class
+	The "Map" class currently creates a grid of 1x1 GameObjects the width & height of the window.
+	Map.CreateBackground() gives a default color value for each of those 1x1 pixels to make a "background".
+	Map.add() allows other GameObjects to overwrite the background pixels with something else (like a player).
+	All the GameObjects in Map are then read by Display.Update().
+	A for loop is used to itterate through each pixel & read its color value.
+	SDL_Fillrect is used to add those colored pixels to the renderer.
+	Display.render() then actally renders things to the window.
+-		Display.update() needs a Map object (passed through its constructor) in order to know where to place rectangles & what to color them.
+			This can be changed to Update() reading the GameObjects directly, since GameObjects already know their color and position.
+-		Display class is currently incompatible with textures/img files, or any form of rendering that doesn't rely on the Map struct.
+			Same solution as above, since GameObjects can now hold a texture in place of a rgb color.
+
+-Rework "Map" struct.
+	A lot of different things can be done with Map once it's no longer required for rendering.
+-	Rework Map to not generate game objects itself, but just keep track of existing game objects.
+		It already sort of does this, but only in the context of the GameObjects it's already made.
+		AKA The background & "grid" it makes are all GameObjects that exist only to be overwritten by other GameObjects.
+-		We can probably simplify "grid" to just be an x,y position insead of GameObjects.
+			Currently Map.add() overwrites the empty grid MapObjects with whatever object is passed.
+			AKA it's using the objects coords (hitbox) to overwrite what's on the grid.
+			This is bad because you can never have two objects in the same location, one will delete the other.
+			It should instead just update the MapObject's position & keep track of it individually.
+-	Make Map compatible with textures & tiles.
+		The tilemap would have the same basic output as what we have currently but function differently.
+		This requires the overwriting stuff to all be fixed first.
+		Tilemap needs to track things on a tiles basis as well as coodrinates.
+		Probably best off as a different class that extends Map.
+
+-Add Tiles struct
+	Extends MapObject.
+	Include unique collision properties, scalable size
+
+These all can be done after the tiles, in order.
+-Add mouse controls
+-Add pathfinding movement
+-Add a camera
+-Expand the map/scrollable map
+-Add gameticks
