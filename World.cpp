@@ -7,11 +7,10 @@ unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
 
 MapObject::MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol, bool _im) :
     hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol), immobile(_im) {
-    ID = map->numberOfEntities++;
 }
 
 bool MapObject::Valid() {
-    if (this->ID && this->map) {
+    if (this->map) {
         return true;
     }
     return false;
@@ -63,11 +62,17 @@ void MapObject::ForceMove(int xD, int yD) {
 
 Map::Map () {
     numberOfEntities = 0;
-    grid = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
-    background = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
+    //A- Map_width & height are the same as the window width & height currently
+    grid = Arr2d<GridPos>(MAP_WIDTH, MAP_HEIGHT);
+    for (int x = 0; x < MAP_WIDTH; x++) {
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            grid(x,y) = GridPos(x,y);
+        }
+    }
 }
 
 void Map::CreateBackground() {
+    background = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
     for (int x = 0; x < MAP_WIDTH; x++) {
         for (int y = 0; y < MAP_HEIGHT; y++) {
             HitBox hb = HitBox(x, y, 1, 1);
@@ -88,25 +93,23 @@ void Map::Add(Wall wall) {
 
 // Adds an object to the map
 void Map::Add(MapObject object) {
-    if (object.Valid()) {
-        for (int i = object.GetCurrentPos().x; i < object.GetCurrentPos().x + object.GetWidth(); i++) {
-            for (int j = object.GetCurrentPos().y; j < object.GetCurrentPos().y + object.GetDepth(); j++) {
-                grid(i % MAP_WIDTH, j % MAP_HEIGHT) = object;
-            }
-        }
-    }
+    object.map = this;
+    //A- In the future I want to assert the position of the object to make sure it's in bounds of the map.
 }
 
 bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
     int xBound = movingPiece.origin.x + movingPiece.dim.width;
     int yBound = movingPiece.origin.y + movingPiece.dim.depth;
-    for (int x = movingPiece.origin.x; x < xBound; x++) {
-        for (int y = movingPiece.origin.y; y < yBound; y++) {
-                        
-            MapObject& possibleEntity = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
-            if (possibleEntity.Valid() && possibleEntity.hasCollision &&
-                possibleEntity.ID != ID) {
-                return true;
+    for (int i, i <= numberOfEntities, i++) {
+        if (i != ID) {
+            for (int x = movingPiece.origin.x; x < xBound; x++) {
+                for (int y = movingPiece.origin.y; y < yBound; y++) {
+
+                    //MapObject& possibleEntity = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
+                    if (possibleEntity.Valid() && possibleEntity.hasCollision) {
+                        return true;
+                    }
+                }
             }
         }
     }

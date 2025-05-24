@@ -170,9 +170,12 @@ public:
     }
 };
 
+//A- Map is a collection of game objects.
+//A- Somehow it's been reduced to just a tag that each GameObject has
+//A- That's how the map "knows" what objets are on it, because every O
 struct Map {
     int numberOfEntities = 0;
-    Arr2d<MapObject> grid;
+    Arr2d<GridPos> grid;
     Arr2d<MapObject> background;
 
     Map ();
@@ -197,6 +200,12 @@ struct Display {
     Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
 
     ~Display();
+
+    //A- ChangeMap swaps map in display with a different one.
+    void ChangeMap(Map* /* pointer? */);
+
+    //A- Clear wipes the screen completly. Use before changing maps.
+    void Clear();
 
     void Update();
 
