@@ -11,7 +11,7 @@
 #include "SDL_image.h"
 #include "time.h"
 
-#include "../World.hpp"
+#include "../World2.hpp"
 
 #include "SDL_net.h"
 #include "sockets.h"
@@ -30,13 +30,14 @@ void cleanup() {
     SDL_Quit();
 }
 
-bool HandleQuitEv(Data& tickData) {
-    return false;
-}
+class ServerDriver {
+    public:
+    Map map;
+    NetworkHelperServer ntwk;
+    std::vector<ClientPlayer> players;
+};
 
-SDL_Keycode HandleKeyDnEv(SDL_KeyboardEvent ev) {
-    return ev.keysym.sym;
-}
+ServerDriver driver;
 
 void ProcessMoveData(std::vector<Player>& clientPlayers, Data& data, int client) {
     // assert size is big enough
@@ -56,11 +57,35 @@ void ProcessData(Data& data, int client) {
     // }
 }
 
+bool Server_InitWorld() {
+    driver.map.InitializeWorld();
+
+    // not sure how I feel about the map updating through the player class but fuck it right
+    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
+    RGBColor player1Color = {120, 200, 200};
+    Player player1(player1HitBox, player1Color, &driver.map);
+    driver.map.Add(player1);
+}
+
+class ClientPlayer : public Player {
+    public:
+    int socketIndx;
+    bool online;
+
+    ClientPlayer (Map* _map) : Player(_map) {}
+
+    void SendFreshConnectionClientData();
+};
+
+void ClientPlayer::SendFreshConnectionClientData() {
+    auto socket = driver.ntwk.clientSockets[socketIndx];
+
+    // Send them all the entities on the world
+
+    driver.ntwk.SendData(socket, );
+}
+
 int main(int argc, char* argv[]) {
-    const int MAX_PLAYERS = NetworkHelperServer::MAX_SOCKETS-1;
-    std::vector<Player> clientPlayers;
-    
-    Log::emit("argc: %d", argc);
     // process args
     std::vector<std::string> args;
     if (argc > 1) {
@@ -72,8 +97,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    
-
+    const int MAX_PLAYERS = NetworkHelperServer::MAX_SOCKETS-1;
+    std::vector<Player> clientPlayers;
 
     int timeoutTime = 50'000; // in ms, so 50 seconds
     if (args.size() != 0) {
@@ -83,56 +108,14 @@ int main(int argc, char* argv[]) {
 
     init();
 
+    Server_InitWorld();
+
     // Init network connection
-    NetworkHelperServer ntwk;
-    if (!(ntwk.Init())) {
+    if (!(driver.ntwk.Init())) {
         Log::emit("Failed server init\n");
         __debugbreak();
         return -1;
     }
-
-    SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN );
-    if ( !win ) {
-        Log::emit("Failed to create a window! Error: %s\n", SDL_GetError());
-    }
-
-    Map map;
-
-    Display display(win, &map);
-
-    map.InitializeWorld();
-
-    // not sure how I feel about the map updating through the player class but fuck it right
-    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
-    RGBColor player1Color = {120, 200, 200};
-    Player player1(player1HitBox, player1Color, &map);
-    map.Add(player1);
-
-    display.Update(); // first draw of the map the screen (should include player initial pos)
-
-    // short walls are 25 long
-    // long walls on bot/top are 50 long
-    // long back wall is 75 long
-
-    RGBColor wallColor = {170, 170, 170};
-
-    Wall lowerFront = Wall({205, 255}, 25, true, wallColor, &map);
-    map.Add(lowerFront);
-    display.Update(lowerFront);
-    Wall bottom = Wall({155, 280}, 50, false, wallColor, &map);
-    map.Add(bottom);
-    display.Update(bottom);
-    Wall back = Wall({155, 205}, 75, true, wallColor, &map);
-    map.Add(back);
-    display.Update(back);
-    Wall top = Wall({155, 205}, 50, false, wallColor, &map);
-    map.Add(top);
-    display.Update(top);
-    Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
-    map.Add(upperFront);
-    display.Update(upperFront); 
-
-    display.Update(); // this updates the map stored within display
     
     bool runLoop = true;
     SDL_Event ev;
@@ -161,7 +144,7 @@ int main(int argc, char* argv[]) {
         }
         timeoutTime--;
 
-        int clients_ready = SDLNet_CheckSockets(ntwk.socket_set, WAIT_TIME);
+        int clients_ready = SDLNet_CheckSockets(driver.ntwk.socket_set, WAIT_TIME);
 
         if (clients_ready == -1) {
             Log::emit("Error returned by SDLNet_CheckSockets\n");
@@ -172,21 +155,30 @@ int main(int argc, char* argv[]) {
         }
         else if (clients_ready > 0) {
             // clients are ready
-            Log::emit("Client(s) are ready\n");
-            if(SDLNet_SocketReady(ntwk.serverSoc)) {
+            Log::emit("One or more sockets ready\n");
+            if(SDLNet_SocketReady(driver.ntwk.serverSoc)) {
                 // client connection ocurred
                 Log::emit("Server socket is ready\n)");
-                ntwk.TryAddClient();
+                int indx = driver.ntwk.TryAddClient();
+                if (indx > 0) {
+                    ClientPlayer joinedPlayer = ClientPlayer(&driver.map);
+                    joinedPlayer.socketIndx = indx;
+                    joinedPlayer.online = true;
+                    driver.players.push_back(joinedPlayer);
+
+                    // Send starter data to player client
+                }
+
             }
 
-            for (int socketIndx = 0; socketIndx < ntwk.MAX_SOCKETS; socketIndx++) {
-                if (!SDLNet_SocketReady(ntwk.clientSockets[socketIndx])) {
+            for (int socketIndx = 0; socketIndx < driver.ntwk.MAX_SOCKETS; socketIndx++) {
+                if (!SDLNet_SocketReady(driver.ntwk.clientSockets[socketIndx])) {
                     continue;
                 }
 
                 Log::emit("Client socket is ready\n)");
 
-                Data data = ntwk.RecvData(ntwk.clientSockets[socketIndx]);
+                Data data = driver.ntwk.RecvData(driver.ntwk.clientSockets[socketIndx]);
 
                 // if (data.IsMove()) {
 
@@ -196,7 +188,7 @@ int main(int argc, char* argv[]) {
                 // switch(data.dataFlags.bits) {
                     // case FLAG_WOOD_UPDATE: {
                     //     Data dataToSend; // TODO: fill this in with real data
-                    //     ntwk.SendData(socketIndx, dataToSend);
+                    //     driver.ntwk.SendData(socketIndx, dataToSend);
                     // } break;
             
                     // case FLAG_QUIT: {
@@ -341,7 +333,7 @@ int main(int argc, char* argv[]) {
             SDL_Delay(TICKS_PER_FRAME - frameTicks);
         }
 
-        ntwk.SendData(ntwk.serverSoc, tickData);
+        driver.ntwk.SendData(driver.ntwk.serverSoc, tickData);
     }
     cleanup();
     return 0;
