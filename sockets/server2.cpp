@@ -14,7 +14,7 @@
 #include "../World2.hpp"
 
 #include "SDL_net.h"
-#include "sockets.h"
+#include "networking.hpp"
 
 using namespace std;
 
@@ -33,31 +33,26 @@ void cleanup() {
 class ServerDriver {
     public:
     Map map;
-    NetworkHelperServer ntwk;
+    Server ntwk;
     std::vector<ClientPlayer> players;
 };
 
 ServerDriver driver;
 
-void ProcessMoveData(std::vector<Player>& clientPlayers, Data& data, int client) {
-    // assert size is big enough
-    if (data.data.size() > 0) {
-        int8_t x, y;
-        x = data.data[0];
-        y = (data.data.size() > 1) ? data.data[1] : 0;
-        
-        clientPlayers[client].Move(x, y);
-
-    }
+// assumes error handling already done
+void ProcessMoveData(std::vector<Player>& clientPlayers, Packet& packet, int client) {
+    int8_t x = packet.ReadAsType<int8_t>(0);
+    int8_t y = packet.ReadAsType<int8_t>(1);
+    clientPlayers[client].Move(x, y);
 }
 
-void ProcessData(Data& data, int client) {
+void ProcessData(Packet& data, int client) {
     // if (data.IsMove()) {
     //     ProcessMoveData(data, client);
     // }
 }
 
-bool Server_InitWorld() {
+bool PopulateWorld() {
     driver.map.InitializeWorld();
 
     // not sure how I feel about the map updating through the player class but fuck it right
@@ -73,16 +68,18 @@ class ClientPlayer : public Player {
     bool online;
 
     ClientPlayer (Map* _map) : Player(_map) {}
-
-    void SendFreshConnectionClientData();
 };
 
-void ClientPlayer::SendFreshConnectionClientData() {
-    auto socket = driver.ntwk.clientSockets[socketIndx];
-
+void SendFreshConnectionClientData(ClientPlayer player) {
+    auto socket = driver.ntwk.clientSockets[player.socketIndx];
     // Send them all the entities on the world
-
-    driver.ntwk.SendData(socket, );
+    for (ClientPlayer otherPlayer : driver.players) {
+        if (otherPlayer.socketIndx != player.socketIndx) {
+            Packet newPacket;
+            newPacket.Encode(otherPlayer, Packet::Flag_t::bNewEntity);
+            driver.ntwk.SendPacket(socket, newPacket);
+        }
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -97,7 +94,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    const int MAX_PLAYERS = NetworkHelperServer::MAX_SOCKETS-1;
+    const int MAX_PLAYERS = Server::MAX_SOCKETS-1;
     std::vector<Player> clientPlayers;
 
     int timeoutTime = 50'000; // in ms, so 50 seconds
@@ -108,13 +105,11 @@ int main(int argc, char* argv[]) {
 
     init();
 
-    Server_InitWorld();
+    PopulateWorld();
 
     // Init network connection
-    if (!(driver.ntwk.Init())) {
-        Log::emit("Failed server init\n");
-        __debugbreak();
-        return -1;
+    if (!(driver.ntwk.Setup())) {
+        Log::error("Failed server setup\n");
     }
     
     bool runLoop = true;
@@ -147,17 +142,15 @@ int main(int argc, char* argv[]) {
         int clients_ready = SDLNet_CheckSockets(driver.ntwk.socket_set, WAIT_TIME);
 
         if (clients_ready == -1) {
-            Log::emit("Error returned by SDLNet_CheckSockets\n");
+            Log::error("Error returned by SDLNet_CheckSockets\n");
         }
         else if (clients_ready == 0) {
             Log::emit("No clients ready at this time\n");
             // no clients ready, process things in server work queue
         }
         else if (clients_ready > 0) {
-            // clients are ready
             Log::emit("One or more sockets ready\n");
             if(SDLNet_SocketReady(driver.ntwk.serverSoc)) {
-                // client connection ocurred
                 Log::emit("Server socket is ready\n)");
                 int indx = driver.ntwk.TryAddClient();
                 if (indx > 0) {
@@ -167,8 +160,8 @@ int main(int argc, char* argv[]) {
                     driver.players.push_back(joinedPlayer);
 
                     // Send starter data to player client
+                    SendFreshConnectionClientData(joinedPlayer);
                 }
-
             }
 
             for (int socketIndx = 0; socketIndx < driver.ntwk.MAX_SOCKETS; socketIndx++) {
@@ -178,7 +171,7 @@ int main(int argc, char* argv[]) {
 
                 Log::emit("Client socket is ready\n)");
 
-                Data data = driver.ntwk.RecvData(driver.ntwk.clientSockets[socketIndx]);
+                Packet packet = driver.ntwk.ConsumePacket(driver.ntwk.clientSockets[socketIndx]);
 
                 // if (data.IsMove()) {
 

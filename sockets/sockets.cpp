@@ -12,12 +12,20 @@ bool FlagsType::IsMove() {
     return flags.move != 0;
 }
 
+bool FlagsType::IsEntityUpdate() {
+    return flags.isEntityUpdate != 0;
+}
+
 void FlagsType::SetQuit() {
     flags.quit = 1;
 }
 
 void FlagsType::SetMove() {
     flags.move = 1;
+}
+
+void FlagsType::SetIsEntityUpdate() {
+    flags.isEntityUpdate = 1;
 }
 
 FlagsType::FlagsType() {

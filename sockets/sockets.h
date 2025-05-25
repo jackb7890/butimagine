@@ -2,16 +2,22 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include <memory>
 
 class FlagsType {
     public:
-    static const int QuitBit = 0x8000;
+    static const int QuitBit = 0x0001;
+    static const int MoveBit = 0x0002;
+    static const int EntityBit = 0x0004;
+    
+    static const int Default = 0x0000;
     union {
         unsigned short bits : 16;
         struct _flags {
             unsigned short quit : 1;
             unsigned short move : 1;
-            unsigned short unused : 14;
+            unsigned short isEntityUpdate : 1;
+            unsigned short unused : 13;
         } flags;
     };
 
@@ -23,18 +29,45 @@ class FlagsType {
     
     bool IsQuit();
     bool IsMove();
+    bool IsEntityUpdate();
     void SetQuit();
     void SetMove();
+    void SetIsEntityUpdate();
     
     FlagsType();
 };
 
 class Data {
 public:
-    std::vector<uint8_t> data;
+    std::unique_ptr<void> ptr;
+    size_t size;
     FlagsType dataFlags;
-    Data();
+    bool alreadyEncoded;
 
+    Data() : ptr(nullptr), size(0), dataFlags(FlagsType::Default), alreadyEncoded(false) {};
+
+    template <typename T>
+    static Data SerializeObject(T obj, FlagsType flags = FlagsType::Default) {
+        Data retData;
+        retData.ptr = std::unique_ptr<void>::make_unique(sizeof(T))
+        memcpy(retData.ptr, &obj, sizeof(T));
+        alreadyEncoded = true;
+        return retData;
+    }
+
+    template <typename T>
+    void Encode(T obj, FlagsType flags = FlagsType::Default) {
+        if (alreadyEncoded) {
+            Log::emit("uh oh reencoding data\n");
+            return;
+        }
+
+        dataFlags = flags;
+        ptr = std::unique_ptr<void>::make_unique(sizeof(T))
+        memcpy(ptr, &obj, sizeof(T));
+    }
+
+    // old Data stuff
     Data(uint8_t* rawTempData, int _size);
 
     void GetRawData(uint8_t* out, int maxsize = 256);

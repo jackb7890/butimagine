@@ -11,7 +11,7 @@
 
 #include "SDL.h"
 #include "SDL_net.h"
-#include "sockets.h"
+#include "networking.hpp"
 
 #include "../World2.hpp"
 
@@ -45,21 +45,21 @@ void cleanup() {
 
 struct MovementCode {
     enum MovementKey {W, A, S, D};
-    std::array<bool, 4> wasd;
+    std::array<int, 4> wasd;
     
     MovementCode() {
-        wasd = {false, false, false, false};
+        wasd = {0, 0, 0, 0};
     }
 
     void set(MovementKey mvkey) {
         if (mvkey >= wasd.size()) {
             Log::emit("Unexpected mvkey value outside of array range: %d\n", mvkey);
         }
-        wasd[mvkey] = true;
+        wasd[mvkey] = 1;
     }
 
     void clear(MovementKey mvkey) {
-        wasd[mvkey] = false;
+        wasd[mvkey] = 0;
     }
     
     bool get(MovementKey mvkey) {
@@ -76,6 +76,11 @@ struct MovementCode {
     bool operator!=(const MovementCode& rhs) const {
         return !(*this == rhs);
     }
+
+    uint8_t compress() {
+        return (wasd[0] & 1) | ((wasd[1] & 1) << 1) 
+            | ((wasd[2] & 1) << 2) | ((wasd[3] & 1) << 3);
+    }
 };
 
 class ClientDriver {
@@ -83,75 +88,96 @@ class ClientDriver {
     MovementCode currentMovementInfo;
     MovementCode lastMovementInfo;
     int playerSpeed;
+    Client clientInfo;
 };
 
 ClientDriver driver;
 
 using namespace std;
 
-Data ProcessUserInput(SDL_Event ev) {
-    Data response;
-    switch (ev.type) {
-        case SDL_QUIT: {
-            response.dataFlags.SetQuit();
-        }
-        break;
-        //A- Instead of directly increasing/decreasing velocity, pressing a key sets a flag to true, while releasing it sets the flag to false
-        //A- We had an issue before where holding a key down didn't register until it's been held for a full second
-        //A- With this method, A key is considred to always be held down until a key up input is read
-        //A- Changing directions and holding multiple directions now works as intended
-        case SDL_KEYDOWN:
-        {
-            SDL_Keycode key = ev.key.keysym.sym;
-            switch (key) {
-            case SDLK_w:
-                driver.currentMovementInfo.set(MovementCode::MovementKey::W);
-                break;
-            case SDLK_a:
-                driver.currentMovementInfo.set(MovementCode::MovementKey::A);
-                break;
-            case SDLK_s:
-                driver.currentMovementInfo.set(MovementCode::MovementKey::S);
-                break;
-            case SDLK_d:
-                driver.currentMovementInfo.set(MovementCode::MovementKey::D);
-                break;
-            default:
-                break;
-            }
-        }
-        break;
-        case SDL_KEYUP:
-        {
-            SDL_Keycode key = ev.key.keysym.sym;
-            switch (key) {
-            case SDLK_w:
-                driver.currentMovementInfo.clear(MovementCode::MovementKey::W);
-                break;
-            case SDLK_a:
-                driver.currentMovementInfo.clear(MovementCode::MovementKey::A);
-                break;
-            case SDLK_s:
-                driver.currentMovementInfo.clear(MovementCode::MovementKey::S);
-                break;
-            case SDLK_d:
-                driver.currentMovementInfo.clear(MovementCode::MovementKey::D);
-                break;
-            default:
-                break;
-            }
-        }
-        break;
-        default: {
-        }
-        break;
-    }
-    
-    if (driver.currentMovementInfo != driver.lastMovementInfo) {
-        response.AppendMovementData(driver.playerSpeed, driver.playerSpeed);
+bool InputIsUserMovement(const SDL_Event& ev) {
+    if (ev.type != SDL_KEYDOWN || ev.type != SDL_KEYUP) {
+        return false;
     }
 
-    return response;
+    switch (ev.key.keysym.sym) {
+        case SDLK_w:
+        case SDLK_a:
+        case SDLK_s:
+        case SDLK_d:
+        return true;
+        
+        default:
+        return false;
+    }
+    return false;
+}
+
+void ProcessUserMovement(SDL_Event ev) {
+    if (ev.type == SDL_KEYDOWN) {
+        SDL_Keycode key = ev.key.keysym.sym;
+        switch (key) {
+        case SDLK_w:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::W);
+            break;
+        case SDLK_a:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::A);
+            break;
+        case SDLK_s:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::S);
+            break;
+        case SDLK_d:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::D);
+            break;
+        default:
+            Log::error("Err: Calling PrcessUserMovement for unexpected key press");
+            break;
+        }
+    }
+    else if (ev.type == SDL_KEYUP) {
+        SDL_Keycode key = ev.key.keysym.sym;
+        switch (key) {
+        case SDLK_w:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::W);
+            break;
+        case SDLK_a:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::A);
+            break;
+        case SDLK_s:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::S);
+            break;
+        case SDLK_d:
+            driver.currentMovementInfo.set(MovementCode::MovementKey::D);
+            break;
+        default:
+            Log::error("Err: Calling PrcessUserMovement for unexpected key unpress");
+            break;
+        }
+    }
+    else {
+        Log::error("Err: Calling PrcessUserMovement for unexpected input");
+    }
+
+    Packet newPacket;
+    newPacket.Encode(driver.currentMovementInfo.compress(), Packet::Flag_t::bMoving);
+    driver.ntwk.SendPacket(ntwk.serverSoc, newPacket);
+    // redo support new packet form for this movement data
+}
+
+bool InputIsQuitGame(const SDL_Event& ev) {
+    ev.type == SDL_QUIT;
+}
+
+// returns false to kill program.
+// true otherwise
+bool ProcessUserInput(SDL_Event ev) {
+    if (InputIsUserMovement(ev)) {
+        ProcessUserMovement(ev);
+    }
+    else if(InputIsQuitGame(ev)) {
+        return false;
+    }
+    return true;
 }
 
 void setup_screen() {
@@ -164,17 +190,32 @@ void setup_screen() {
     Display display(win, &map);
 }
 
+void ConsumeGameStartupData() {
+    
+}
+
 int main() {
     init();
 
-    NetworkHelperClient ntwk("localhost");
-    if (!ntwk.Init()) {
-        printf("Failed client init\n");
-        return -1;
+    driver.clientInfo = Client("localhost");
+    if (!driver.clientInfo.Connect()) {
+        Log::error("Failed to connect to server\n");
     }
 
     // After init and before game loop below, we should start ask server for the world initialization data
-
+    const int WAIT_TIME = 300;
+    bool receivedStartingData = false;
+    while (!receivedStartingData) {
+        int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
+        if (clients_ready == -1) {
+            Log::error("Error returned by SDLNet_CheckSockets\n");
+        }
+        else if (clients_ready > 0) {
+            ConsumeGameStartupData();
+            receivedStartingData = true;
+        }
+        // continue waiting on server
+    }
 
     display.Update(lowerFront);
     display.Update(back);
@@ -182,17 +223,14 @@ int main() {
     display.Update(bottom);
 
     SDL_Event ev;
-    while (true) {
+    bool running = true;
+    while (running) {
         if (SDL_PollEvent(&ev) != 0) {
-            Data response = ProcessUserInput(ev);
+            running = ProcessUserInput(ev);
 
-            if (response.dataFlags.IsQuit()) {
-                cleanup();
-                return 0;
-            }
-            else if (response.dataFlags.IsMove()) {
-                ntwk.SendData(ntwk.serverSoc, response);
-            }
+            
         }
     }
+
+    cleanup();
 }

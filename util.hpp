@@ -37,10 +37,24 @@ int Wrap(int oldIndex, int change, int bound);
 struct Log {
     template<typename First, typename ...Args>
     static void emit(First str, Args... args) {
-        #ifdef LOG
+        #if defined(LOG)
             printf(str, args...);
+        #elif defined(DBGBRK)
         #else
             return;
         #endif
+    }
+
+    template<typename First, typename ...Args>
+    static void error(First str, Args... args) {
+        printf(str, args...);
+        #if defined(DEBUG)
+            __debugbreak();
+        #elif defined(QUIET_ERRORS)
+            // just print and return
+        #else
+            abort();
+        #endif
+        return;
     }
 };
