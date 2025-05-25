@@ -20,10 +20,6 @@ void FlagsType::SetMove() {
     flags.move = 1;
 }
 
-void FlagsType::Init(uint16_t flagdata) {
-    bits = flagdata;
-}
-
 FlagsType::FlagsType() {
     bits = 0x0000;
 }
@@ -206,16 +202,18 @@ bool NetworkHelperServer::Init() {
     return true;
 }
 
-bool NetworkHelperServer::TryAddClient() {
+// returns index in clientSockets of newest client
+// if it failed, returns -1
+int NetworkHelperServer::TryAddClient() {
     if (next_ind >= MAX_SOCKETS) {
         // could choose to override sockets here, probably should
-        return false;
+        return -1;
     }
 
     clientSockets[next_ind] = SDLNet_TCP_Accept(serverSoc);
 
     if (clientSockets[next_ind] == nullptr) {
-        return false;
+        return -1;
     }
 
     if (SDLNet_TCP_AddSocket(socket_set, clientSockets[next_ind]) == -1) {
@@ -224,8 +222,7 @@ bool NetworkHelperServer::TryAddClient() {
     }
 
     printf("DB: new connection (next_ind = %d)\n", next_ind);
-    next_ind++;
-    return true;
+    return next_ind++; // btw next_ind++ returns the value before its incremented
 }
 
 // NetworkHelperClient
