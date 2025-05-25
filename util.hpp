@@ -89,6 +89,16 @@ struct Arr2d {
         return arr[jMax*i + j];
     }
 
+    T& operator()(GridPos pos) {
+        assert(i < iMax && j < jMax);
+        return arr[jMax*pos.x + pos.y];
+    }
+
+    T& operator[](GridPos pos) {
+        assert(i < iMax && j < jMax);
+        return arr[jMax*pos.x + pos.y];
+    }
+
 };
 
 // util.cpp function declarations

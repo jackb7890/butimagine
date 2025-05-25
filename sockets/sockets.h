@@ -25,8 +25,6 @@ class FlagsType {
     bool IsMove();
     void SetQuit();
     void SetMove();
-
-    void Init(uint16_t flagdata);
     
     FlagsType();
 };
@@ -91,7 +89,7 @@ struct NetworkHelperServer : public NetworkHelperBase {
     ~NetworkHelperServer();
 
     bool Init();
-    bool TryAddClient();
+    int TryAddClient();
 
     private:
 };
