@@ -83,7 +83,7 @@ class MapObject {
     SDL_Texture* texture;
     bool hasCollision;
     Map* map = nullptr;
-    int ID = 0;
+    int ID = NULL;
     bool immobile;
 
     //A- It would be silly but is there a way to only declare these variables if immobile is false?
@@ -171,23 +171,57 @@ public:
 };
 
 //A- Map is a collection of game objects.
-//A- Somehow it's been reduced to just a tag that each GameObject has
-//A- That's how the map "knows" what objets are on it, because every O
 struct Map {
-    int numberOfEntities = 0;
+    //A- util.h already includes vectors.
+    //A- Idk a good name for a map objects list.
+    std::vector<MapObject> allObjects;
     Arr2d<GridPos> grid;
     Arr2d<MapObject> background;
 
     Map ();
 
-    //A- Creates each pixel as a game object & fills the map with them
     void CreateBackground();
 
-    //A- These two currently don't do anything unique
-    void Add(Player player);
-    void Add(Wall wall);
+    //A- Just making helper functions so I don't have to remember every vector function.
+    //A- Trying to have good practices & centralizing all our functions in case we change allObjects to a different datatype.
 
-    void Add(MapObject object);
+    //A- Intuitive but size will always be 1 higher than the highest index.
+    inline int GetNumberOfObjects() {
+        return allObjects.size();
+    }
+
+    //A- Permanently deletes all MapObjects.
+    inline void DeleteAllObjects() {
+        allObjects.clear();
+    }
+
+    //Removes most recently added MapObject.
+    //Pop does not return the last element, just deletes it.
+    inline void PopObject() {
+        allObjects.pop_back();
+    }
+
+    //Returns an Object from an ID
+    inline MapObject GetObject(int ID) {
+        //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
+        return allObjects.at(ID);
+    }
+
+
+    inline void AddObject(MapObject object) {
+        object.map = this;
+        //Conveniently the size of the vector before an objects is added will equal its index.
+        object.ID = allObjects.size();
+        allObjects.push_back(object);
+    }
+
+    //In the future we may want special behavior for adding players.
+    inline void AddObject(Player player) {
+        AddObject((MapObject) player);
+    }
+    inline void AddObject(Wall wall) {
+        AddObject((MapObject) wall);
+    }
 
     bool CheckForCollision(const HitBox& movingPiece, int ID);
 };

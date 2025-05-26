@@ -55,14 +55,20 @@ int main(int argc, char* argv[]) {
 
     map.CreateBackground();
 
+    HitBox testHB = { MAP_WIDTH / 3, MAP_HEIGHT / 2, 100, 100 };
+    RGBColor testC = { 0, 200, 0 };
+    MapObject testObject(testHB, testC, &map, true, true);
+    map.AddObject(testObject);
+    
+    HitBox testHB1 = { MAP_WIDTH / 2, MAP_HEIGHT / 3, 20, 50 };
+    RGBColor testC1 = { 200, 200, 0 };
+    MapObject testObject1(testHB1, testC1, &map, true, true);
+    map.AddObject(testObject1);
+
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
     RGBColor player1Color = {120, 200, 200};
     Player player1(player1HitBox, player1Color, &map);
-
-    HitBox testHB = { MAP_WIDTH / 3, MAP_HEIGHT / 2, 10, 100 };
-    RGBColor testC = { 0, 200, 0 };
-    MapObject testObject(testHB, testC, &map, true, true);
-    map.Add(testObject);
+    map.AddObject(player1);
 
     display.Update(); // this updates the map stored within display
 
@@ -222,9 +228,11 @@ int main(int argc, char* argv[]) {
             player1.Move(player1.X_velocity * dT, player1.Y_velocity * dT);
         }
         //A- Re-render the player
-        display.Update(player1);
+        display.Update();
         //A- Update for DT
         player1.lastUpdate = SDL_GetTicks();
+
+        std::cout << player1.oldPos.x << std::endl;
 
         //A- End of loop, increase frame counter & get end time.
         totalFrames++;
