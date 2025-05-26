@@ -18,6 +18,8 @@
 
 using namespace std;
 
+using namespace NetworkingStuff;
+
 #pragma warning(disable : 4244)
 
 void init() {
@@ -54,12 +56,6 @@ void ProcessData(Packet& data, int client) {
 
 bool PopulateWorld() {
     driver.map.InitializeWorld();
-
-    // not sure how I feel about the map updating through the player class but fuck it right
-    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
-    RGBColor player1Color = {120, 200, 200};
-    Player player1(player1HitBox, player1Color, &driver.map);
-    driver.map.Add(player1);
 }
 
 class ClientPlayer : public Player {
@@ -70,15 +66,19 @@ class ClientPlayer : public Player {
     ClientPlayer (Map* _map) : Player(_map) {}
 };
 
-void SendFreshConnectionClientData(ClientPlayer player) {
+void SendPlayerAllEntities(ClientPlayer player) {
+    for (MapEntity entity : driver.map.allEntities) {
+        Packet newPacket()
+    }
+}
+
+void SendPlayerAllEntities(ClientPlayer player) {
     auto socket = driver.ntwk.clientSockets[player.socketIndx];
     // Send them all the entities on the world
-    for (ClientPlayer otherPlayer : driver.players) {
-        if (otherPlayer.socketIndx != player.socketIndx) {
-            Packet newPacket;
-            newPacket.Encode(otherPlayer, Packet::Flag_t::bNewEntity);
-            driver.ntwk.SendPacket(socket, newPacket);
-        }
+    for (MapEntity entity : driver.map.allEntities) {
+        Packet newPacket(Flag_t::bNewEntity);
+        newPacket.EncodePoly(entity);
+        driver.ntwk.SendPacket(socket, newPacket);
     }
 }
 
