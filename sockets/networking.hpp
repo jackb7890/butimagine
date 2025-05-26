@@ -5,12 +5,11 @@
 // stdlib includes
 #include <memory>
 #include <string>
+#include <typeinfo>
 
-// A very broad type thats supports the
-// send and receive functions
-class Packet {
-    public:
+#include "../util.hpp"
 
+namespace NetworkingStuff {
     // a type representing the flags sent with
     // the actualy data in the packet.
     struct alignas(short) Flag_t {
@@ -43,14 +42,19 @@ class Packet {
             bits &= ~bit;
         }
     };
+} // namespace NetworkingStuff
 
-
+// A very broad type thats supports the
+// send and receive functions
+class Packet {
+    public:
     std::shared_ptr<void> data;
     Flag_t flags;
     bool alreadyEncoded;
     size_t size;
 
     Packet() : data(nullptr), size(0), flags(Flag_t::bNone), alreadyEncoded(false) {};
+    Packet(Flag_t::bits_t bits) : data(nullptr), size(0), flags(bits), alreadyEncoded(false) {};
 
     static Packet TCPToPacket(void* p_packet, size_t _size);
 
@@ -74,6 +78,33 @@ class Packet {
     void Encode(T obj, Flag_t::bits_t _flagbits) {
         flags = _flagbits;
         Encode(obj);
+    }
+
+    // Encode polymorphic obj (like MapEntity)
+    // it marks a IsPolyType flag that tells the reader
+    // that the first 32-bits of data is a unique type ID
+    template <typename T>
+    void EncodePoly(T poly) {
+        if (alreadyEncoded) {
+            Log::emit("uh oh reencoding data\n");
+            return;
+        }
+        int typeId = GetTypeID<T>();
+        data = std::make_shared<void>(sizeof(T) + sizeof(typeId));
+        memcpy(data.get(), &obj, typeId);
+        memcpy(data.get() + sizeof(typeId), &obj, sizeof(T));
+    }
+
+    template <typename T>
+    void EncodePoly(T obj, Flag_t _flags) {
+        flags = _flags;
+        EncodePoly(obj);
+    }
+
+    template <typename T>
+    void EncodePoly(T obj, Flag_t::bits_t _flagbits) {
+        flags = _flagbits;
+        EncodePoly(obj);
     }
 
     template <typename T>
