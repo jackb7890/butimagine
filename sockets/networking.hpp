@@ -9,9 +9,9 @@
 
 #include "../util.hpp"
 
-namespace NetworkingStuff {
-    // a type representing the flags sent with
-    // the actualy data in the packet.
+// A very broad type thats supports the
+// send and receive functions
+class Packet {
     struct alignas(short) Flag_t {
         typedef unsigned short bits_t;
         bits_t bits;
@@ -42,11 +42,7 @@ namespace NetworkingStuff {
             bits &= ~bit;
         }
     };
-} // namespace NetworkingStuff
 
-// A very broad type thats supports the
-// send and receive functions
-class Packet {
     public:
     std::shared_ptr<void> data;
     Flag_t flags;
@@ -89,7 +85,7 @@ class Packet {
             Log::emit("uh oh reencoding data\n");
             return;
         }
-        int typeId = GetTypeID<T>();
+        int typeId = TypeDetails<T>::hash;
         data = std::make_shared<void>(sizeof(T) + sizeof(typeId));
         memcpy(data.get(), &obj, typeId);
         memcpy(data.get() + sizeof(typeId), &obj, sizeof(T));

@@ -21,7 +21,7 @@ Networking::~Networking() {
 int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
     if (packet.Size() > max_packet_size) {
         Log::error("Trying to send packet larger than buffer size allows."
-            "\n\tpacket.size: %d, maximum: %d\n", data.Size(), max_packet_size);
+            "\n\tpacket.size: %d, maximum: %d\n", packet.Size(), max_packet_size);
     }
     uint8_t temp_data[max_packet_size];
     packet.WriteBuffer(&temp_data[0]);
