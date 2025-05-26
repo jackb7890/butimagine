@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <assert.h>
+#include <typeinfo>
 
 // i mighta fucked up the orientation for this not sure
 
@@ -56,5 +57,49 @@ struct Log {
             abort();
         #endif
         return;
+    }
+};
+
+#define RegisterTypeIndex(type, ind) \
+template <class type>  \
+int constexpr operator()() {\
+    return ind;               \
+}
+
+template <typename T>
+struct IndexOf{
+    // poison
+    template <typename T>
+    static constexpr int operator()() {
+        static_assert<false>();
+    }
+
+    RegisterTypeIndex(MapEntity, 0)
+    RegisterTypeIndex(Wall, 1)
+    RegisterTypeIndex(Player, 2)
+};
+
+template <typename W>
+struct TypeDetails {
+    static const int hash = typeid(W).hash_code();
+    static const int index = IndexOf<W>();
+
+    // poison
+    template <typename T>
+    static constexpr int IndexOf() {
+        static_assert<false>();
+    }
+
+    template <class MapEntity>
+    static constexpr int IndexOf() {
+        return 0;
+    }
+    template <class Wall>
+    int constexpr IndexOf() {
+        return 1;
+    }
+    template <class Player>
+    int constexpr IndexOf() {
+        return 2;
     }
 };
