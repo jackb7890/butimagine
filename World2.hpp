@@ -127,6 +127,10 @@ class MapEntity {
     void MoveHoriz(int xD);
     void MoveVert(int yD);
     void Move(int xD, int yD);
+
+    virtual int TypeID() {
+        return TypeDetails<MapEntity>::hash;
+    }
 };
 
 class Wall : public MapEntity {
@@ -167,6 +171,8 @@ struct Map {
 
     Arr2d<std::vector<MapEntity>> grid2;
     std::vector<Player> players;
+
+    std::vector<MapEntity> allEntities;
 
     // npcs
 

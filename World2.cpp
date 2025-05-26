@@ -45,20 +45,15 @@ Map::Map () {
 // will be slow compared to if we can do some SDL_FillRects, but
 // idk how to we'd do that
 void Map::InitializeWorld() {
-    for (int i = 0; i < MAP_WIDTH; i++) {
-        for (int j = 0; j < MAP_HEIGHT; j++) {
-            HitBox hb = HitBox(i, j, 1, 1);
-            int index = i*MAP_HEIGHT+j;
-            RGBColor color = RGBColor(index % 255, (index / 255) % 255, (index / 65025) % 255);
-            background(i,j) = MapEntity(hb, color, this, false /* don't give background collision */);
-        }
-    }
-}
-
-void Map::InitializeWorld2() {
         // short walls are 25 long
     // long walls on bot/top are 50 long
     // long back wall is 75 long
+
+    // not sure how I feel about the map updating through the player class but fuck it right
+    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
+    RGBColor player1Color = {120, 200, 200};
+    Player player1(player1HitBox, player1Color, this);
+    this->Add(player1);
 
     RGBColor wallColor = {170, 170, 170};
 
