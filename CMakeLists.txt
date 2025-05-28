@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT_F}/scripts/buildsystems/vcpkg.cmake)
+set (CMAKE_CXX_STANDARD 20)
 
 project(butimagine)
 
@@ -37,4 +38,22 @@ target_link_libraries(client PRIVATE SDL2::SDL2 SDL2::SDL2main)
 target_link_libraries(client PRIVATE SDL2_image::SDL2_image)
 target_link_libraries(client PRIVATE SDL2_mixer::SDL2_mixer)
 target_link_libraries(client PRIVATE SDL2_ttf::SDL2_ttf)
+add_compile_options(-DLOG)
+
+add_executable(networking-client sockets/client2.cpp sockets/networking.cpp World2.cpp util.cpp)
+target_include_directories(networking-client PRIVATE ${SDL2_INCLUDE_DIR})
+target_link_libraries(networking-client PRIVATE SDL2_net::SDL2_net)
+target_link_libraries(networking-client PRIVATE SDL2::SDL2 SDL2::SDL2main)
+target_link_libraries(networking-client PRIVATE SDL2_image::SDL2_image)
+target_link_libraries(networking-client PRIVATE SDL2_mixer::SDL2_mixer)
+target_link_libraries(networking-client PRIVATE SDL2_ttf::SDL2_ttf)
+add_compile_options(-DLOG)
+
+add_executable(networking-server sockets/server2.cpp sockets/networking.cpp World2.cpp util.cpp)
+target_include_directories(networking-server PRIVATE ${SDL2_INCLUDE_DIR})
+target_link_libraries(networking-server PRIVATE SDL2_net::SDL2_net)
+target_link_libraries(networking-server PRIVATE SDL2::SDL2 SDL2::SDL2main)
+target_link_libraries(networking-server PRIVATE SDL2_image::SDL2_image)
+target_link_libraries(networking-server PRIVATE SDL2_mixer::SDL2_mixer)
+target_link_libraries(networking-server PRIVATE SDL2_ttf::SDL2_ttf)
 add_compile_options(-DLOG)

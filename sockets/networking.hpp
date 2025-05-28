@@ -1,3 +1,4 @@
+#pragma once
 // Everything necessary to transfer data between PCs
 
 // SDL includes
@@ -6,12 +7,15 @@
 #include <memory>
 #include <string>
 #include <typeinfo>
+#include <cstring>
 
 #include "../util.hpp"
 
+
+
 // A very broad type thats supports the
 // send and receive functions
-class Packet {
+struct Packet {
     struct alignas(short) Flag_t {
         typedef unsigned short bits_t;
         bits_t bits;
@@ -44,7 +48,7 @@ class Packet {
     };
 
     public:
-    std::shared_ptr<void> data;
+    std::shared_ptr<char[]> data;
     Flag_t flags;
     bool alreadyEncoded;
     size_t size;
@@ -60,8 +64,8 @@ class Packet {
             Log::emit("uh oh reencoding data\n");
             return;
         }
-        data = std::make_shared<void>(sizeof(T))
-        memcpy(data.get(), &obj, sizeof(T));
+        data = std::make_shared<void>(sizeof(T));
+        std::memcpy(data.get(), &obj, sizeof(T));
     }
 
     template <typename T>
@@ -80,33 +84,32 @@ class Packet {
     // it marks a IsPolyType flag that tells the reader
     // that the first 32-bits of data is a unique type ID
     template <typename T>
-    void EncodePoly(T poly) {
+    void EncodePoly(T obj, int typeID) {
         if (alreadyEncoded) {
             Log::emit("uh oh reencoding data\n");
             return;
         }
-        int typeId = TypeDetails<T>::hash;
-        data = std::make_shared<void>(sizeof(T) + sizeof(typeId));
-        memcpy(data.get(), &obj, typeId);
-        memcpy(data.get() + sizeof(typeId), &obj, sizeof(T));
+        data = std::make_shared<char[]>(sizeof(T) + sizeof(typeID));
+        std::memcpy(data.get(), &obj, typeID);
+        std::memcpy(data.get() + sizeof(typeID), &obj, sizeof(T));
     }
 
     template <typename T>
-    void EncodePoly(T obj, Flag_t _flags) {
+    void EncodePoly(T obj, int typeID, Flag_t _flags) {
         flags = _flags;
-        EncodePoly(obj);
+        EncodePoly(obj, typeID);
     }
 
     template <typename T>
-    void EncodePoly(T obj, Flag_t::bits_t _flagbits) {
+    void EncodePoly(T obj, int typeID, Flag_t::bits_t _flagbits) {
         flags = _flagbits;
-        EncodePoly(obj);
+        EncodePoly(obj, typeID);
     }
 
     template <typename T>
     T ReadAsType(size_t byteoffset = 0) {
         T dataAsTypeT;
-        memcpy(&dataAsTypeT, data.get() + byteoffset, sizeof(T));
+        std::memcpy(&dataAsTypeT, data.get() + byteoffset, sizeof(T));
         return dataAsTypeT;
     }
 
@@ -125,10 +128,6 @@ class Packet {
     inline size_t Size() {
         return flags.size() + size;
     }
-
-    private:
-
-    size_t size;
 };
 
 // Singleton class -- just kidding
