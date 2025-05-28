@@ -1,5 +1,5 @@
 #include "Networking.hpp"
-#include "util.hpp"
+#include "../util.hpp"
 
 Networking::Networking() : 
     connected(false), serverSoc(nullptr), socket_set(nullptr) {
@@ -203,7 +203,7 @@ Packet Packet::TCPToPacket(void* p_packet, size_t _size) {
     newPacket.flags = *reinterpret_cast<Flag_t::bits_t*>(p_packet);
     p_packet = (char*) p_packet + sizeof(Flag_t::bits_t);
 
-    newPacket.data = std::make_shared<void>(_size - sizeof(Flag_t::bits_t));
+    newPacket.data = std::make_shared<char[]>(_size - sizeof(Flag_t::bits_t));
     memcpy(newPacket.data.get(), p_packet, _size - sizeof(Flag_t::bits_t));
 
     return newPacket;
