@@ -89,6 +89,9 @@ class ClientDriver {
     MovementCode lastMovementInfo;
     int playerSpeed;
     Client clientInfo;
+    Display display;
+    Map map;
+    ClientDriver() {}
 };
 
 ClientDriver driver;
@@ -160,7 +163,7 @@ void ProcessUserMovement(SDL_Event ev) {
 
     Packet newPacket;
     newPacket.Encode(driver.currentMovementInfo.compress(), Packet::Flag_t::bMoving);
-    driver.ntwk.SendPacket(ntwk.serverSoc, newPacket);
+    driver.clientInfo.SendPacket(driver.clientInfo.serverSoc, newPacket);
     // redo support new packet form for this movement data
 }
 
@@ -185,9 +188,8 @@ void setup_screen() {
     if ( !win ) {
         Log::emit("Failed to create a window! Error: %s\n", SDL_GetError());
     }
-    Map map;
 
-    Display display(win, &map);
+    driver.display = Display(win, &driver.map);
 }
 
 void ConsumeGameStartupData() {
@@ -217,20 +219,12 @@ int main() {
         // continue waiting on server
     }
 
-    display.Update(lowerFront);
-    display.Update(back);
-    display.Update(top);
-    display.Update(bottom);
-
     SDL_Event ev;
     bool running = true;
     while (running) {
         if (SDL_PollEvent(&ev) != 0) {
             running = ProcessUserInput(ev);
-
-            
         }
     }
-
     cleanup();
 }

@@ -195,6 +195,8 @@ struct Display {
     SDL_Surface* surface = nullptr;
     Map* map = nullptr;
 
+    Display();
+
     Display(SDL_Window* _w, Map* map);
 
     ~Display();

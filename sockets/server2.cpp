@@ -55,7 +55,7 @@ void SendAllEntities(TCPsocket socket) {
     // Send them all the entities on the world
     for (MapEntity* entity : driver.map.allEntities) {
         Packet newPacket(Packet::Flag_t::bNewEntity);
-        newPacket.EncodePoly(*entity, entity->GetTypeIndex());
+        newPacket.EncodePoly(entity);
         driver.ntwk.SendPacket(socket, newPacket);
     }
 }

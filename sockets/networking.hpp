@@ -11,8 +11,6 @@
 
 #include "../util.hpp"
 
-
-
 // A very broad type thats supports the
 // send and receive functions
 struct Packet {
@@ -83,25 +81,26 @@ struct Packet {
     // Encode polymorphic obj (like MapEntity)
     // it marks a IsPolyType flag that tells the reader
     // that the first 32-bits of data is a unique type ID
-    template <typename T>
-    void EncodePoly(T obj, int typeID) {
+    template <IndexRegisteredT T>
+    void EncodePoly(T* obj) {
         if (alreadyEncoded) {
             Log::emit("uh oh reencoding data\n");
             return;
         }
+        int typeID = obj->GetTypeIndex();
         data = std::make_shared<char[]>(sizeof(T) + sizeof(typeID));
         std::memcpy(data.get(), &obj, typeID);
         std::memcpy(data.get() + sizeof(typeID), &obj, sizeof(T));
     }
 
-    template <typename T>
-    void EncodePoly(T obj, int typeID, Flag_t _flags) {
+    template <IndexRegisteredT T>
+    void EncodePoly(T* obj, int typeID, Flag_t _flags) {
         flags = _flags;
         EncodePoly(obj, typeID);
     }
 
-    template <typename T>
-    void EncodePoly(T obj, int typeID, Flag_t::bits_t _flagbits) {
+    template <IndexRegisteredT T>
+    void EncodePoly(T* obj, int typeID, Flag_t::bits_t _flagbits) {
         flags = _flagbits;
         EncodePoly(obj, typeID);
     }
