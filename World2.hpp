@@ -4,61 +4,17 @@
 #include "SDL.h"
 
 #include "util.hpp"
+#include "sockets/networking.hpp"
 
 #include <unordered_map>
+
+#include <type_traits>
 
 #define MAP_WIDTH 1280
 #define MAP_HEIGHT 720
 
 struct Map;
 struct Display;
-
-struct GridPos {
-    int x, y;
-
-    inline GridPos() : x(0), y(0) {}
-    inline GridPos(int _x, int _y) : x(_x), y(_y) {}
-};
-
-struct GridDimension {
-    int width;
-    int depth;
-
-    inline GridDimension() : width(0), depth(0) {}
-    inline GridDimension(int _w, int _d) : width(_w), depth(_d) {}
-};
-
-struct HitBox {
-    GridPos origin;
-    GridDimension dim;
-
-    inline HitBox() :
-        origin(0, 0), dim(1, 1) {}
-    inline HitBox(GridPos _pos, GridDimension _dim) :
-        origin(_pos), dim(_dim) {}
-    inline HitBox(int _x, int _y, int _w, int _d) :
-        origin(_x, _y), dim(_w, _d) {}
-};
-
-class RGBColor {
-    public:
-    int r;
-    int g;
-    int b;
-
-    inline RGBColor() :
-        r(255), g(255), b(255) {}
-    inline RGBColor(int _r, int _g, int _b) :
-        r(_r), g(_g), b(_b) {
-        // eventually make the asserts debug only so they don't slow down the program
-        assert(0 <= r && r <= 255);
-        assert(0 <= g && g <= 255);
-        assert(0 <= b && b <= 255);
-
-    }
-
-    unsigned ConvertToSDL(SDL_Surface* surface);
-};
 
 class MapEntity {
     // base class for things that go on the map
@@ -70,7 +26,7 @@ class MapEntity {
     HitBox hitbox;
     RGBColor color;
     bool hasCollision;
-    int ID;
+    size_t ID;
 
     // Currently the way it works is player has 2 positions.
     // the second position is to store the players updated position
@@ -84,8 +40,9 @@ class MapEntity {
     Map* map;
 
     public:
+    MapEntity() {}
+    MapEntity(Map* _map, size_t _ID) : map(_map), ID(_ID) {}
     MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
-    inline MapEntity() : valid(false) {}
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
@@ -128,8 +85,8 @@ class MapEntity {
     void MoveVert(int yD);
     void Move(int xD, int yD);
 
-    virtual int TypeID() {
-        return TypeDetails<MapEntity>::hash;
+    virtual int GetTypeIndex() {
+        return TypeDetails<MapEntity>::index;
     }
 };
 
@@ -141,6 +98,10 @@ class Wall : public MapEntity {
     public:
     // default color 112,112,112 is gray
     Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
+
+    virtual int GetTypeIndex() {
+        return TypeDetails<Wall>::index;
+    }
 };
 
 class Player : public MapEntity {
@@ -151,18 +112,25 @@ class Player : public MapEntity {
     Uint32 born = 0;
     Uint32 lastUpdate = 0;
 
+    int multiplayerID;
+    bool online;
 
     inline Player(HitBox _hb, RGBColor _c, Map* _map) :
         MapEntity(_hb, _c, _map) {}
 
-    inline Player(Map* _map) : 
-        MapEntity(HitBox(0, 0, 1, 1), RGBColor(), _map) {}
+    inline Player(Map* _map, size_t ID) : 
+        MapEntity(_map, ID) {}
+
+    virtual int GetTypeIndex() {
+        return TypeDetails<Player>::index;
+    }
 
     // pretty sure we can remove this but not checking rn
     friend struct Display;
 };
 
-
+template <typename T>
+concept MapEntityT = std::is_base_of<MapEntity, T>::value;
 
 struct Map {
     int numberOfEntities = 0;
@@ -172,13 +140,21 @@ struct Map {
     Arr2d<std::vector<MapEntity>> grid2;
     std::vector<Player> players;
 
-    std::vector<MapEntity> allEntities;
+    std::vector<MapEntity*> allEntities;
 
     // npcs
 
     // walls
 
     Map ();
+    ~Map ();
+
+    template <MapEntityT T>
+    T& CreateEntity() {
+        T* newEntity = new T(this, numberOfEntities++);
+        allEntities.push_back(newEntity);
+        return *newEntity;
+    }
 
     // Drawing each pixel based on each entry of grid for the map
     // will be slow compared to if we can do some SDL_FillRects, but
@@ -209,11 +185,11 @@ struct Map {
     void Add(MapEntity entity);
     void Clear(MapEntity entity);
 
-    bool CheckForCollision(const HitBox& movingPiece, int ID);
+    bool CheckForCollision(const HitBox& movingPiece, size_t ID);
 
-    void Add2(MapEntity entity);
 };
 
+// TODO move this to util
 struct Display {
     SDL_Window* window = nullptr;
     SDL_Surface* surface = nullptr;

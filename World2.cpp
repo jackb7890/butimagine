@@ -1,5 +1,6 @@
 #include "World2.hpp"
 #include <algorithm>
+#include <type_traits>
 
 unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
@@ -39,6 +40,12 @@ Map::Map () {
     numberOfEntities = 0;
     grid = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
     background = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
+}
+
+Map::~Map () {
+    for (MapEntity* entity : allEntities) {
+        delete entity;
+    }
 }
 
 // Drawing each pixel based on each entry of grid for the map
@@ -97,6 +104,7 @@ void Map::Add(Wall wall) {
 
 // Adds an entity to the map
 void Map::Add(MapEntity entity) {
+    // todo: debug checks that this entity hasn't already been added
     for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
         for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = entity;
@@ -104,17 +112,8 @@ void Map::Add(MapEntity entity) {
     }
 }
 
-// Adds an entity to the map
-void Map::Add2(MapEntity entity) {
-    grid2[entity.GetCurrentPos()].push_back(entity);
-    for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
-        for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = entity;
-        }
-    }
-}
 
-bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
+bool Map::CheckForCollision(const HitBox& movingPiece, size_t ID)  {
     int xBound = movingPiece.origin.x + movingPiece.dim.width;
     int yBound = movingPiece.origin.y + movingPiece.dim.depth;
     for (int x = movingPiece.origin.x; x < xBound; x++) {
