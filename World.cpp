@@ -1,5 +1,6 @@
 #include "World.hpp"
 #include <algorithm>
+#include <type_traits>
 
 unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
@@ -41,10 +42,39 @@ Map::Map () {
     background = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
 }
 
+Map::~Map () {
+    for (MapEntity* entity : allEntities) {
+        delete entity;
+    }
+}
+
 // Drawing each pixel based on each entry of grid for the map
 // will be slow compared to if we can do some SDL_FillRects, but
 // idk how to we'd do that
 void Map::InitializeWorld() {
+        // short walls are 25 long
+    // long walls on bot/top are 50 long
+    // long back wall is 75 long
+
+    // not sure how I feel about the map updating through the player class but fuck it right
+    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
+    RGBColor player1Color = {120, 200, 200};
+    Player player1(player1HitBox, player1Color, this);
+    this->Add(player1);
+
+    RGBColor wallColor = {170, 170, 170};
+
+    Wall lowerFront = Wall({205, 255}, 25, true, wallColor, this);
+    this->Add(lowerFront);
+    Wall bottom = Wall({155, 280}, 50, false, wallColor, this);
+    this->Add(bottom);
+    Wall back = Wall({155, 205}, 75, true, wallColor, this);
+    this->Add(back);
+    Wall top = Wall({155, 205}, 50, false, wallColor, this);
+    this->Add(top);
+    Wall upperFront = Wall({205, 205}, 25, true, wallColor, this);
+    this->Add(upperFront);
+
     for (int i = 0; i < MAP_WIDTH; i++) {
         for (int j = 0; j < MAP_HEIGHT; j++) {
             HitBox hb = HitBox(i, j, 1, 1);
@@ -74,6 +104,7 @@ void Map::Add(Wall wall) {
 
 // Adds an entity to the map
 void Map::Add(MapEntity entity) {
+    // todo: debug checks that this entity hasn't already been added
     for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
         for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = entity;
@@ -81,7 +112,8 @@ void Map::Add(MapEntity entity) {
     }
 }
 
-bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
+
+bool Map::CheckForCollision(const HitBox& movingPiece, size_t ID)  {
     int xBound = movingPiece.origin.x + movingPiece.dim.width;
     int yBound = movingPiece.origin.y + movingPiece.dim.depth;
     for (int x = movingPiece.origin.x; x < xBound; x++) {
