@@ -70,12 +70,6 @@ class RGBColor {
 
 class MapObject {
     // base class for things that go on the map
-    // for collosion detection sake, assume everything is rectangular for now
-
-    //A- I was originally going to remove "Map" variable from MapObject.
-    //A- But it turns out we do need it because that's how we check for collision.
-    //A- "MapEntity" from before has been removed. Instead we're using a flag for immobile.
-    //A- Objects are assumed immobile. Immobile objects can NEVER move.
 
     public:
     HitBox hitbox;
@@ -84,23 +78,19 @@ class MapObject {
     bool hasCollision;
     Map* map = nullptr;
     int ID = NULL;
-    bool immobile;
 
-    //A- It would be silly but is there a way to only declare these variables if immobile is false?
-    //A- idk if that could or should be done in the hpp.
-    //A- Otherwise we'd have to check if an object is immobile for every movement function.
-    //A- It'd be easier for these to just not exist if an object is immobile.
+    bool immobile;
     double X_velocity, Y_velocity;
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    inline MapObject() {}
-
     inline MapObject(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
         hitbox(_hb), color(_c), hasCollision(_hasCol), immobile(_im) {
     }
+    inline MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol, bool _im) :
+        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol), immobile(_im) {
+    }
 
-    MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol = true, bool _im = true);
     MapObject(HitBox _hb, SDL_Texture* tex, bool _hasCol = true, bool _im = true);
     MapObject(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true, bool _im = true);
 
@@ -172,20 +162,12 @@ public:
 
 //A- Map is a collection of game objects.
 struct Map {
-    //A- util.h already includes vectors.
-    //A- Idk a good name for a map objects list.
-    std::vector<MapObject> allObjects;
+    std::vector<MapObject*> allObjects;
     Arr2d<GridPos> grid;
     Arr2d<MapObject> background;
 
-    Map ();
+    Map();
 
-    void CreateBackground();
-
-    //A- Just making helper functions so I don't have to remember every vector function.
-    //A- Trying to have good practices & centralizing all our functions in case we change allObjects to a different datatype.
-
-    //A- Intuitive but size will always be 1 higher than the highest index.
     inline int GetNumberOfObjects() {
         return allObjects.size();
     }
@@ -201,28 +183,32 @@ struct Map {
         allObjects.pop_back();
     }
 
-    //Returns an Object from an ID
-    inline MapObject GetObject(int ID) {
+    //Returns an Object reference from an ID
+    inline MapObject& GetObject(int ID) {
+        MapObject* object = allObjects.at(ID);
         //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
-        return allObjects.at(ID);
+        return *object;
     }
 
-
-    inline void AddObject(MapObject object) {
-        object.map = this;
-        //Conveniently the size of the vector before an objects is added will equal its index.
-        object.ID = allObjects.size();
+    //Adds an object to the map.
+    //This will also update the map variable stored within the object, making the object valid.
+    inline void AddObject(MapObject* object) {
+        object->map = this;
+        //Conveniently the size of the vector before an object is added will equal its index.
+        object->ID = allObjects.size();
         allObjects.push_back(object);
     }
 
     //In the future we may want special behavior for adding players.
-    inline void AddObject(Player player) {
-        AddObject((MapObject) player);
+    inline void AddObject(Player* player) {
+        AddObject((MapObject*) player);
     }
-    inline void AddObject(Wall wall) {
-        AddObject((MapObject) wall);
+    inline void AddObject(Wall* wall) {
+        AddObject((MapObject*) wall);
     }
 
+    //Unused
+    void CreateBackground();
     bool CheckForCollision(const HitBox& movingPiece, int ID);
 };
 
@@ -243,15 +229,13 @@ struct Display {
 
     void Update();
 
-    void Erase(Player player, bool renderChange = true);
-
-    void Update(Player player);
-
-    void Update(Wall wall);
-
-    void Update(MapObject object);
-
     void Render();
+
+    //Unused
+    void Erase(Player player, bool renderChange = true);
+    void Update(Player player);
+    void Update(Wall wall);
+    void Update(MapObject object);
 };
 
 

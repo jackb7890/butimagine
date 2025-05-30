@@ -1,39 +1,22 @@
 Random notes & things I plan on doing will go here.
 -A dash in front indicates something that can actually "be done" instead of just notes or yapping.
 
+-Clean world files & main(?)
+	I commented out a lot of things that can now be removed.
+	Also a lot of currently unused functions.
+-	Probably best to move unused things to a "junkyard" for now.
 
--Remove dependency of "map" structs from display class.
-	The "Map" class currently creates a grid of 1x1 GameObjects the width & height of the window.
-	Map.CreateBackground() gives a default color value for each of those 1x1 pixels to make a "background".
-	Map.add() allows other GameObjects to overwrite the background pixels with something else (like a player).
-	All the GameObjects in Map are then read by Display.Update().
-	A for loop is used to itterate through each pixel & read its color value.
-	SDL_Fillrect is used to add those colored pixels to the renderer.
-	Display.render() then actally renders things to the window.
-		Display.update() needs a Map (passed through its constructor) in order to know where to place rectangles & what to color them.
-			This can be changed to Update() reading the GameObjects directly, since GameObjects already know their color and position.
-				But what game objects does it read? Do we pass individual game objects to Update() to render things? Too clunky,
-				Thus we've circled back to needing a collection of game objects to render, something like a map.
--				Display need to read the GameObjects from the Map class & render them on an object by object basis.
-				The order of what to render first would just be the objects IDs.
--		Display class is currently incompatible with textures/img files, or any form of rendering that doesn't rely on the Map struct.
-			Same solution as above, since GameObjects can now hold a texture in place of a rgb color.
+-Delete current collision detection
 
--Rework "Map" struct.
-	Map is inevitibly usefull & will be required for rendering, but it needs to change.
--	Rework Map to not generate game objects itself, but just keep track of existing game objects.
-		It already sort of does this, but only in the context of the GameObjects it's already made.
-		AKA The background & "grid" it makes are all GameObjects that exist only to be overwritten by other GameObjects.
--		We can probably simplify "grid" to just be an x,y position insead of GameObjects.
-			Currently Map.add() overwrites the empty grid MapObjects with whatever object is passed.
-			AKA it's using the objects coords (hitbox) to overwrite what's on the grid.
-			This is bad because you can never have two objects in the same location, one will delete the other.
-			It should instead just update the MapObject's position & keep track of it individually.
--	Make Map compatible with textures & tiles.
-		The tilemap would have the same basic output as what we have currently but function differently.
-		This requires the overwriting stuff to all be fixed first.
-		Tilemap needs to track things on a tiles basis as well as coodrinates.
-		Probably best off as a different class that extends Map.
+-Make Display compatible with textures
+	Textures use a different SDL function to render
+-	I think a simple if statement will do. If the map object has a texture, render that instead of the RGB color.
+
+-Make Map compatible with textures & tiles.
+	The tilemap would have the same basic output as what we have currently but function differently.
+	This requires the overwriting stuff to all be fixed first.
+	Tilemap needs to track things on a tiles basis as well as coodrinates.
+	Probably best off as a different class that extends Map.
 
 -Add Tiles struct
 	Extends MapObject (maybe).
@@ -46,7 +29,7 @@ Random notes & things I plan on doing will go here.
 	Self explanitory it's very cluttered atm.
 
 -Delete tilemap.cpp & .hpp
-	I just move them to World.cpp but I think deleting the files might break cmake so you do it.
+	I just move them to World.cpp but I think deleting the files might break cmake.
 
 These all can be done after the tiles, in order.
 -Add mouse controls
@@ -64,21 +47,3 @@ These all can be done after the tiles, in order.
 	I think.
 -Add gameticks
 	May need to move ALL events to it's own file.
-
-
-Problem; After a lot of back and forth, A Map class does need to store a reference to any GameObject that's added to it.
-I tried to store everything in the GameObject class & just have Map reference those variables.
-Problem with that is Map has no way of knowing what specific GameObjects are on it, just how many were added.
-This made all the Map functions kind of useless, all Map does is assign an ID to a Game Object.
-GameObjects would get a unique id based on how many other objects were on the map.
-The Map class would have that number, but no way to tell what GameObject that ID belongs to.
-The old Map class stored gameobjects in a 2dArray, which matched the dimensions of the map.
-This was bad because no two game objects could have the same position, they would overwrite eachother in the array.
-My solution *would* be to simply have a list in Map that we can add gameobjects to, and that list would also serve as an ID via indexes.
-C++ doesn't have lists because it's cringe.
-Option B is having an array of a predetermined size, but that puts an arbetrary cap on how many objects we could add to a map.
-Also I just don't know how to work with arrays. Adding/deleting/reading would be hell.
-Option C is to manually code a list/linked list datatype. Seems like too much for exactly 1 issue.
-
-TL;DR I need a way to pull a game object from an ID in the Map class.
-
