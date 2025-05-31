@@ -53,8 +53,6 @@ int main(int argc, char* argv[]) {
     Map map;
     Display display(window, renderer, &map);
 
-    map.CreateBackground();
-
     HitBox dummyHB = { 0, 0, MAP_WIDTH, MAP_HEIGHT };
     RGBColor dummyC = { 40, 40, 40 };
     MapObject* dummyBG = new MapObject(dummyHB, dummyC, &map, false, true);
