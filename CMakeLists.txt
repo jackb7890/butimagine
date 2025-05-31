@@ -10,7 +10,7 @@ find_package(sdl2_mixer CONFIG REQUIRED)
 find_package(sdl2_ttf CONFIG REQUIRED)
 find_package(sdl2_net CONFIG REQUIRED)
 
-add_executable(butimagine main.cpp World.cpp util.cpp TextureManager.cpp TileMap.cpp)
+add_executable(butimagine main.cpp World.cpp util.cpp TextureManager.cpp)
 
 find_path(SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2)
 target_include_directories(butimagine PRIVATE ${SDL2_INCLUDE_DIR})

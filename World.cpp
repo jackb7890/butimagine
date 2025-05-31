@@ -5,37 +5,50 @@ unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
 }
 
-void MapEntity::Move(int xD, int yD) {
-    hasMovedOffScreen = true;
-    oldPos = GetCurrentPos();
-    GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
-    int smallerXCoord = std::min(oldPos.x, newPos.x);
-    int smallerYCoord = std::min(oldPos.y, newPos.y);
-    int xCollision = GetWidth() + std::abs(xD);
-    int yCollision = GetDepth() + std::abs(yD);
-    const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
-
-    //A- I added a check to see if the object that is moving has collision.
-    //A- Ideally both objects need to have collision on for them to collide.
-    if (this->hasCollision == true) {
-        if (map->CheckForCollision(collisionPath, ID)) {
-            //A- Collisions set velocity to 0. Makes bumping into walls less annoying
-            this->X_velocity = 0.0;
-            this->Y_velocity = 0.0;
-            return;
-        }
+//A- Just checks if a map object has a map.
+bool MapObject::Valid() {
+    if (this->map) {
+        return true;
     }
-
-    newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
-    newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
-
-    map->Clear(*this);
-    SetPos(newPos);
-    map->Add(*this);
+    return false;
 }
 
-//A- I get intrusive thoughts and add forced movement despite having 0 use for it yet.
-void MapEntity::ForceMove(int xD, int yD) {
+void MapObject::Move(int xD, int yD) {
+    if (!immobile) {
+        hasMovedOffScreen = true;
+        oldPos = GetCurrentPos();
+        GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
+
+        /*
+        int smallerXCoord = std::min(oldPos.x, newPos.x);
+        int smallerYCoord = std::min(oldPos.y, newPos.y);
+        int xCollision = GetWidth() + std::abs(xD);
+        int yCollision = GetDepth() + std::abs(yD);
+        const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
+
+        //A- I added a check to see if the object that is moving has collision.
+        //A- Ideally both objects need to have collision on for them to collide.
+        if (this->hasCollision) {
+           if (map->CheckForCollision(collisionPath, ID)) {
+                //A- Collisions set velocity to 0. Makes bumping into walls less annoying
+                this->X_velocity = 0.0;
+                this->Y_velocity = 0.0;
+                return;
+            }
+        } */
+
+        newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
+        newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
+
+        SetPos(newPos);
+    }
+    else {
+        //A "this" just prints the memory address. I know there's a better way but too lazy to look that up.
+        std::cout << "Attempt to move immobile MapObject; " << this << std::endl;
+    }
+}
+
+void MapObject::ForceMove(int xD, int yD) {
     //A- If the object *does* have collision, this just turns it off temporarily to move it, then turns it back on.
     if (this->hasCollision == true) {
         this->hasCollision = false;
@@ -46,114 +59,117 @@ void MapEntity::ForceMove(int xD, int yD) {
 }
 
 Map::Map () {
-    numberOfEntities = 0;
-    grid = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
-    background = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
-}
-
-// Drawing each pixel based on each entry of grid for the map
-// will be slow compared to if we can do some SDL_FillRects, but
-// idk how to we'd do that
-void Map::CreateBackground() {
-    //A- I changed the i and j to x and y, to make it a bit less confusing
-    //A- I know I and J are standard for loops but oh well deal with it >:(
+    //A- Map_width & height are the same as the window width & height currently
+    grid = Arr2d<GridPos>(MAP_WIDTH, MAP_HEIGHT);
     for (int x = 0; x < MAP_WIDTH; x++) {
         for (int y = 0; y < MAP_HEIGHT; y++) {
-            HitBox hb = HitBox(x, y, 1, 1);
-            int index = x*MAP_HEIGHT+y;
-            RGBColor color = RGBColor(index % 255 / 2, (1 / (index+1)) % 255, (index / 10000) % 255);
-            background(x,y) = MapObject(hb, color, this, false /* don't give background collision */);
+            grid(x,y) = GridPos(x,y);
         }
     }
 }
 
-// Clears an object on the map
-void Map::Clear(MapObject entity) {
-    for (int x = entity.GetCurrentPos().x; x < entity.GetCurrentPos().x + entity.GetWidth(); x++) {
-        for (int y = entity.GetCurrentPos().y; y < entity.GetCurrentPos().y + entity.GetDepth(); y++) {
-            grid(x % MAP_WIDTH, y % MAP_HEIGHT) = background(x % MAP_WIDTH, y % MAP_HEIGHT);
-        }
-    }
-}
-
-void Map::Add(Player player) {
-    Add((MapObject) player);
-}
-
-void Map::Add(Wall wall) {
-    Add((MapObject) wall);
-}
-
-// Adds an object to the map
-void Map::Add(MapObject object) {
-    for (int i = object.GetCurrentPos().x; i < object.GetCurrentPos().x + object.GetWidth(); i++) {
-        for (int j = object.GetCurrentPos().y; j < object.GetCurrentPos().y + object.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = object;
-        }
-    }
-}
-
-bool Map::CheckForCollision(const HitBox& movingPiece, int ID)  {
-    int xBound = movingPiece.origin.x + movingPiece.dim.width;
-    int yBound = movingPiece.origin.y + movingPiece.dim.depth;
-    for (int x = movingPiece.origin.x; x < xBound; x++) {
-        for (int y = movingPiece.origin.y; y < yBound; y++) {
-                        
-            MapObject& possibleEntity = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
-            if (possibleEntity.valid && possibleEntity.hasCollision &&
-                possibleEntity.ID != ID) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-//A- To my understanding, everything we render is through the display class(?), which is built around the "map" struct.
-//A- In order to get my tile/map to work, we either need to redesign this to not rely on "map" structs for rendering,
-//A- or create a new rendering system that uses tilemaps instead.
-//A- Or as a 3rd option, we redesign the tilemap to be some kind of extension of the map struct.
-//A- Personally I think changing display is the best option.
-//A- To my understanding (again), the map is created via 1x1 pixel gameObjects to make a background.
-//A- Other gameObjects are then created *inside* the map, overwriting whatever background pixels were there before.
-//A- The display::update is making that change to the map, then rendering the updared map in the same function.
-//A- "fixing" the display class may be as easy as just seperating the rendering part of all these functions
-//A- from the updating part. And also making it not require a Map object in the ctour.
 Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {}
 
 Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::Update(bool updateScreen) {
-    for (int i = 0; i < MAP_WIDTH; i++) {
-        for (int j = 0; j < MAP_HEIGHT; j++) {
-            SDL_Rect point {i, j, 1, 1};
-            MapObject object = map->grid(i, j);
+void Display::Update() {
+    //open up map.allObjects in a loop
+    //create/update that object (sdl_fillrect)
+    //once all objects are drawn, render them
 
-            if (object.valid) {
-                //A- Unlike SDL_FillRect from the window based rendering,
-                //A- RenderFillRect doesn't have a color input.
-                //A- Color is set beforehand by SetRenderDrawColor
-                //A- It's also one field for each RGB, so use (map)object.color.(r/g/b) instead of RGBColor.ConvertToSDL()
-                SDL_SetRenderDrawColor(renderer, object.color.r, object.color.g, object.color.b, 255);
-                SDL_RenderFillRect(renderer, &point);
-            }
-            else {
-                MapObject bg = map->background(i, j);
-                SDL_SetRenderDrawColor(renderer, bg.color.r, bg.color.g, bg.color.b, 255);
-                SDL_RenderFillRect(renderer, &point);
-            }
+    //This will always draw & render all objects 1 by 1, even if they haven't changed in any way.
+    //Isn't the most optimal thing but an easy enough fix later
+    //Would just need some kind of "updated" flag in MapObject (or Map).
+
+    for (int i = 0; i < map->GetNumberOfObjects(); i++) {
+        MapObject object = map->GetObject(i);
+        if (object.Valid()) {
+            SDL_SetRenderDrawColor(renderer, object.color.r, object.color.g, object.color.b, 255);
+            SDL_Rect point{object.GetSDLRect()};
+            SDL_RenderFillRect(renderer, &point);
         }
     }
-    if (updateScreen) {
-        //A- All UpdateWindowSurface calls were changed to RenderPresent
-        SDL_RenderPresent(renderer);
+    Render();
+}
+
+void Display::Render() {
+    SDL_RenderPresent(renderer);
+}
+
+Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c) : 
+    MapObject(HitBox(_pos, GridDimension(thickness, _length)), _c),
+    isVert(_isV) {
+    // SetWidth(thickness); // fix the place holder
+    if (!isVert) {
+        std::swap(hitbox.dim.depth, hitbox.dim.width);
     }
 }
 
-void Display::Erase(Player player, bool updateScreen) {
+/*
+Tile::Tile(HitBox _hb, SDL_Texture* _tex, int _col) {
+	this->SetCollisionType(_col);
+	this->SetTexture(_tex);
+	this->hitbox = _hb;
+}
 
+Tile::~Tile() {
+	SDL_DestroyTexture(texture);
+}
+
+TileMap::TileMap() {
+	
+}
+
+//int TileMap::ReadMapFile() {
+
+//}
+
+void TileMap::GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]) {
+
+}
+
+void TileMap::DisplayMap() {
+
+}
+*/
+
+
+
+/* OLD UNUSED FUNCTIONS */
+/*
+void Map::CreateBackground() {
+    background = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
+    for (int x = 0; x < MAP_WIDTH; x++) {
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            HitBox hb = HitBox(x, y, 1, 1);
+            int index = x * MAP_HEIGHT + y;
+            RGBColor color = RGBColor(index % 255 / 2, (1 / (index + 1)) % 255, (index / 10000) % 255);
+            background(x, y) = MapObject(hb, color, this, false);
+        }
+    }
+}
+
+bool Map::CheckForCollision(const HitBox& movingPiece, int ID) {
+    int xBound = movingPiece.origin.x + movingPiece.dim.width;
+    int yBound = movingPiece.origin.y + movingPiece.dim.depth;
+    for (int i; i <= numberOfEntities; i++) {
+        if (i != ID) {
+            for (int x = movingPiece.origin.x; x < xBound; x++) {
+                for (int y = movingPiece.origin.y; y < yBound; y++) {
+                    MapObject& possibleEntity = grid(Wrap(x - 1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
+                    if (possibleEntity.Valid() && possibleEntity.hasCollision) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void Display::Erase(Player player, bool renderChange) {
     for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
         for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
             MapObject background = map->background(i % MAP_WIDTH, j % MAP_HEIGHT);
@@ -162,49 +178,30 @@ void Display::Erase(Player player, bool updateScreen) {
             SDL_RenderFillRect(renderer, &rect);
         }
     }
-
-    if (updateScreen) {
-        //A-
-        SDL_RenderPresent(renderer);
+    if (renderChange) {
+        Render();
     }
 }
 
-void Display::Update(Player player, bool updateScreen) {
+void Display::Update(Player player) {
     if (player.hasMovedOffScreen) {
-        Erase(player, false /* false so we don't update in Erase and update again here*/);
+        //Erase(player, false);
     }
-    Update((MapEntity) player, updateScreen);
+    Update((MapObject) player);
     player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
-    if (updateScreen) {
-        //A-
-        SDL_RenderPresent(renderer);
-    }
 }
 
-void Display::Update(Wall wall, bool updateScreen) {
-    Update((MapObject) wall, updateScreen);
+void Display::Update(Wall wall) {
+    Update((MapObject) wall);
 }
 
-void Display::Update(MapObject object, bool updateScreen) {
+void Display::Update(MapObject object) {
     SDL_Rect rect = object.GetSDLRect();
     SDL_SetRenderDrawColor(renderer, object.color.r, object.color.g, object.color.b, 255);
     SDL_RenderFillRect(renderer, &rect);
-    if (updateScreen) {
-        //A-
-        SDL_RenderPresent(renderer);
-    }
+    Render();
 }
 
-MapObject::MapObject(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :
-    hitbox(_hb), color(_c), map(_map), hasCollision(_hasCol) {
-    ID = map->numberOfEntities++;
-}
 
-Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map) : 
-    MapObject(HitBox(_pos, GridDimension(thickness, _length)), _c, _map),
-    isVert(_isV) {
-    // SetWidth(thickness); // fix the place holder
-    if (!isVert) {
-        std::swap(hitbox.dim.depth, hitbox.dim.width);
-    }
-}
+
+*/

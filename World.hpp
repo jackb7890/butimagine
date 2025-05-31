@@ -1,12 +1,22 @@
 #pragma once
 
 #define SDL_MAIN_HANDLED 1
-#include "SDL.h"
 
+#include <iostream>
+#include <fstream>
+#include "SDL.h"
+#include "SDL_image.h"
+
+#include "TextureManager.hpp"
 #include "util.hpp"
 
 #define MAP_WIDTH 1280
 #define MAP_HEIGHT 720
+//Tile resolution in pixels
+#define TILE_RES 32;
+
+const int TILESWIDTH = MAP_WIDTH / TILE_RES;
+const int TILESHEIGHT = MAP_HEIGHT / TILE_RES;
 
 struct Map;
 struct Display;
@@ -60,21 +70,31 @@ class RGBColor {
 
 class MapObject {
     // base class for things that go on the map
-    // for collosion detection sake, assume everything is rectangular for now
-    // if mfers want triangles do it yourself
-    //A- Variables regarding updated positions or movement was moved to MapEntity.
-    //A- MapObjects DO NOT MOVE. Great for things like walls or the background.
 
     public:
-    bool valid;
     HitBox hitbox;
     RGBColor color;
+    SDL_Texture* texture;
     bool hasCollision;
-    int ID;
-    Map* map;
+    Map* map = nullptr;
+    int ID = NULL;
 
-    MapObject(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
-    inline MapObject() : valid(false) {}
+    bool immobile;
+    double X_velocity, Y_velocity;
+    bool hasMovedOffScreen = false;
+    GridPos oldPos;
+
+    inline MapObject(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
+        hitbox(_hb), color(_c), hasCollision(_hasCol), immobile(_im) {
+    }
+    inline MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol, bool _im) :
+        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol), immobile(_im) {
+    }
+
+    MapObject(HitBox _hb, SDL_Texture* tex, bool _hasCol = true, bool _im = true);
+    MapObject(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true, bool _im = true);
+
+    bool Valid();
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
@@ -108,24 +128,11 @@ class MapObject {
     inline SDL_Rect GetSDLRect() const {
         return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
     }
-};
-
-class MapEntity : public MapObject {
-    public:
-
-    double X_velocity,Y_velocity;
-    bool hasMovedOffScreen = false;
-    GridPos oldPos;
-
-    //A- I Don't know any better so the MapEntity constructor just calls the MapObject ctour.
-    //A- Not having this broke the Player constructor
-    inline MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
-        MapObject(_hb, _c, _map) {}
 
     inline GridPos GetOldPos() const {
         return oldPos;
     }
-    //A- Force move ignores all collision
+
     void ForceMove(int xD, int yD);
     void Move(int xD, int yD);
 };
@@ -137,69 +144,75 @@ class Wall : public MapObject {
 
     public:
     // default color 112,112,112 is gray
-    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
+    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c);
 };
 
-class Player : public MapEntity {
+class Player : public MapObject {
 
-    public:
+public:
     int health = 100;
     int runEnergy = 100;
     Uint32 born = 0;
     Uint32 lastUpdate = 0;
 
-    
-    inline Player(HitBox _hb, RGBColor _c, Map* _map) :
-        //A- I tried to change this to MapObject, but it complained that it wasn't inherited
-        //A- So I guess it can't see past MapEntity? Even though it should?
-        MapEntity(_hb, _c, _map) {}
-
-    friend struct Display;
+    inline Player(HitBox _hb, RGBColor _c, Map* _m) :
+        MapObject(_hb, _c, _m, true, false) {
+    }
 };
 
+//A- Map is a collection of game objects.
 struct Map {
-    int numberOfEntities = 0;
-    Arr2d<MapObject> grid;
+    std::vector<MapObject*> allObjects;
+    Arr2d<GridPos> grid;
     Arr2d<MapObject> background;
 
-    // npcs
+    Map();
 
-    // walls
+    inline int GetNumberOfObjects() {
+        return allObjects.size();
+    }
 
-    Map ();
+    //A- Permanently deletes all MapObjects.
+    inline void DeleteAllObjects() {
+        allObjects.clear();
+    }
 
-    // Drawing each pixel based on each entry of grid for the map
-    // will be slow compared to if we can do some SDL_FillRects, but
-    // idk how to we'd do that
+    //Removes most recently added MapObject.
+    //Pop does not return the last element, just deletes it.
+    inline void PopObject() {
+        allObjects.pop_back();
+    }
+
+    //Returns an Object reference from an ID
+    inline MapObject& GetObject(int ID) {
+        MapObject* object = allObjects.at(ID);
+        //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
+        return *object;
+    }
+
+    //Adds an object to the map.
+    //This will also update the map variable stored within the object, making the object valid.
+    inline void AddObject(MapObject* object) {
+        object->map = this;
+        //Conveniently the size of the vector before an object is added will equal its index.
+        object->ID = allObjects.size();
+        allObjects.push_back(object);
+    }
+
+    //In the future we may want special behavior for adding players.
+    inline void AddObject(Player* player) {
+        AddObject((MapObject*) player);
+    }
+    inline void AddObject(Wall* wall) {
+        AddObject((MapObject*) wall);
+    }
+
+    //Unused
     void CreateBackground();
-
-    // Clears the map at area covered by player
-    void Clear(Player player);
-
-    // These add functions add data that get's drawn differently
-    // than drawing via display.Update(wall) or for player.
-    // For example, if we add a wall to the map, it will store wall.color.r
-    // in the map, and when we display.Update(map) it will use wall.color.r to color that pixel
-    // But if we do display.Update(wall) it will use the full rgb color correctly.
-
-    // I think to fix this we should start storing entire objects in the grid,
-    // and to do that, we will need to make them the same type. So that means we gotta
-    // add inheritence aka a parent class for wall and player called like MapEntry or something
-    // Then we have a grid full of MapEntry objects, some of which are players, some of which are walls.
-
-    // Adds a player to the map
-    void Add(Player player);
-
-    void Add(Wall wall);
-
-    void Add(MapObject entity);
-    void Clear(MapObject entity);
-
     bool CheckForCollision(const HitBox& movingPiece, int ID);
 };
 
 struct Display {
-    //A- Tutorial said it was a good idea to have a single static renderer
     SDL_Renderer* renderer;
     SDL_Window* window = nullptr;
     Map* map = nullptr;
@@ -208,13 +221,120 @@ struct Display {
 
     ~Display();
 
-    void Update(bool updateScreen = true);
+    //A- ChangeMap swaps map in display with a different one.
+    void ChangeMap(Map* /* pointer? */);
 
-    void Erase(Player player, bool updateScreen = true);
+    //A- Clear wipes the screen completly. Use before changing maps.
+    void Clear();
 
-    void Update(Player player, bool updateScreen = true);
+    void Update();
 
-    void Update(Wall wall, bool updateScreen = true);
+    void Render();
 
-    void Update(MapObject object, bool updateScreen = true);
+    //Unused
+    void Erase(Player player, bool renderChange = true);
+    void Update(Player player);
+    void Update(Wall wall);
+    void Update(MapObject object);
+};
+
+
+class Tile : public MapObject {
+public:
+    Uint8 collisionType;
+    SDL_Texture* texture;
+
+    Tile(HitBox _hb, SDL_Texture* _tex, int _col);
+    ~Tile();
+
+    inline int GetCollisionType() {
+        return collisionType;
+    }
+
+    inline GridPos GetTilePosition() {
+        int x = hitbox.origin.x % TILE_RES;
+        int y = hitbox.origin.y % TILE_RES;
+        return GridPos(x, y);
+    }
+
+    inline void SetCollisionType(int col = 15) {
+        collisionType = col % 16;
+    }
+
+    inline void SetTexture(const char* filepath, SDL_Renderer* ren) {
+        texture = TextureManager::LoadTexture(filepath, ren);
+    }
+
+    inline void SetTexture(SDL_Texture* tex) {
+        texture = tex;
+    }
+
+};
+
+//Should read, load, & render the tile based map
+//Helper functions to check tiles, collision(?), coords
+class TileMap {
+public:
+    TileMap();
+    ~TileMap();
+
+    //read map file
+    //Should return the array from the map file(?)
+    int ReadMapFile();
+
+    //generate tilemap based on map file
+    //Probably have it use ReadMapFile, should have everything ready for rendering  
+    void GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]);
+
+    //render textures to screen
+    //used in place of Display struct in World.h
+    void DisplayMap();
+
+    //Debug display what tile player is on
+    bool DebugHighlightCurrentTile();
+
+    //get tile object is on
+    //overload to get player, walls, etc.
+    void GetObjectTile();
+
+    //collision logic
+    //There are 16 possible collision combinations for a tile (4^2)
+    //Somehow I think binary is the easiest way to assign & remember collision (internally)
+    //Having 1 variable determine collision makes assigning easy
+    //Having it be binary based makes calculations easy
+    // 0 0 0 0, in order of Left, Top, Bottom, Right
+    /*	0 = 0000 = No collision
+    *	1 = 1000 = Left
+    *	2 = 0100 = Top
+    *	3 = 1100 = Left, Top
+    *	4 = 0010 = Bottom
+    *	5 = 1010 = Left, Bottom
+    *	6 =	0110 = Top, Bottom
+    *	7 = 1110 = Left, Top, Bottom
+    *	8 = 0001 = Right
+    *	9 = 1001 = Left, Right
+    *	10= 0101 = Top, Right
+    *	11= 1101 = Left, Top, Right
+    *	12= 0011 = Bottom, Right
+    *	13= 1011 = Left, Bottom , Right
+    *	14= 0111 = Top, Bottom, Right
+    *	15= 1111 = All
+    */
+    //For calcualting;
+    //	Left	= Odd number
+    //	Top		= %4 is >= 2
+    //	Bottom	= %8 is >= 4
+    //	Right	= >= 8
+
+    //As a final example to this shear lack of any actual code
+    //If we look at a collision value of 11
+    // 1. 11 is odd, so we know there's collision on the left
+    // 2. 11 %4 = 3, so we know there's collision on the top
+    // 3. 11 %8 = 3, so we know there's no bottom collision
+    // 4. 11 is >= 8, so we know there's collision on the right.
+
+private:
+    SDL_Rect* src, dest;
+    SDL_Texture* grass;
+    int map[TILESWIDTH][TILESHEIGHT];
 };
