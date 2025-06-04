@@ -68,7 +68,7 @@ class RGBColor {
     unsigned ConvertToSDL(SDL_Surface* surface);
 };
 
-class MapObject {
+class MapEntity {
     // base class for things that go on the map
 
     public:
@@ -84,15 +84,18 @@ class MapObject {
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    inline MapObject(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
+    inline MapEntity(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
         hitbox(_hb), color(_c), hasCollision(_hasCol), immobile(_im) {
     }
-    inline MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol, bool _im) :
+    inline MapEntity(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol = true, bool _im = true) :
         hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol), immobile(_im) {
     }
-
-    MapObject(HitBox _hb, SDL_Texture* tex, bool _hasCol = true, bool _im = true);
-    MapObject(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true, bool _im = true);
+    inline MapEntity(HitBox _hb, SDL_Texture* _tex, bool _hasCol = true, bool _im = true) :
+        hitbox(_hb), texture(_tex), hasCollision(_hasCol), immobile(_im) {
+    }
+    inline MapEntity(HitBox _hb, SDL_Texture* _tex, Map* _m, bool _hasCol, bool _im) :
+        hitbox(_hb), texture(_tex), map(_m), hasCollision(_hasCol), immobile(_im) {
+    }
 
     bool Valid();
 
@@ -137,7 +140,7 @@ class MapObject {
     void Move(int xD, int yD);
 };
 
-class Wall : public MapObject {
+class Wall : public MapEntity {
     private:
     bool isVert;
     const static int thickness = 2;
@@ -147,7 +150,7 @@ class Wall : public MapObject {
     Wall(GridPos _pos, int _length, bool _isV, RGBColor _c);
 };
 
-class Player : public MapObject {
+class Player : public MapEntity {
 
 public:
     int health = 100;
@@ -156,55 +159,55 @@ public:
     Uint32 lastUpdate = 0;
 
     inline Player(HitBox _hb, RGBColor _c, Map* _m) :
-        MapObject(_hb, _c, _m, true, false) {
+        MapEntity(_hb, _c, _m, true, false) {
     }
 };
 
-//A- Map is a collection of game objects.
+//A- Map is a collection of game Entities.
 struct Map {
-    std::vector<MapObject*> allObjects;
+    std::vector<MapEntity*> allEntities;
     Arr2d<GridPos> grid;
-    Arr2d<MapObject> background;
+    //Arr2d<MapEntity> background;
 
     Map();
 
-    inline int GetNumberOfObjects() {
-        return allObjects.size();
+    inline int GetNumberOfEntities() {
+        return allEntities.size();
     }
 
-    //A- Permanently deletes all MapObjects.
-    inline void DeleteAllObjects() {
-        allObjects.clear();
+    //A- Permanently deletes all MapEntitys.
+    inline void DeleteAllEntities() {
+        allEntities.clear();
     }
 
-    //Removes most recently added MapObject.
+    //Removes most recently added MapEntity.
     //Pop does not return the last element, just deletes it.
-    inline void PopObject() {
-        allObjects.pop_back();
+    inline void PopEntity() {
+        allEntities.pop_back();
     }
 
-    //Returns an Object reference from an ID
-    inline MapObject& GetObject(int ID) {
-        MapObject* object = allObjects.at(ID);
+    //Returns an Entity reference from an ID
+    inline MapEntity& GetEntity(int ID) {
+        MapEntity* entity = allEntities.at(ID);
         //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
-        return *object;
+        return *entity;
     }
 
-    //Adds an object to the map.
-    //This will also update the map variable stored within the object, making the object valid.
-    inline void AddObject(MapObject* object) {
-        object->map = this;
-        //Conveniently the size of the vector before an object is added will equal its index.
-        object->ID = allObjects.size();
-        allObjects.push_back(object);
+    //Adds an entity to the map.
+    //This will also update the map variable stored within the entity, making the entity valid.
+    inline void AddEntity(MapEntity* entity) {
+        entity->map = this;
+        //Conveniently the size of the vector before an entity is added will equal its index.
+        entity->ID = allEntities.size();
+        allEntities.push_back(entity);
     }
 
     //In the future we may want special behavior for adding players.
-    inline void AddObject(Player* player) {
-        AddObject((MapObject*) player);
+    inline void AddEntity(Player* player) {
+        AddEntity((MapEntity*) player);
     }
-    inline void AddObject(Wall* wall) {
-        AddObject((MapObject*) wall);
+    inline void AddEntity(Wall* wall) {
+        AddEntity((MapEntity*) wall);
     }
 
     //Unused
@@ -235,14 +238,14 @@ struct Display {
     void Erase(Player player, bool renderChange = true);
     void Update(Player player);
     void Update(Wall wall);
-    void Update(MapObject object);
+    void Update(MapEntity entity);
 };
 
-
-class Tile : public MapObject {
+//Tiles are only using 2 variables in MapEntity.
+//I'll keep it as a child for rendering but in the future it should be it's own class.
+class Tile : public MapEntity {
 public:
     Uint8 collisionType;
-    SDL_Texture* texture;
 
     Tile(HitBox _hb, SDL_Texture* _tex, int _col);
     ~Tile();
@@ -251,14 +254,9 @@ public:
         return collisionType;
     }
 
-    inline GridPos GetTilePosition() {
-        int x = hitbox.origin.x % TILE_RES;
-        int y = hitbox.origin.y % TILE_RES;
-        return GridPos(x, y);
-    }
-
-    inline void SetCollisionType(int col = 15) {
-        collisionType = col % 16;
+    inline void SetCollisionType(int col = 0) {
+        collisionType = col;
+        assert(collisionType < 16);
     }
 
     inline void SetTexture(const char* filepath, SDL_Renderer* ren) {
@@ -268,7 +266,6 @@ public:
     inline void SetTexture(SDL_Texture* tex) {
         texture = tex;
     }
-
 };
 
 //Should read, load, & render the tile based map
@@ -293,9 +290,9 @@ public:
     //Debug display what tile player is on
     bool DebugHighlightCurrentTile();
 
-    //get tile object is on
+    //get tile entity is on
     //overload to get player, walls, etc.
-    void GetObjectTile();
+    void GetEntityTile();
 
     //collision logic
     //There are 16 possible collision combinations for a tile (4^2)

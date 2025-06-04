@@ -5,15 +5,15 @@ unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
 }
 
-//A- Just checks if a map object has a map.
-bool MapObject::Valid() {
+//A- Just checks if a map entity has a map.
+bool MapEntity::Valid() {
     if (this->map) {
         return true;
     }
     return false;
 }
 
-void MapObject::Move(int xD, int yD) {
+void MapEntity::Move(int xD, int yD) {
     if (!immobile) {
         hasMovedOffScreen = true;
         oldPos = GetCurrentPos();
@@ -26,8 +26,8 @@ void MapObject::Move(int xD, int yD) {
         int yCollision = GetDepth() + std::abs(yD);
         const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
 
-        //A- I added a check to see if the object that is moving has collision.
-        //A- Ideally both objects need to have collision on for them to collide.
+        //A- I added a check to see if the entity that is moving has collision.
+        //A- Ideally both Entities need to have collision on for them to collide.
         if (this->hasCollision) {
            if (map->CheckForCollision(collisionPath, ID)) {
                 //A- Collisions set velocity to 0. Makes bumping into walls less annoying
@@ -44,12 +44,12 @@ void MapObject::Move(int xD, int yD) {
     }
     else {
         //A "this" just prints the memory address. I know there's a better way but too lazy to look that up.
-        std::cout << "Attempt to move immobile MapObject; " << this << std::endl;
+        std::cout << "Attempt to move immobile MapEntity; " << this << std::endl;
     }
 }
 
-void MapObject::ForceMove(int xD, int yD) {
-    //A- If the object *does* have collision, this just turns it off temporarily to move it, then turns it back on.
+void MapEntity::ForceMove(int xD, int yD) {
+    //A- If the entity *does* have collision, this just turns it off temporarily to move it, then turns it back on.
     if (this->hasCollision == true) {
         this->hasCollision = false;
         Move(xD, yD);
@@ -75,19 +75,16 @@ Display::~Display() {
 }
 
 void Display::Update() {
-    //open up map.allObjects in a loop
-    //create/update that object (sdl_fillrect)
-    //once all objects are drawn, render them
 
-    //This will always draw & render all objects 1 by 1, even if they haven't changed in any way.
+    //This will always draw & render all Entities 1 by 1, even if they haven't changed in any way.
     //Isn't the most optimal thing but an easy enough fix later
-    //Would just need some kind of "updated" flag in MapObject (or Map).
+    //Would just need some kind of "updated" flag in MapEntity (or Map).
 
-    for (int i = 0; i < map->GetNumberOfObjects(); i++) {
-        MapObject object = map->GetObject(i);
-        if (object.Valid()) {
-            SDL_SetRenderDrawColor(renderer, object.color.r, object.color.g, object.color.b, 255);
-            SDL_Rect point{object.GetSDLRect()};
+    for (int i = 0; i < map->GetNumberOfEntities(); i++) {
+        MapEntity entity = map->GetEntity(i);
+        if (entity.Valid()) {
+            SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+            SDL_Rect point{entity.GetSDLRect()};
             SDL_RenderFillRect(renderer, &point);
         }
     }
@@ -99,7 +96,7 @@ void Display::Render() {
 }
 
 Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c) : 
-    MapObject(HitBox(_pos, GridDimension(thickness, _length)), _c),
+    MapEntity(HitBox(_pos, GridDimension(thickness, _length)), _c),
     isVert(_isV) {
     // SetWidth(thickness); // fix the place holder
     if (!isVert) {
@@ -107,11 +104,10 @@ Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c) :
     }
 }
 
-/*
-Tile::Tile(HitBox _hb, SDL_Texture* _tex, int _col) {
-	this->SetCollisionType(_col);
-	this->SetTexture(_tex);
-	this->hitbox = _hb;
+
+Tile::Tile(HitBox _hb, SDL_Texture* _tex, int _col) : 
+    MapEntity(_hb, _tex), collisionType(_col) {
+    assert(collisionType < 16);
 }
 
 Tile::~Tile() {
@@ -133,20 +129,19 @@ void TileMap::GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]) {
 void TileMap::DisplayMap() {
 
 }
-*/
 
 
 
 /* OLD UNUSED FUNCTIONS */
 /*
 void Map::CreateBackground() {
-    background = Arr2d<MapObject>(MAP_WIDTH, MAP_HEIGHT);
+    background = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
     for (int x = 0; x < MAP_WIDTH; x++) {
         for (int y = 0; y < MAP_HEIGHT; y++) {
             HitBox hb = HitBox(x, y, 1, 1);
             int index = x * MAP_HEIGHT + y;
             RGBColor color = RGBColor(index % 255 / 2, (1 / (index + 1)) % 255, (index / 10000) % 255);
-            background(x, y) = MapObject(hb, color, this, false);
+            background(x, y) = MapEntity(hb, color, this, false);
         }
     }
 }
@@ -158,7 +153,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID) {
         if (i != ID) {
             for (int x = movingPiece.origin.x; x < xBound; x++) {
                 for (int y = movingPiece.origin.y; y < yBound; y++) {
-                    MapObject& possibleEntity = grid(Wrap(x - 1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
+                    MapEntity& possibleEntity = grid(Wrap(x - 1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
                     if (possibleEntity.Valid() && possibleEntity.hasCollision) {
                         return true;
                     }
@@ -172,7 +167,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID) {
 void Display::Erase(Player player, bool renderChange) {
     for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
         for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
-            MapObject background = map->background(i % MAP_WIDTH, j % MAP_HEIGHT);
+            MapEntity background = map->background(i % MAP_WIDTH, j % MAP_HEIGHT);
             SDL_Rect rect = background.GetSDLRect();
             SDL_SetRenderDrawColor(renderer, background.color.r, background.color.g, background.color.b, 255);
             SDL_RenderFillRect(renderer, &rect);
@@ -187,17 +182,17 @@ void Display::Update(Player player) {
     if (player.hasMovedOffScreen) {
         //Erase(player, false);
     }
-    Update((MapObject) player);
+    Update((MapEntity) player);
     player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
 }
 
 void Display::Update(Wall wall) {
-    Update((MapObject) wall);
+    Update((MapEntity) wall);
 }
 
-void Display::Update(MapObject object) {
-    SDL_Rect rect = object.GetSDLRect();
-    SDL_SetRenderDrawColor(renderer, object.color.r, object.color.g, object.color.b, 255);
+void Display::Update(MapEntity entity) {
+    SDL_Rect rect = entity.GetSDLRect();
+    SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
     SDL_RenderFillRect(renderer, &rect);
     Render();
 }
