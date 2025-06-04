@@ -6,8 +6,6 @@ Random notes & things I plan on doing will go here.
 	Also a lot of currently unused functions.
 -	Probably best to move unused things to a "junkyard" for now.
 
--Delete current collision detection
-
 -Make Display compatible with textures
 	Textures use a different SDL function to render
 -	I think a simple if statement will do. If the map object has a texture, render that instead of the RGB color.

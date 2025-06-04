@@ -12,11 +12,6 @@
 
 #define MAP_WIDTH 1280
 #define MAP_HEIGHT 720
-//Tile resolution in pixels
-#define TILE_RES 32;
-
-const int TILESWIDTH = MAP_WIDTH / TILE_RES;
-const int TILESHEIGHT = MAP_HEIGHT / TILE_RES;
 
 struct Map;
 struct Display;
@@ -163,8 +158,8 @@ public:
 //A- Map is a collection of game objects.
 struct Map {
     std::vector<MapObject*> allObjects;
-    Arr2d<GridPos> grid;
-    Arr2d<MapObject> background;
+    Arr2d<MapObject*> grid;
+    //Arr2d<MapObject> background;
 
     Map();
 
@@ -190,26 +185,20 @@ struct Map {
         return *object;
     }
 
+    void AddToGrid(MapObject& object);
+
     //Adds an object to the map.
     //This will also update the map variable stored within the object, making the object valid.
-    inline void AddObject(MapObject* object) {
-        object->map = this;
-        //Conveniently the size of the vector before an object is added will equal its index.
-        object->ID = allObjects.size();
-        allObjects.push_back(object);
-    }
+    void AddObject(MapObject* object);
+    void AddObject(Player* player);
+    void AddObject(Wall* wall);
 
-    //In the future we may want special behavior for adding players.
-    inline void AddObject(Player* player) {
-        AddObject((MapObject*) player);
-    }
-    inline void AddObject(Wall* wall) {
-        AddObject((MapObject*) wall);
-    }
+    bool CheckForCollision(const HitBox& movingPiece, int ID);
+
 
     //Unused
     void CreateBackground();
-    bool CheckForCollision(const HitBox& movingPiece, int ID);
+
 };
 
 struct Display {
@@ -236,105 +225,4 @@ struct Display {
     void Update(Player player);
     void Update(Wall wall);
     void Update(MapObject object);
-};
-
-
-class Tile : public MapObject {
-public:
-    Uint8 collisionType;
-    SDL_Texture* texture;
-
-    Tile(HitBox _hb, SDL_Texture* _tex, int _col);
-    ~Tile();
-
-    inline int GetCollisionType() {
-        return collisionType;
-    }
-
-    inline GridPos GetTilePosition() {
-        int x = hitbox.origin.x % TILE_RES;
-        int y = hitbox.origin.y % TILE_RES;
-        return GridPos(x, y);
-    }
-
-    inline void SetCollisionType(int col = 15) {
-        collisionType = col % 16;
-    }
-
-    inline void SetTexture(const char* filepath, SDL_Renderer* ren) {
-        texture = TextureManager::LoadTexture(filepath, ren);
-    }
-
-    inline void SetTexture(SDL_Texture* tex) {
-        texture = tex;
-    }
-
-};
-
-//Should read, load, & render the tile based map
-//Helper functions to check tiles, collision(?), coords
-class TileMap {
-public:
-    TileMap();
-    ~TileMap();
-
-    //read map file
-    //Should return the array from the map file(?)
-    int ReadMapFile();
-
-    //generate tilemap based on map file
-    //Probably have it use ReadMapFile, should have everything ready for rendering  
-    void GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]);
-
-    //render textures to screen
-    //used in place of Display struct in World.h
-    void DisplayMap();
-
-    //Debug display what tile player is on
-    bool DebugHighlightCurrentTile();
-
-    //get tile object is on
-    //overload to get player, walls, etc.
-    void GetObjectTile();
-
-    //collision logic
-    //There are 16 possible collision combinations for a tile (4^2)
-    //Somehow I think binary is the easiest way to assign & remember collision (internally)
-    //Having 1 variable determine collision makes assigning easy
-    //Having it be binary based makes calculations easy
-    // 0 0 0 0, in order of Left, Top, Bottom, Right
-    /*	0 = 0000 = No collision
-    *	1 = 1000 = Left
-    *	2 = 0100 = Top
-    *	3 = 1100 = Left, Top
-    *	4 = 0010 = Bottom
-    *	5 = 1010 = Left, Bottom
-    *	6 =	0110 = Top, Bottom
-    *	7 = 1110 = Left, Top, Bottom
-    *	8 = 0001 = Right
-    *	9 = 1001 = Left, Right
-    *	10= 0101 = Top, Right
-    *	11= 1101 = Left, Top, Right
-    *	12= 0011 = Bottom, Right
-    *	13= 1011 = Left, Bottom , Right
-    *	14= 0111 = Top, Bottom, Right
-    *	15= 1111 = All
-    */
-    //For calcualting;
-    //	Left	= Odd number
-    //	Top		= %4 is >= 2
-    //	Bottom	= %8 is >= 4
-    //	Right	= >= 8
-
-    //As a final example to this shear lack of any actual code
-    //If we look at a collision value of 11
-    // 1. 11 is odd, so we know there's collision on the left
-    // 2. 11 %4 = 3, so we know there's collision on the top
-    // 3. 11 %8 = 3, so we know there's no bottom collision
-    // 4. 11 is >= 8, so we know there's collision on the right.
-
-private:
-    SDL_Rect* src, dest;
-    SDL_Texture* grass;
-    int map[TILESWIDTH][TILESHEIGHT];
 };

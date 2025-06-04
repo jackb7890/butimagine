@@ -59,25 +59,27 @@ int main(int argc, char* argv[]) {
 
     HitBox testHB = { MAP_WIDTH / 3, MAP_HEIGHT / 2, 100, 100 };
     RGBColor testC = { 0, 200, 0 };
-    MapObject* testObject = new MapObject(testHB, testC, &map, true, true);
+    MapObject* testObjectOver = new MapObject(testHB, testC, &map, false, true);
     
     HitBox testHB1 = { MAP_WIDTH / 3 + 100, MAP_HEIGHT / 2, 100, 100 };
     RGBColor testC1 = { 200, 200, 0 };
-    MapObject* testObject1 = new MapObject(testHB1, testC1, &map, true, true);
+    MapObject* testObjectUnder = new MapObject(testHB1, testC1, &map, false, true);
+
+    HitBox testHB2 = { MAP_WIDTH / 3 - 100, MAP_HEIGHT / 2, 100, 100 };
+    RGBColor testC2 = { 0, 50, 200 };
+    MapObject* testObjectCol = new MapObject(testHB2, testC2, &map, true, true);
 
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 15, 15};
     RGBColor player1Color = {100, 100, 255};
     Player* player1 = new Player(player1HitBox, player1Color, &map);
 
     map.AddObject(dummyBG);
-    map.AddObject(testObject);
+    map.AddObject(testObjectOver);
     map.AddObject(player1);
-    map.AddObject(testObject1);
+    map.AddObject(testObjectUnder);
+    map.AddObject(testObjectCol);
 
     display.Update(); // this updates the map stored within display
-
-    //A- 5/20/25 - This will not actually render the player, since the player was not added to the map
-    //A- The player will be rendered later in the game loop.
     
     bool runLoop = true;
     SDL_Event ev;
