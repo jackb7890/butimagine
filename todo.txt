@@ -2,7 +2,7 @@ Random notes & things I plan on doing will go here.
 -A dash in front indicates something that can actually "be done" instead of just notes or yapping.
 
 -Delete current collision detection
-	Given the 2d enviroment & the pathfinding based movement of runescape I really don't see a use case for standard object-object collision.
+	Given the 2d enviroment & the pathfinding based movement of runescape I really don't see a use case for standard entity-entity collision.
 	In games with free movement, you obviously need collision because the player can move *anywhere*.
 -	This comes down to how we want to impliment WASD movement.
 

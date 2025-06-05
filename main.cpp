@@ -56,28 +56,30 @@ int main(int argc, char* argv[]) {
     HitBox dummyHB = { 0, 0, MAP_WIDTH, MAP_HEIGHT };
     RGBColor dummyC = { 40, 40, 40 };
     MapEntity* dummyBG = new MapEntity(dummyHB, dummyC, &map, false, true);
-
+    
     HitBox testHB = { MAP_WIDTH / 3, MAP_HEIGHT / 2, 100, 100 };
     RGBColor testC = { 0, 200, 0 };
-    MapEntity* testEntity = new MapEntity(testHB, testC, &map, true, true);
+    MapEntity* testEntityOver = new MapEntity(testHB, testC, &map, false, true);
     
     HitBox testHB1 = { MAP_WIDTH / 3 + 100, MAP_HEIGHT / 2, 100, 100 };
     RGBColor testC1 = { 200, 200, 0 };
-    MapEntity* testEntity1 = new MapEntity(testHB1, testC1, &map, true, true);
+    MapEntity* testEntityUnder = new MapEntity(testHB1, testC1, &map, false, true);
+
+    HitBox testHB2 = { MAP_WIDTH / 3 - 100, MAP_HEIGHT / 2, 100, 100 };
+    RGBColor testC2 = { 0, 50, 200 };
+    MapEntity* testEntityCol = new MapEntity(testHB2, testC2, &map, true, true);
 
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 15, 15};
     RGBColor player1Color = {100, 100, 255};
     Player* player1 = new Player(player1HitBox, player1Color, &map);
 
     map.AddEntity(dummyBG);
-    map.AddEntity(testEntity);
+    map.AddEntity(testEntityOver);
     map.AddEntity(player1);
-    map.AddEntity(testEntity1);
+    map.AddEntity(testEntityUnder);
+    map.AddEntity(testEntityCol);
 
     display.Update(); // this updates the map stored within display
-
-    //A- 5/20/25 - This will not actually render the player, since the player was not added to the map
-    //A- The player will be rendered later in the game loop.
     
     bool runLoop = true;
     SDL_Event ev;

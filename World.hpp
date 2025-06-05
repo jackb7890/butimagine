@@ -12,6 +12,7 @@
 
 #define MAP_WIDTH 1280
 #define MAP_HEIGHT 720
+
 //Tile resolution in pixels
 #define TILE_RES 32;
 
@@ -166,8 +167,8 @@ public:
 //A- Map is a collection of game Entities.
 struct Map {
     std::vector<MapEntity*> allEntities;
-    Arr2d<GridPos> grid;
     //Arr2d<MapEntity> background;
+    Arr2d<MapEntity*> grid;
 
     Map();
 
@@ -175,7 +176,7 @@ struct Map {
         return allEntities.size();
     }
 
-    //A- Permanently deletes all MapEntitys.
+    //A- Permanently deletes all MapEntities.
     inline void DeleteAllEntities() {
         allEntities.clear();
     }
@@ -193,26 +194,19 @@ struct Map {
         return *entity;
     }
 
+    void AddToGrid(MapEntity& entity);
+
     //Adds an entity to the map.
     //This will also update the map variable stored within the entity, making the entity valid.
-    inline void AddEntity(MapEntity* entity) {
-        entity->map = this;
-        //Conveniently the size of the vector before an entity is added will equal its index.
-        entity->ID = allEntities.size();
-        allEntities.push_back(entity);
-    }
+    void AddEntity(MapEntity* entity);
+    void AddEntity(Player* player);
+    void AddEntity(Wall* wall);
 
-    //In the future we may want special behavior for adding players.
-    inline void AddEntity(Player* player) {
-        AddEntity((MapEntity*) player);
-    }
-    inline void AddEntity(Wall* wall) {
-        AddEntity((MapEntity*) wall);
-    }
+    bool CheckForCollision(const HitBox& movingPiece, int ID);
 
     //Unused
     void CreateBackground();
-    bool CheckForCollision(const HitBox& movingPiece, int ID);
+
 };
 
 struct Display {
