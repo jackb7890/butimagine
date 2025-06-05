@@ -83,6 +83,9 @@ void Map::AddEntity(Player* player) {
 void Map::AddEntity(Wall* wall) {
     AddEntity((MapEntity*)wall);
 }
+void Map::AddEntity(Tile* tile) {
+    AddEntity((MapEntity*)tile);
+}
 
 bool Map::CheckForCollision(const HitBox& movingPiece, int ID) {
     int xBound = movingPiece.origin.x + movingPiece.dim.width;
@@ -112,9 +115,16 @@ void Display::Update() {
     for (int i = 0; i < map->GetNumberOfEntities(); i++) {
         MapEntity entity = map->GetEntity(i);
         if (entity.Valid()) {
-            SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
             SDL_Rect point{entity.GetSDLRect()};
-            SDL_RenderFillRect(renderer, &point);
+            //A- If a texture exist, it will be prefered over RGB color.
+            if (entity->texture != nullptr) {
+                //A- RenderCopy is used for textures, in place of RenderFillRect.
+                SDL_RenderCopy(renderer, entity.texture, NULL, &point);
+            }
+            else {
+                SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+                SDL_RenderFillRect(renderer, &point);
+            }
         }
     }
     Render();
@@ -134,7 +144,7 @@ Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c) :
 }
 
 Tile::Tile(HitBox _hb, SDL_Texture* _tex, int _col) : 
-    MapEntity(_hb, _tex), collisionType(_col) {
+    MapEntity(_hb, _tex, false, true), collisionType(_col) {
     assert(collisionType < 16);
 }
 

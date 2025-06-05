@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT_F}/scripts/buildsystems/vcpkg.cmake)
 
-project(butimagine)
+project("butimagine")
 
 find_package(sdl2 CONFIG REQUIRED)
 find_package(sdl2_image CONFIG REQUIRED)

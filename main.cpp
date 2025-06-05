@@ -73,11 +73,19 @@ int main(int argc, char* argv[]) {
     RGBColor player1Color = {100, 100, 255};
     Player* player1 = new Player(player1HitBox, player1Color, &map);
 
+    HitBox tileHB = { 100, 100, 32, 32 };
+    SDL_Texture* tileTex = TextureManager::LoadTexture("assets/tiles/Dirt.png", renderer);
+    Tile* testTile = new Tile(tileHB, tileTex, 0);
+    testTile->color = testC2;
+    testTile->SetTexture(tileTex);
+
     map.AddEntity(dummyBG);
+
     map.AddEntity(testEntityOver);
     map.AddEntity(player1);
     map.AddEntity(testEntityUnder);
     map.AddEntity(testEntityCol);
+    map.AddEntity(testTile);
 
     display.Update(); // this updates the map stored within display
     
@@ -238,7 +246,7 @@ int main(int argc, char* argv[]) {
         //A- Update for DT
         player1->lastUpdate = SDL_GetTicks();
 
-        std::cout << player1->oldPos.x << std::endl;
+        std::cout << testTile->texture << std::endl;
 
         //A- End of loop, increase frame counter & get end time.
         totalFrames++;

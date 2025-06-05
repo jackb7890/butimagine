@@ -75,7 +75,7 @@ class MapEntity {
     public:
     HitBox hitbox;
     RGBColor color;
-    SDL_Texture* texture;
+    SDL_Texture* texture = nullptr;
     bool hasCollision;
     Map* map = nullptr;
     int ID = NULL;
@@ -129,12 +129,24 @@ class MapEntity {
         hitbox.origin = pos;
     }
 
+    inline void SetTexture(const char* filepath, SDL_Renderer* ren) {
+        texture = TextureManager::LoadTexture(filepath, ren);
+    }
+
+    inline void SetTexture(SDL_Texture* tex) {
+        texture = tex;
+    }
+
     inline SDL_Rect GetSDLRect() const {
         return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
     }
 
     inline GridPos GetOldPos() const {
         return oldPos;
+    }
+
+    inline SDL_Texture* GetTexture() const{
+        return texture;
     }
 
     void ForceMove(int xD, int yD);
@@ -164,77 +176,6 @@ public:
     }
 };
 
-//A- Map is a collection of game Entities.
-struct Map {
-    std::vector<MapEntity*> allEntities;
-    //Arr2d<MapEntity> background;
-    Arr2d<MapEntity*> grid;
-
-    Map();
-
-    inline int GetNumberOfEntities() {
-        return allEntities.size();
-    }
-
-    //A- Permanently deletes all MapEntities.
-    inline void DeleteAllEntities() {
-        allEntities.clear();
-    }
-
-    //Removes most recently added MapEntity.
-    //Pop does not return the last element, just deletes it.
-    inline void PopEntity() {
-        allEntities.pop_back();
-    }
-
-    //Returns an Entity reference from an ID
-    inline MapEntity& GetEntity(int ID) {
-        MapEntity* entity = allEntities.at(ID);
-        //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
-        return *entity;
-    }
-
-    void AddToGrid(MapEntity& entity);
-
-    //Adds an entity to the map.
-    //This will also update the map variable stored within the entity, making the entity valid.
-    void AddEntity(MapEntity* entity);
-    void AddEntity(Player* player);
-    void AddEntity(Wall* wall);
-
-    bool CheckForCollision(const HitBox& movingPiece, int ID);
-
-    //Unused
-    void CreateBackground();
-
-};
-
-struct Display {
-    SDL_Renderer* renderer;
-    SDL_Window* window = nullptr;
-    Map* map = nullptr;
-
-    Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
-
-    ~Display();
-
-    //A- ChangeMap swaps map in display with a different one.
-    void ChangeMap(Map* /* pointer? */);
-
-    //A- Clear wipes the screen completly. Use before changing maps.
-    void Clear();
-
-    void Update();
-
-    void Render();
-
-    //Unused
-    void Erase(Player player, bool renderChange = true);
-    void Update(Player player);
-    void Update(Wall wall);
-    void Update(MapEntity entity);
-};
-
 //Tiles are only using 2 variables in MapEntity.
 //I'll keep it as a child for rendering but in the future it should be it's own class.
 class Tile : public MapEntity {
@@ -251,14 +192,6 @@ public:
     inline void SetCollisionType(int col = 0) {
         collisionType = col;
         assert(collisionType < 16);
-    }
-
-    inline void SetTexture(const char* filepath, SDL_Renderer* ren) {
-        texture = TextureManager::LoadTexture(filepath, ren);
-    }
-
-    inline void SetTexture(SDL_Texture* tex) {
-        texture = tex;
     }
 };
 
@@ -328,4 +261,76 @@ private:
     SDL_Rect* src, dest;
     SDL_Texture* grass;
     int map[TILESWIDTH][TILESHEIGHT];
+};
+
+//A- Map is a collection of game Entities.
+struct Map {
+    std::vector<MapEntity*> allEntities;
+    //Arr2d<MapEntity> background;
+    Arr2d<MapEntity*> grid;
+
+    Map();
+
+    inline int GetNumberOfEntities() {
+        return allEntities.size();
+    }
+
+    //A- Permanently deletes all MapEntities.
+    inline void DeleteAllEntities() {
+        allEntities.clear();
+    }
+
+    //Removes most recently added MapEntity.
+    //Pop does not return the last element, just deletes it.
+    inline void PopEntity() {
+        allEntities.pop_back();
+    }
+
+    //Returns an Entity reference from an ID
+    inline MapEntity& GetEntity(int ID) {
+        MapEntity* entity = allEntities.at(ID);
+        //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
+        return *entity;
+    }
+
+    void AddToGrid(MapEntity& entity);
+
+    //Adds an entity to the map.
+    //This will also update the map variable stored within the entity, making the entity valid.
+    void AddEntity(MapEntity* entity);
+    void AddEntity(Player* player);
+    void AddEntity(Wall* wall);
+    void AddEntity(Tile* tile);
+
+    bool CheckForCollision(const HitBox& movingPiece, int ID);
+
+    //Unused
+    void CreateBackground();
+
+};
+
+struct Display {
+    SDL_Renderer* renderer;
+    SDL_Window* window = nullptr;
+    Map* map = nullptr;
+
+    Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
+
+    ~Display();
+
+    //A- ChangeMap swaps map in display with a different one.
+    void ChangeMap(Map* /* pointer? */);
+
+    //A- Clear wipes the screen completly. Use before changing maps.
+    void Clear();
+
+    void Update();
+
+    void Render();
+
+    //Unused
+    void Erase(Player player, bool renderChange = true);
+    void Update(Player player);
+    void Update(Wall wall);
+    void Update(MapEntity entity);
 };
