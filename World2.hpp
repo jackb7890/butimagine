@@ -9,12 +9,41 @@
 #include <unordered_map>
 
 #include <type_traits>
+#include <list>
 
 #define MAP_WIDTH 1280
 #define MAP_HEIGHT 720
 
 struct Map;
 struct Display;
+
+struct MapEntityList {
+    std::list<MapEntity*> list;
+
+    void Add(MapEntity* en) {
+        // assert tail.next is null
+        for (auto el : list) {
+            if (!el) {
+                continue;
+            }
+            if (el == en) {
+                return;
+            }
+        }
+        list.push_back(en);
+    }
+
+    bool Remove(MapEntity* en) {
+        for (int i = 0; i < list.length(); i++) {
+            if (!list[i]) {
+                continue;
+            }
+            if (list[i] == en) {
+                list.remove(i);
+            }
+        }
+    }
+};
 
 class MapEntity {
     // base class for things that go on the map
@@ -144,8 +173,7 @@ concept MapEntityT = std::is_base_of<MapEntity, T>::value;
 
 struct Map {
     int numberOfEntities = 0;
-    Arr2d<MapEntity*> grid;
-    Arr2d<MapEntity*> background;
+    Arr2d<MapEntityList> grid;
 
     std::vector<Player*> players;
     std::vector<MapEntity*> allEntities;
