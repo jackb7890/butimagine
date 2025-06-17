@@ -99,8 +99,6 @@ int main(int argc, char* argv[]) {
 
     init();
 
-    driver.map.InitializeWorld();
-
     // Init network connection
     if (!(driver.ntwk.Setup())) {
         Log::error("Failed server setup\n");
