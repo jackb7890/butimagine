@@ -130,11 +130,11 @@ int main(int argc, char* argv[]) {
                 // Log::emit("Server socket is ready\n)");
                 int indx = driver.ntwk.TryAddClient();
                 if (indx >= 0) {
-                    Player& joinedPlayer = driver.map.SpawnEntity<Player>();
-                    joinedPlayer.multiplayerID = indx;
-                    joinedPlayer.online = true;
+                    Player* joinedPlayer = driver.map.SpawnEntity<Player>();
+                    joinedPlayer->multiplayerID = indx;
+                    joinedPlayer->online = true;
                     // Send starter data to player client
-                    SendAllEntities(driver.ntwk.clientSockets[joinedPlayer.multiplayerID]);
+                    SendAllEntities(driver.ntwk.clientSockets[joinedPlayer->multiplayerID]);
                 }
             }
             

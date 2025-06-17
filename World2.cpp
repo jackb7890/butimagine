@@ -141,6 +141,35 @@ Display::~Display() {
 
 // When I get back: next thing is to rewrite Display like how jacob wanted it
 
+void Display::DrawBackground() {
+    SDL_Rect bg = {0, 0, MAP_WIDTH, MAP_HEIGHT};
+    SDL_FillRect(surface, &bg, 0);
+}
+
+void Display::Publish() {
+    SDL_UpdateWindowSurface(window);
+}
+
+void Display::DrawEntity(MapEntity* entity) {
+    SDL_Rect rect = entity.GetSDLRect();
+    SDL_FillRect(surface, &rect, entity.color.ConvertToSDL(surface));
+}
+
+void Display::DrawEntities(std::vector<MapEntity*> entities) {
+    for (auto entity : entities) {
+        Display::DrawEntity(entity, false);
+    }
+    Display::Publish();
+}
+
+void Display::PublishNextFrame(std::vector<MapEntity*> entities) {
+    Display::DrawBackground();
+    Display::DrawEntities(entities);
+    Display::Publish();
+}
+
+// end of new
+
 void Display::Update(bool updateScreen) {
     for (int i = 0; i < MAP_WIDTH; i++) {
         for (int j = 0; j < MAP_HEIGHT; j++) {

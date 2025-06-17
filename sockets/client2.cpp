@@ -104,6 +104,7 @@ class ClientDriver {
     MovementCode lastMovementInfo;
     Client clientInfo;
     Map map;
+    Player* me;
     Display display;
     bool updateDisplay;
 };
@@ -203,6 +204,7 @@ void ProcessUserMovement(SDL_Event ev) {
 
     // next update our own map
     
+
 }
 
 bool InputIsQuitGame(const SDL_Event& ev) {
@@ -299,6 +301,9 @@ void GetAllEntities() {
             
         }
     }
+
+    // last entity sent should be ourselves
+    driver.me = dynamic_cast<Player*>(driver.map.allEntities.back());
 }
 
 void setup_screen() {
@@ -348,7 +353,7 @@ int main() {
         }
 
         // finally, update the screen
-        update_screen();
+        driver.display.PublishNextFrame();
     }
 
     cleanup();
