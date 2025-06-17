@@ -158,19 +158,19 @@ struct Map {
     ~Map ();
 
     template <MapEntityT T>
-    T& SpawnEntity() {
+    T* SpawnEntity() {
         T* newEntity = AllocateNewEntity<T>();
         newEntity->SetMap(this);
         newEntity->SetID(numberOfEntities++);
-        return *newEntity;
+        return newEntity;
     }
 
     template <MapEntityT T>
-    T& SpawnEntity(const T& copy) {
+    T* SpawnEntity(const T& copy) {
         T* newEntity = AllocateNewEntity<T>(copy);
         newEntity->SetMap(this);
         newEntity->SetID(numberOfEntities++);
-        return *newEntity;
+        return newEntity;
     }
 
     template <MapEntityT T>
