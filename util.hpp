@@ -231,7 +231,6 @@ struct Log {
         }
         #if defined(LOG)
             printf(str, args...);
-        #elif defined(DBGBRK)
         #else
             return;
         #endif

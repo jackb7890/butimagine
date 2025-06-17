@@ -1,6 +1,7 @@
 #include "World2.hpp"
 #include <algorithm>
 #include <type_traits>
+#include <functional>
 
 unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
@@ -86,27 +87,19 @@ void Map::InitializeWorld() {
 }
 
 // Clears an entity on the map
-void Map::Clear(MapEntity entity) {
-    for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
-        for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = background(i % MAP_WIDTH, j % MAP_HEIGHT);
+void Map::Clear(MapEntity* entity) {
+    for (int i = entity->GetCurrentPos().x; i < entity->GetCurrentPos().x + entity->GetWidth(); i++) {
+        for (int j = entity->GetCurrentPos().y; j < entity->GetCurrentPos().y + entity->GetDepth(); j++) {
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = nullptr;
         }
     }
 }
 
-void Map::Add(Player player) {
-    Add((MapEntity) player);
-}
-
-void Map::Add(Wall wall) {
-    Add((MapEntity) wall);
-}
-
 // Adds an entity to the map
-void Map::Add(MapEntity entity) {
+void Map::Add(MapEntity* entity) {
     // todo: debug checks that this entity hasn't already been added
-    for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
-        for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
+    for (int i = entity->GetCurrentPos().x; i < entity->GetCurrentPos().x + entity->GetWidth(); i++) {
+        for (int j = entity->GetCurrentPos().y; j < entity->GetCurrentPos().y + entity->GetDepth(); j++) {
             grid(i % MAP_WIDTH, j % MAP_HEIGHT) = entity;
         }
     }
@@ -129,6 +122,15 @@ bool Map::CheckForCollision(const HitBox& movingPiece, size_t ID)  {
     return false;
 }
 
+MapEntity* Map::GetEntity(size_t id) {
+    for (auto entity : allEntities) {
+        if (entity->ID == id) {
+            return entity;
+        } 
+    }
+    return nullptr;
+}
+
 Display::Display(SDL_Window* _w, Map* _map) : window(_w), map(_map) {
     surface = SDL_GetWindowSurface(window);
 }
@@ -136,6 +138,8 @@ Display::Display(SDL_Window* _w, Map* _map) : window(_w), map(_map) {
 Display::~Display() {
     SDL_DestroyWindow(window);
 }
+
+// When I get back: next thing is to rewrite Display like how jacob wanted it
 
 void Display::Update(bool updateScreen) {
     for (int i = 0; i < MAP_WIDTH; i++) {

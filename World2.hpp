@@ -44,6 +44,14 @@ class MapEntity {
     MapEntity(Map* _map, size_t _ID) : map(_map), ID(_ID) {}
     MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
 
+    inline void SetMap(Map* _map) {
+        map = _map;
+    }
+
+    inline void SetID(int _ID) {
+        ID = _ID;
+    }
+
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
     }
@@ -97,6 +105,7 @@ class Wall : public MapEntity {
 
     public:
     // default color 112,112,112 is gray
+    Wall() {}
     Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
 
     virtual int GetTypeIndex() {
@@ -115,6 +124,7 @@ class Player : public MapEntity {
     int multiplayerID;
     bool online;
 
+    inline Player() {}
     inline Player(HitBox _hb, RGBColor _c, Map* _map) :
         MapEntity(_hb, _c, _map) {}
 
@@ -134,12 +144,10 @@ concept MapEntityT = std::is_base_of<MapEntity, T>::value;
 
 struct Map {
     int numberOfEntities = 0;
-    Arr2d<MapEntity> grid;
-    Arr2d<MapEntity> background;
+    Arr2d<MapEntity*> grid;
+    Arr2d<MapEntity*> background;
 
-    Arr2d<std::vector<MapEntity>> grid2;
-    std::vector<Player> players;
-
+    std::vector<Player*> players;
     std::vector<MapEntity*> allEntities;
 
     // npcs
@@ -150,10 +158,33 @@ struct Map {
     ~Map ();
 
     template <MapEntityT T>
-    T& CreateEntity() {
-        T* newEntity = new T(this, numberOfEntities++);
-        allEntities.push_back(newEntity);
+    T& SpawnEntity() {
+        T* newEntity = AllocateNewEntity<T>();
+        newEntity->SetMap(this);
+        newEntity->SetID(numberOfEntities++);
         return *newEntity;
+    }
+
+    template <MapEntityT T>
+    T& SpawnEntity(const T& copy) {
+        T* newEntity = AllocateNewEntity<T>(copy);
+        newEntity->SetMap(this);
+        newEntity->SetID(numberOfEntities++);
+        return *newEntity;
+    }
+
+    template <MapEntityT T>
+    T* AllocateNewEntity() {
+        T* newEntity = new T();
+        allEntities.push_back(newEntity);
+        return newEntity;
+    }
+
+    template <MapEntityT T>
+    T* AllocateNewEntity(const T& copy) {
+        T* newEntity = new T(copy);
+        allEntities.push_back(newEntity);
+        return newEntity;
     }
 
     // Drawing each pixel based on each entry of grid for the map
@@ -166,6 +197,8 @@ struct Map {
     // Clears the map at area covered by player
     void Clear(Player player);
 
+    MapEntity* GetEntity(size_t id);
+
     // These add functions add data that get's drawn differently
     // than drawing via display.Update(wall) or for player.
     // For example, if we add a wall to the map, it will store wall.color.r
@@ -177,13 +210,9 @@ struct Map {
     // add inheritence aka a parent class for wall and player called like MapEntry or something
     // Then we have a grid full of MapEntry objects, some of which are players, some of which are walls.
 
-    // Adds a player to the map
-    void Add(Player player);
 
-    void Add(Wall wall);
-
-    void Add(MapEntity entity);
-    void Clear(MapEntity entity);
+    void Add(MapEntity* entity);
+    void Clear(MapEntity* entity);
 
     bool CheckForCollision(const HitBox& movingPiece, size_t ID);
 

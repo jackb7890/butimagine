@@ -77,9 +77,24 @@ struct MovementCode {
         return !(*this == rhs);
     }
 
-    uint8_t compress() {
-        return (wasd[0] & 1) | ((wasd[1] & 1) << 1) 
-            | ((wasd[2] & 1) << 2) | ((wasd[3] & 1) << 3);
+    bool IsMovingUp() {
+        return wasd[0] && !wasd[2];
+    }
+
+    bool IsMovingDown() {
+        return wasd[2] && !wasd[0];
+    }
+
+    bool IsMovingRight() {
+        return wasd[3] && !wasd[1];
+    }
+
+    bool IsMovingLeft() {
+        return wasd[1] && !wasd[3];
+    }
+
+    bool IsMoving() {
+        return IsMovingUp() || IsMovingDown() || IsMovingLeft() || IsMovingRight();
     }
 };
 
@@ -87,8 +102,10 @@ class ClientDriver {
     public:
     MovementCode currentMovementInfo;
     MovementCode lastMovementInfo;
-    int playerSpeed;
     Client clientInfo;
+    Map map;
+    Display display;
+    bool updateDisplay;
 };
 
 ClientDriver driver;
@@ -138,16 +155,16 @@ void ProcessUserMovement(SDL_Event ev) {
         SDL_Keycode key = ev.key.keysym.sym;
         switch (key) {
         case SDLK_w:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::W);
+            driver.currentMovementInfo.clear(MovementCode::MovementKey::W);
             break;
         case SDLK_a:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::A);
+            driver.currentMovementInfo.clear(MovementCode::MovementKey::A);
             break;
         case SDLK_s:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::S);
+            driver.currentMovementInfo.clear(MovementCode::MovementKey::S);
             break;
         case SDLK_d:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::D);
+            driver.currentMovementInfo.clear(MovementCode::MovementKey::D);
             break;
         default:
             Log::error("Err: Calling PrcessUserMovement for unexpected key unpress");
@@ -158,14 +175,38 @@ void ProcessUserMovement(SDL_Event ev) {
         Log::error("Err: Calling PrcessUserMovement for unexpected input");
     }
 
-    Packet newPacket;
-    newPacket.Encode(driver.currentMovementInfo.compress(), Packet::Flag_t::bMoving);
-    driver.ntwk.SendPacket(ntwk.serverSoc, newPacket);
-    // redo support new packet form for this movement data
+    if (!driver.currentMovementInfo.IsMoving()) {
+        return;
+    }
+
+    driver.updateDisplay = true;
+
+    // first send this information to the server
+    ImMoving moving;
+    if (driver.currentMovementInfo.IsMovingUp()) {
+        moving.yOff = 1;
+    }
+    else if (driver.currentMovementInfo.IsMovingDown()) {
+        moving.yOff = -1;
+    }
+
+    if (driver.currentMovementInfo.IsMovingRight()) {
+        moving.xOff = 1;
+    }
+    else if (driver.currentMovementInfo.IsMovingLeft()) {
+        moving.xOff = -1;
+    }
+
+    Packet newPacket(Packet::Flag_t::bMoving);
+    newPacket.Encode(moving);
+    driver.clientInfo.SendPacket(driver.clientInfo.serverSoc, newPacket);
+
+    // next update our own map
+    
 }
 
 bool InputIsQuitGame(const SDL_Event& ev) {
-    ev.type == SDL_QUIT;
+    return ev.type == SDL_QUIT;
 }
 
 // returns false to kill program.
@@ -174,24 +215,105 @@ bool ProcessUserInput(SDL_Event ev) {
     if (InputIsUserMovement(ev)) {
         ProcessUserMovement(ev);
     }
-    else if(InputIsQuitGame(ev)) {
+    
+    if (InputIsQuitGame(ev)) {
         return false;
     }
     return true;
 }
 
+void ProcessServerUpdate() {
+    const int WAIT_TIME = 300;
+    int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
+    if (clients_ready == -1) {
+        Log::error("Error returned by SDLNet_CheckSockets\n");
+    }
+    else if (clients_ready == 0) {
+        return;
+    }
+    else {
+        if(!SDLNet_SocketReady(driver.clientInfo.serverSoc)) {
+            Log::emit("SDLnET\n)");
+            return;
+        }
+        // We have something from the server
+        Packet p = driver.clientInfo.ConsumePacket(driver.clientInfo.serverSoc);
+        
+        if (p.flags.test(Packet::Flag_t::bMoving)) {
+            // something has moved in the world
+            EntityMoveUpdate data = p.ReadAsType<EntityMoveUpdate>();
+            MapEntity* entityToMove = driver.map.GetEntity(data.id);
+            entityToMove->Move(data.xOff, data.yOff);
+            
+            driver.updateDisplay = true;
+        }
+        
+    }
+}
+
+void GetAllEntities() {
+    driver.updateDisplay = true;
+    // After init and before game loop below, we should start ask server for the world initialization data
+    const int WAIT_TIME = 300;
+    bool receivedStartingData = false;
+    while (!receivedStartingData) {
+        int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
+        if (clients_ready == -1) {
+            Log::error("Error returned by SDLNet_CheckSockets\n");
+        }
+        else if (clients_ready > 0) {
+        
+            if(!SDLNet_SocketReady(driver.clientInfo.serverSoc)) {
+                Log::emit("SDLnET\n)");
+                continue;
+            }
+
+            Packet p = driver.clientInfo.ConsumePacket(driver.clientInfo.serverSoc);
+            
+            if (p.flags.test(Packet::Flag_t::bEndOfPacketGroup)) {
+                receivedStartingData = true;
+                break;
+            }
+
+            else if (p.flags.test(Packet::Flag_t::bNewEntity)) {
+                // we need to build the entity type again
+                
+                // get the type id from data
+                if (p.polyTypeID == TypeDetails<Player>::index) {
+                    Player transmitted = p.ReadAsType<Player>();
+                    driver.map.SpawnEntity<>(transmitted);
+                }
+                else if (p.polyTypeID == TypeDetails<Wall>::index) {
+                    Wall transmitted = p.ReadAsType<Wall>();
+                    driver.map.SpawnEntity<>(transmitted);
+                }
+                else if (p.polyTypeID == TypeDetails<MapEntity>::index) {
+                    MapEntity transmitted = p.ReadAsType<Player>();
+                    driver.map.SpawnEntity<>(transmitted);
+                }
+                else {
+                    Log::error("received NewEntity packet but it wasn't any of the expeted types");
+                }
+                // RegisterNewEntity allocates memory and adds it to the list of entities;
+            }
+            
+        }
+    }
+}
+
 void setup_screen() {
     SDL_Window* win = SDL_CreateWindow( "my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN );
     if ( !win ) {
-        Log::emit("Failed to create a window! Error: %s\n", SDL_GetError());
+        Log::error("Failed to create a window! Error: %s\n", SDL_GetError());
     }
-    Map map;
-
-    Display display(win, &map);
+    driver.ntwk.display = Display(win, &driver.ntwk.map);
 }
 
-void ConsumeGameStartupData() {
-    
+void update_screen() {
+    if (driver.updateDisplay) {
+        display.Update();
+    }
+    driver.updateDisplay = false;
 }
 
 int main() {
@@ -202,34 +324,31 @@ int main() {
         Log::error("Failed to connect to server\n");
     }
 
-    // After init and before game loop below, we should start ask server for the world initialization data
+    // build up the entities sent over from the server to start with
+    GetAllEntities();
+
     const int WAIT_TIME = 300;
-    bool receivedStartingData = false;
-    while (!receivedStartingData) {
+    SDL_Event ev;
+    bool running = true;
+
+    while (running) {
+        // first check for any input from the client device
+        if (SDL_PollEvent(&ev) != 0) {
+            running = ProcessUserInput(ev);      
+        }
+        
+        // next check if the server has anything for us
         int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
+
         if (clients_ready == -1) {
             Log::error("Error returned by SDLNet_CheckSockets\n");
         }
         else if (clients_ready > 0) {
-            ConsumeGameStartupData();
-            receivedStartingData = true;
+            ProcessServerUpdate();
         }
-        // continue waiting on server
-    }
 
-    display.Update(lowerFront);
-    display.Update(back);
-    display.Update(top);
-    display.Update(bottom);
-
-    SDL_Event ev;
-    bool running = true;
-    while (running) {
-        if (SDL_PollEvent(&ev) != 0) {
-            running = ProcessUserInput(ev);
-
-            
-        }
+        // finally, update the screen
+        update_screen();
     }
 
     cleanup();
