@@ -7,6 +7,20 @@ unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
 }
 
+void MapEntity::UpdateGrid(HitBox oldArea, HitBox newArea, MapEntity* entity) {
+    for (int i = oldArea.origin.x; i < oldArea.origin.x + oldArea.dim.width; i++) {
+        for (int j = oldArea.origin.y; j < oldArea.origin.y + oldArea.dim.depth; j++) {
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT).Remove();
+        }
+    }
+
+    for (int i = newArea.origin.x; i < newArea.origin.x + newArea.dim.width; i++) {
+        for (int j = newArea.origin.y; j < newArea.origin.y + newArea.dim.depth; j++) {
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT).Add(entity);
+        }
+    }
+}
+
 void MapEntity::Move(int xD, int yD) {
     hasMovedOffScreen = true;
     oldPos = GetCurrentPos();
@@ -24,6 +38,7 @@ void MapEntity::Move(int xD, int yD) {
     newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
     newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
 
+    // update grid
     map->Clear(*this);
     SetPos(newPos);
     map->Add(*this);
@@ -112,10 +127,12 @@ bool Map::CheckForCollision(const HitBox& movingPiece, size_t ID)  {
     for (int x = movingPiece.origin.x; x < xBound; x++) {
         for (int y = movingPiece.origin.y; y < yBound; y++) {
                         
-            MapEntity& possibleEntity = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
-            if (possibleEntity.valid && possibleEntity.hasCollision &&
-                possibleEntity.ID != ID) {
-                return true;
+            MapEntityList entitiesAtPoint = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
+            for (MapEntity* entity : entitiesAtPoint.list) {
+                if (entity->valid && entity->hasCollision &&
+                    entity->ID != ID) {
+                    return true;
+                }
             }
         }
     }
