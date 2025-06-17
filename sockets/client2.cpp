@@ -106,7 +106,7 @@ class ClientDriver {
     Map map;
     Player* me;
     Display display;
-    bool updateDisplay;
+    std::vector<MapEntity*> entitiesToDraw;
 };
 
 ClientDriver driver;
@@ -180,8 +180,6 @@ void ProcessUserMovement(SDL_Event ev) {
         return;
     }
 
-    driver.updateDisplay = true;
-
     // first send this information to the server
     ImMoving moving;
     if (driver.currentMovementInfo.IsMovingUp()) {
@@ -246,8 +244,7 @@ void ProcessServerUpdate() {
             EntityMoveUpdate data = p.ReadAsType<EntityMoveUpdate>();
             MapEntity* entityToMove = driver.map.GetEntity(data.id);
             entityToMove->Move(data.xOff, data.yOff);
-            
-            driver.updateDisplay = true;
+            driver.entitiesToDraw.push_back(entityToMove);
         }
         
     }
@@ -283,15 +280,19 @@ void GetAllEntities() {
                 // get the type id from data
                 if (p.polyTypeID == TypeDetails<Player>::index) {
                     Player transmitted = p.ReadAsType<Player>();
-                    driver.map.SpawnEntity<>(transmitted);
+                    Player* player = driver.map.SpawnEntity<>(transmitted);
+                    driver.entitiesToDraw.push_back(player);
                 }
                 else if (p.polyTypeID == TypeDetails<Wall>::index) {
                     Wall transmitted = p.ReadAsType<Wall>();
-                    driver.map.SpawnEntity<>(transmitted);
+                    Wall* wall = driver.map.SpawnEntity<>(transmitted);
+                    driver.entitiesToDraw.push_back(wall);
                 }
                 else if (p.polyTypeID == TypeDetails<MapEntity>::index) {
                     MapEntity transmitted = p.ReadAsType<Player>();
                     driver.map.SpawnEntity<>(transmitted);
+                    MapEntity* entity = driver.map.SpawnEntity<>(transmitted);
+                    driver.entitiesToDraw.push_back(entity);
                 }
                 else {
                     Log::error("received NewEntity packet but it wasn't any of the expeted types");
@@ -353,7 +354,7 @@ int main() {
         }
 
         // finally, update the screen
-        driver.display.PublishNextFrame();
+        driver.display.PublishNextFrame(driver.entitiesToDraw);
     }
 
     cleanup();
