@@ -18,6 +18,17 @@ Networking::~Networking() {
     }
 }
 
+const char* Packet::ToString() {
+    // needs safety, rushed
+    if (flags.test(Packet::Flag_t::bNewEntity)) {
+        description = std::string("new entity packet: typeID: ") + std::to_string(polyTypeID);
+    }
+    else {
+        description = std::string("dont care packet");
+    }
+    return description.c_str();
+}
+
 int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
     if (packet.Size() > max_packet_size) {
         Log::error("Trying to send packet larger than buffer size allows."
@@ -31,6 +42,7 @@ int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
         Log::error("ER: SDLNet_TCP_Send: %s\n", SDLNet_GetError());
     }
 
+    Log::emit("Sent packet: %s\n", packet.ToString());
     return num_sent; 
 }
 
@@ -48,7 +60,9 @@ Packet Networking::ConsumePacket(TCPsocket& socket) {
         return Packet(); // empty constructor returns a non-valid Data object
     } 
 
-    return Packet::TCPToPacket(&temp_data[0], num_recv);
+    Packet p = Packet::TCPToPacket(&temp_data[0], num_recv);
+    Log::emit("Consumed packet(%dbytes): %s\n", num_recv, p.ToString());
+    return p;
 }
 
 void Networking::CloseSocket(TCPsocket* socket) {
@@ -195,13 +209,22 @@ bool Client::Connect() {
 void Packet::WriteBuffer(void* buffer) {
     memcpy(buffer, &flags.bits, sizeof(flags.bits));
     buffer = (char*) buffer + sizeof(flags.bits);
+    memcpy(buffer, &polyTypeID, sizeof(polyTypeID));
+    buffer = (char*) buffer + sizeof(polyTypeID);
     memcpy(buffer, data.get(), size);
 }
 
 Packet Packet::TCPToPacket(void* p_packet, size_t _size) {
+
+    if (_size - sizeof(Flag_t::bits_t) < 0) {
+        Log::error("Error in TCPToPacket\n");
+    }
     Packet newPacket;
     newPacket.flags = *reinterpret_cast<Flag_t::bits_t*>(p_packet);
     p_packet = (char*) p_packet + sizeof(Flag_t::bits_t);
+
+    newPacket.polyTypeID = *reinterpret_cast<short*>(p_packet);
+    p_packet = (char*) p_packet + sizeof(short);
 
     newPacket.data = std::make_shared<char[]>(_size - sizeof(Flag_t::bits_t));
     memcpy(newPacket.data.get(), p_packet, _size - sizeof(Flag_t::bits_t));

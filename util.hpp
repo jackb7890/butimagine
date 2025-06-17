@@ -93,7 +93,6 @@ struct Log {
     static void emit(First str, Args... args) {
         #if defined(LOG)
             printf(str, args...);
-        #elif defined(DBGBRK)
         #else
             return;
         #endif
