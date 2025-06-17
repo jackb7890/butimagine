@@ -34,6 +34,7 @@ class ServerDriver {
     public:
     Map map;
     Server ntwk;
+    std::vector<Player*> clientEntities;
 };
 
 ServerDriver driver;
@@ -58,6 +59,21 @@ void SendAllEntities(TCPsocket socket) {
         newPacket.EncodePoly(*entity, entity->GetTypeIndex());
         driver.ntwk.SendPacket(socket, newPacket);
     }
+    Packet newPacket(Packet::Flag_t::bEndOfPacketGroup);
+    driver.ntwk.SendPacket(socket, newPacket);
+}
+
+void SendPacketToAllButOne(Packet p, int socketIndx) {
+    for (int i = 0; i < driver.ntwk.MAX_SOCKETS; i++) {
+        TCPsocket clientSocket = driver.ntwk.clientSockets[i];
+        if (!clientSocket) {
+            continue;
+        }
+        if (i == socketIndx) {
+            continue;
+        }
+        driver.ntwk.SendPacket(clientSocket, p);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -75,7 +91,7 @@ int main(int argc, char* argv[]) {
     const int MAX_PLAYERS = Server::MAX_SOCKETS-1;
     std::vector<Player> clientPlayers;
 
-    int timeoutTime = 50'000; // in ms, so 50 seconds
+    int timeoutTime = 500; // in ms
     if (args.size() != 0) {
         timeoutTime = stoi(args[0]);
     }
@@ -91,7 +107,7 @@ int main(int argc, char* argv[]) {
     }
     
     bool runLoop = true;
-    const int WAIT_TIME = 300;
+    const int WAIT_TIME = 100;
     while (runLoop) {
 
         if (timeoutTime <= 0) {
@@ -105,16 +121,16 @@ int main(int argc, char* argv[]) {
             Log::error("Error returned by SDLNet_CheckSockets\n");
         }
         else if (clients_ready == 0) {
-            Log::emit("No clients ready at this time\n");
+            // Log::emit("No clients ready at this time\n");
             // no clients ready, process things in server work queue
         }
         else if (clients_ready > 0) {
-            Log::emit("One or more sockets ready\n");
+            // Log::emit("One or more sockets ready\n");
             if(SDLNet_SocketReady(driver.ntwk.serverSoc)) {
-                Log::emit("Server socket is ready\n)");
+                // Log::emit("Server socket is ready\n)");
                 int indx = driver.ntwk.TryAddClient();
-                if (indx > 0) {
-                    Player& joinedPlayer = driver.map.CreateEntity<Player>();
+                if (indx >= 0) {
+                    Player& joinedPlayer = driver.map.SpawnEntity<Player>();
                     joinedPlayer.multiplayerID = indx;
                     joinedPlayer.online = true;
                     // Send starter data to player client
@@ -127,9 +143,25 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                Log::emit("Client socket is ready\n)");
+                // Log::emit("Client socket is ready\n)");
 
                 Packet packet = driver.ntwk.ConsumePacket(driver.ntwk.clientSockets[socketIndx]);
+
+                // process client packet
+
+                // is it the client moving?
+                if (packet.flags.test(Packet::Flag_t::bMoving)) {
+                    // update our server map
+                    ImMoving moving = packet.ReadAsType<ImMoving>();
+                    Player* client = driver.clientEntities[socketIndx];
+                    client->Move(moving.xOff, moving.yOff);
+
+                    // send notifcation to the other clients about this update
+                    Packet outgoingPacket(Packet::Flag_t::bMoving);
+                    EntityMoveUpdate data = EntityMoveUpdate {client->ID, moving.xOff, moving.yOff};
+                    outgoingPacket.Encode<EntityMoveUpdate>(data);
+                    SendPacketToAllButOne(outgoingPacket, socketIndx);
+                }
             }
         }
     }

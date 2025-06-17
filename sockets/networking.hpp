@@ -11,11 +11,25 @@
 
 #include "../util.hpp"
 
+// DataTypes Packet wraps
+struct ImMoving {
+    int8_t xOff;
+    int8_t yOff;
+};
 
+struct EntityMoveUpdate {
+    size_t id;
+    int8_t xOff;
+    int8_t yOff;
+};
 
 // A very broad type thats supports the
 // send and receive functions
 struct Packet {
+    // private:
+    short polyTypeID;
+
+    public:
     struct alignas(short) Flag_t {
         typedef unsigned short bits_t;
         bits_t bits;
@@ -23,6 +37,7 @@ struct Packet {
         static const bits_t bQuit = 0x0001;
         static const bits_t bMoving = 0x0002;
         static const bits_t bNewEntity = 0x0004;
+        static const bits_t bEndOfPacketGroup = 0x0008;
         
         static const bits_t bNone = 0x0000;
 
@@ -35,39 +50,48 @@ struct Packet {
         }
 
         // set the bits specified to 1
-        inline void set(unsigned short bit) {
+        inline void set(bits_t bit) {
             bits |= bit;
         }
 
         // clears the bits specfied to 0
         // E.g. if bit = b0010 0101 and bits was = b0111 1011
         // bits would become = b0101 1010
-        inline void clear(unsigned short bit) {
+        inline void clear(bits_t bit) {
             bits &= ~bit;
+        }
+
+        inline bool test(bits_t testbits) {
+            return (bits & testbits) != 0;
         }
     };
 
-    public:
     std::shared_ptr<char[]> data;
     Flag_t flags;
     bool alreadyEncoded;
     size_t size;
+    std::string description;
 
-    Packet() : data(nullptr), size(0), flags(Flag_t::bNone), alreadyEncoded(false) {};
+    Packet() : data(nullptr), size(0), flags(Flag_t::bNone), alreadyEncoded(false), description("") {};
     Packet(Flag_t::bits_t bits) : data(nullptr), size(0), flags(bits), alreadyEncoded(false) {};
 
     static Packet TCPToPacket(void* p_packet, size_t _size);
+    const char* ToString();
 
     template <typename T>
     void Encode(T obj) {
         if (alreadyEncoded) {
-            Log::emit("uh oh reencoding data\n");
+            Log::error("uh oh reencoding data\n");
             return;
         }
-        data = std::make_shared<void>(sizeof(T));
-        std::memcpy(data.get(), &obj, sizeof(T));
+        
+        data = std::make_shared<char[sizeof(T)]>();
+        memcpy(data.get(), &obj, sizeof(T));
+        alreadyEncoded = true;
+        size = sizeof(T) + flags.size() + sizeof(size);
     }
 
+    // try to get rid of these
     template <typename T>
     void Encode(T obj, Flag_t _flags) {
         flags = _flags;
@@ -85,13 +109,8 @@ struct Packet {
     // that the first 32-bits of data is a unique type ID
     template <typename T>
     void EncodePoly(T obj, int typeID) {
-        if (alreadyEncoded) {
-            Log::emit("uh oh reencoding data\n");
-            return;
-        }
-        data = std::make_shared<char[]>(sizeof(T) + sizeof(typeID));
-        std::memcpy(data.get(), &obj, typeID);
-        std::memcpy(data.get() + sizeof(typeID), &obj, sizeof(T));
+        polyTypeID = typeID;
+        Encode(obj);
     }
 
     template <typename T>
