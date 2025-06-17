@@ -98,8 +98,9 @@ struct MovementCode {
     }
 };
 
-class ClientDriver {
+struct ClientDriver {
     public:
+    ClientDriver() {};
     MovementCode currentMovementInfo;
     MovementCode lastMovementInfo;
     Client clientInfo;
@@ -251,7 +252,6 @@ void ProcessServerUpdate() {
 }
 
 void GetAllEntities() {
-    driver.updateDisplay = true;
     // After init and before game loop below, we should start ask server for the world initialization data
     const int WAIT_TIME = 300;
     bool receivedStartingData = false;
@@ -312,14 +312,7 @@ void setup_screen() {
     if ( !win ) {
         Log::error("Failed to create a window! Error: %s\n", SDL_GetError());
     }
-    driver.ntwk.display = Display(win, &driver.ntwk.map);
-}
-
-void update_screen() {
-    if (driver.updateDisplay) {
-        display.Update();
-    }
-    driver.updateDisplay = false;
+    driver.display = Display(win, &driver.map);
 }
 
 int main() {

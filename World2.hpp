@@ -33,15 +33,8 @@ struct MapEntityList {
         list.push_back(en);
     }
 
-    bool Remove(MapEntity* en) {
-        for (int i = 0; i < list.length(); i++) {
-            if (!list[i]) {
-                continue;
-            }
-            if (list[i] == en) {
-                list.remove(i);
-            }
-        }
+    void Remove(MapEntity* en) {
+        list.remove(en);
     }
 };
 
@@ -121,6 +114,7 @@ class MapEntity {
     void MoveHoriz(int xD);
     void MoveVert(int yD);
     void Move(int xD, int yD);
+    void UpdateGrid(HitBox oldArea, HitBox newArea);
 
     virtual int GetTypeIndex() {
         return TypeDetails<MapEntity>::index;
@@ -252,17 +246,13 @@ struct Display {
     SDL_Surface* surface = nullptr;
     Map* map = nullptr;
 
+    Display() {};
     Display(SDL_Window* _w, Map* map);
-
     ~Display();
 
-    void Update(bool updateScreen = true);
-
-    void Erase(Player player, bool updateScreen = true);
-
-    void Update(Player player, bool updateScreen = true);
-
-    void Update(Wall wall, bool updateScreen = true);
-
-    void Update(MapEntity entity, bool updateScreen = true);
+    void DrawBackground();
+    void Publish();
+    void DrawEntity(MapEntity* entity);
+    void DrawEntities(std::vector<MapEntity*> entities);
+    void PublishNextFrame(std::vector<MapEntity*> entities);
 };
