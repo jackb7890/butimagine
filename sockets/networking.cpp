@@ -46,7 +46,7 @@ int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
     return num_sent; 
 }
 
-Packet Networking::ConsumePacket(TCPsocket& socket) {
+void Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsOut) {
     uint8_t temp_data[max_packet_size];
     int num_recv = SDLNet_TCP_Recv(socket, temp_data, max_packet_size);
     Log::emit("Consumed %d packets\n", num_recv);
@@ -60,9 +60,8 @@ Packet Networking::ConsumePacket(TCPsocket& socket) {
         return Packet(); // empty constructor returns a non-valid Data object
     } 
 
-    Packet p = Packet::TCPToPacket(&temp_data[0], num_recv);
-    Log::emit("Consumed packet(%dbytes): %s\n", num_recv, p.ToString());
-    return p;
+    Packet::TCPToPackets(&temp_data[0], num_recv, packetsOut);
+    Log::emit("Consumed packet(%dbytes): %s\n", num_recv, packetsOut[0].ToString());
 }
 
 void Networking::CloseSocket(TCPsocket* socket) {
@@ -207,6 +206,8 @@ bool Client::Connect() {
 // Packet functions
 // ----------------
 void Packet::WriteBuffer(void* buffer) {
+    memcpy(buffer, &size, sizeof(size));
+    buffer = (char*) buffer + sizeof(size); 
     memcpy(buffer, &flags.bits, sizeof(flags.bits));
     buffer = (char*) buffer + sizeof(flags.bits);
     memcpy(buffer, &polyTypeID, sizeof(polyTypeID));
@@ -220,6 +221,8 @@ Packet Packet::TCPToPacket(void* p_packet, size_t _size) {
         Log::error("Error in TCPToPacket\n");
     }
     Packet newPacket;
+    newPacket.size = *reinterpret_cast<decltype(size)*>(p_packet);
+    p_packet = (char*) p_packet + sizeof(decltype(size));
     newPacket.flags = *reinterpret_cast<Flag_t::bits_t*>(p_packet);
     p_packet = (char*) p_packet + sizeof(Flag_t::bits_t);
 
@@ -230,4 +233,32 @@ Packet Packet::TCPToPacket(void* p_packet, size_t _size) {
     memcpy(newPacket.data.get(), p_packet, _size - sizeof(Flag_t::bits_t));
 
     return newPacket;
+}
+
+void Packet::TCPToPackets(void* p_packet, size_t _size, std::vector<Packet>& packetsOut) {
+
+    if (_size - sizeof(Flag_t::bits_t) < 0) {
+        Log::error("Error in TCPToPacket\n");
+    }
+    Packet newPacket;
+    newPacket.size = *reinterpret_cast<decltype(size)*>(p_packet);
+    p_packet = (char*) p_packet + sizeof(decltype(size));
+
+    newPacket.flags = *reinterpret_cast<Flag_t::bits_t*>(p_packet);
+    p_packet = (char*) p_packet + sizeof(Flag_t::bits_t);
+
+    newPacket.polyTypeID = *reinterpret_cast<short*>(p_packet);
+    p_packet = (char*) p_packet + sizeof(short);
+
+    newPacket.data = std::make_shared<char[]>(newPacket.size);
+    memcpy(newPacket.data.get(), p_packet, newPacket.size);
+    p_packet = (char*) p_packet + newPacket.size;
+
+    packetsOut.push_back(newPacket);
+
+    long long remaining = _size - sizeof(Flag_t::bits_t) - sizeof(decltype(newPacket.size)) - sizeof(decltype(newPacket.polyTypeID)) - newPacket.size;
+    if (remaining > 0) {
+        // start of a new packet
+        TCPToPackets(p_packet, remaining, packetsOut);
+    }
 }
