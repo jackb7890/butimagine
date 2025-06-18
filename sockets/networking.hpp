@@ -76,7 +76,7 @@ struct Packet {
     Packet(Flag_t::bits_t bits) : data(nullptr), size(0), flags(bits), alreadyEncoded(false) {};
 
     static Packet TCPToPacket(void* p_packet, size_t _size);
-    static void TCPToPackets (void* p_packet, size_t _size, std::vector<Packet>& packetsOut);
+    static void TCPToPackets(void* p_packet, size_t _size, std::vector<Packet>& packetsOut);
     const char* ToString();
 
     template <typename T>
@@ -170,6 +170,7 @@ class Networking {
 
     int SendPacket(TCPsocket& socket, Packet& Packet);
     Packet ConsumePacket(TCPsocket& socket);
+    void ConsumePackets(TCPsocket& socket, std::vector<Packet>& outPackets);
     void CloseSocket(TCPsocket* socket);
     
     protected:

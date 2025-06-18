@@ -240,7 +240,7 @@ void ProcessServerUpdate() {
         // We have something from the server
         std::vector<Packet> consumedPackets;
         driver.clientInfo.ConsumePackets(driver.clientInfo.serverSoc, consumedPackets);
-        for (auto packet : consumedPackets) {
+        for (auto p : consumedPackets) {
             if (p.flags.test(Packet::Flag_t::bMoving)) {
                 // something has moved in the world
                 EntityMoveUpdate data = p.ReadAsType<EntityMoveUpdate>();
@@ -268,39 +268,40 @@ void GetAllEntities() {
                 continue;
             }
 
-            Packet p = driver.clientInfo.ConsumePacket(driver.clientInfo.serverSoc);
+            std::vector<Packet> consumedPackets;
+            driver.clientInfo.ConsumePackets(driver.clientInfo.serverSoc, consumedPackets);
             
-            if (p.flags.test(Packet::Flag_t::bEndOfPacketGroup)) {
-                receivedStartingData = true;
-                break;
+            for (auto p : consumedPackets) {
+                if (p.flags.test(Packet::Flag_t::bEndOfPacketGroup)) {
+                    receivedStartingData = true;
+                    break;
+                }
+                else if (p.flags.test(Packet::Flag_t::bNewEntity)) {
+                    // we need to build the entity type again
+                    
+                    // get the type id from data
+                    if (p.polyTypeID == TypeDetails<Player>::index) {
+                        Player transmitted = p.ReadAsType<Player>();
+                        Player* player = driver.map.SpawnEntity<>(transmitted);
+                        driver.entitiesToDraw.push_back(player);
+                    }
+                    else if (p.polyTypeID == TypeDetails<Wall>::index) {
+                        Wall transmitted = p.ReadAsType<Wall>();
+                        Wall* wall = driver.map.SpawnEntity<>(transmitted);
+                        driver.entitiesToDraw.push_back(wall);
+                    }
+                    else if (p.polyTypeID == TypeDetails<MapEntity>::index) {
+                        MapEntity transmitted = p.ReadAsType<Player>();
+                        driver.map.SpawnEntity<>(transmitted);
+                        MapEntity* entity = driver.map.SpawnEntity<>(transmitted);
+                        driver.entitiesToDraw.push_back(entity);
+                    }
+                    else {
+                        Log::error("received NewEntity packet but it wasn't any of the expeted types");
+                    }
+                    // RegisterNewEntity allocates memory and adds it to the list of entities;
+                }
             }
-
-            else if (p.flags.test(Packet::Flag_t::bNewEntity)) {
-                // we need to build the entity type again
-                
-                // get the type id from data
-                if (p.polyTypeID == TypeDetails<Player>::index) {
-                    Player transmitted = p.ReadAsType<Player>();
-                    Player* player = driver.map.SpawnEntity<>(transmitted);
-                    driver.entitiesToDraw.push_back(player);
-                }
-                else if (p.polyTypeID == TypeDetails<Wall>::index) {
-                    Wall transmitted = p.ReadAsType<Wall>();
-                    Wall* wall = driver.map.SpawnEntity<>(transmitted);
-                    driver.entitiesToDraw.push_back(wall);
-                }
-                else if (p.polyTypeID == TypeDetails<MapEntity>::index) {
-                    MapEntity transmitted = p.ReadAsType<Player>();
-                    driver.map.SpawnEntity<>(transmitted);
-                    MapEntity* entity = driver.map.SpawnEntity<>(transmitted);
-                    driver.entitiesToDraw.push_back(entity);
-                }
-                else {
-                    Log::error("received NewEntity packet but it wasn't any of the expeted types");
-                }
-                // RegisterNewEntity allocates memory and adds it to the list of entities;
-            }
-            
         }
     }
 
