@@ -57,7 +57,7 @@ void Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsO
             Log::emit("SDLNet_TCP_Recv: %sn\n", errmsg);
         }
         Log::error("Error in ConsumePacket, num_recv=%d\n", num_recv);
-        return Packet(); // empty constructor returns a non-valid Data object
+        return;
     } 
 
     Packet::TCPToPackets(&temp_data[0], num_recv, packetsOut);
