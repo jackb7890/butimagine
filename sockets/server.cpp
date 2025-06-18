@@ -142,23 +142,24 @@ int main(int argc, char* argv[]) {
                 }
 
                 // Log::emit("Client socket is ready\n)");
-
-                Packet packet = driver.ntwk.ConsumePacket(driver.ntwk.clientSockets[socketIndx]);
+                std::vector<Packet> consumedPackets;
+                driver.ntwk.ConsumePackets(driver.ntwk.clientSockets[socketIndx], consumedPackets);
 
                 // process client packet
+                for (auto packet : consumedPackets) {
+                    // is it the client moving?
+                    if (packet.flags.test(Packet::Flag_t::bMoving)) {
+                        // update our server map
+                        ImMoving moving = packet.ReadAsType<ImMoving>();
+                        Player* client = driver.clientEntities[socketIndx];
+                        client->Move(moving.xOff, moving.yOff);
 
-                // is it the client moving?
-                if (packet.flags.test(Packet::Flag_t::bMoving)) {
-                    // update our server map
-                    ImMoving moving = packet.ReadAsType<ImMoving>();
-                    Player* client = driver.clientEntities[socketIndx];
-                    client->Move(moving.xOff, moving.yOff);
-
-                    // send notifcation to the other clients about this update
-                    Packet outgoingPacket(Packet::Flag_t::bMoving);
-                    EntityMoveUpdate data = EntityMoveUpdate {client->ID, moving.xOff, moving.yOff};
-                    outgoingPacket.Encode<EntityMoveUpdate>(data);
-                    SendPacketToAllButOne(outgoingPacket, socketIndx);
+                        // send notifcation to the other clients about this update
+                        Packet outgoingPacket(Packet::Flag_t::bMoving);
+                        EntityMoveUpdate data = EntityMoveUpdate {client->ID, moving.xOff, moving.yOff};
+                        outgoingPacket.Encode<EntityMoveUpdate>(data);
+                        SendPacketToAllButOne(outgoingPacket, socketIndx);
+                    }
                 }
             }
         }
