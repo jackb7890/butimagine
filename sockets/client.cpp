@@ -238,16 +238,17 @@ void ProcessServerUpdate() {
             return;
         }
         // We have something from the server
-        Packet p = driver.clientInfo.ConsumePacket(driver.clientInfo.serverSoc);
-        
-        if (p.flags.test(Packet::Flag_t::bMoving)) {
-            // something has moved in the world
-            EntityMoveUpdate data = p.ReadAsType<EntityMoveUpdate>();
-            MapEntity* entityToMove = driver.map.GetEntity(data.id);
-            entityToMove->Move(data.xOff, data.yOff);
-            driver.entitiesToDraw.push_back(entityToMove);
+        std::vector<Packet> consumedPackets;
+        driver.clientInfo.ConsumePackets(driver.clientInfo.serverSoc, consumedPackets);
+        for (auto packet : consumedPackets) {
+            if (p.flags.test(Packet::Flag_t::bMoving)) {
+                // something has moved in the world
+                EntityMoveUpdate data = p.ReadAsType<EntityMoveUpdate>();
+                MapEntity* entityToMove = driver.map.GetEntity(data.id);
+                entityToMove->Move(data.xOff, data.yOff);
+                driver.entitiesToDraw.push_back(entityToMove);
+            }
         }
-        
     }
 }
 
@@ -347,7 +348,7 @@ int main() {
         }
 
         // finally, update the screen
-        driver.display.PublishNextFrame(driver.entitiesToDraw);
+        driver.display.PublishNextFrame(driver.map.allEntities);
     }
 
     cleanup();

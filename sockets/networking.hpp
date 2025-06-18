@@ -76,6 +76,7 @@ struct Packet {
     Packet(Flag_t::bits_t bits) : data(nullptr), size(0), flags(bits), alreadyEncoded(false) {};
 
     static Packet TCPToPacket(void* p_packet, size_t _size);
+    static void TCPToPackets (void* p_packet, size_t _size, std::vector<Packet>& packetsOut);
     const char* ToString();
 
     template <typename T>
@@ -88,7 +89,7 @@ struct Packet {
         data = std::make_shared<char[sizeof(T)]>();
         memcpy(data.get(), &obj, sizeof(T));
         alreadyEncoded = true;
-        size = sizeof(T) + flags.size() + sizeof(size);
+        size = sizeof(T);
     }
 
     // try to get rid of these
