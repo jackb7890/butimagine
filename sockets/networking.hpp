@@ -8,6 +8,7 @@
 #include <string>
 #include <typeinfo>
 #include <cstring>
+#include <queue>
 
 #include "../util.hpp"
 
@@ -71,13 +72,19 @@ struct Packet {
     bool alreadyEncoded;
     size_t size;
     std::string description;
+    bool unfinished;
 
-    Packet() : data(nullptr), size(0), flags(Flag_t::bNone), alreadyEncoded(false), description("") {};
-    Packet(Flag_t::bits_t bits) : data(nullptr), size(0), flags(bits), alreadyEncoded(false) {};
+    static const int MAX_INCOMING_PACKET_SIZE = 255;
+    static const int EXPECTED_BASE_PACKET_SIZE = sizeof(flags.bits) + sizeof(size) + sizeof(polyTypeID);
 
-    static Packet TCPToPacket(void* p_packet, size_t _size);
+    Packet() : unfinished(false), data(nullptr), size(0), flags(Flag_t::bNone), alreadyEncoded(false), description("") {};
+    Packet(Flag_t::bits_t bits) : unfinished(false), data(nullptr), size(0), flags(bits), alreadyEncoded(false) {};
+
+    static Packet TCPToPacket(void** p_packet, size_t _size, size_t* remaining);
     static void TCPToPackets(void* p_packet, size_t _size, std::vector<Packet>& packetsOut);
     const char* ToString();
+
+    bool inline IsInvalid() { return data == nullptr || size == 0; }
 
     template <typename T>
     void Encode(T obj) {
@@ -164,10 +171,19 @@ class Networking {
     static const int max_packet_size = 256; // (in bytes)
     static const int server_port_num = 8099;
 
+    static constexpr int buf1Size = 16;
+    Packet buf1[buf1Size];
+    int buf1Next = 0;
+    int buf1Count = 0;
+    
+    std::queue<Packet> buf2;
+
     SDLNet_SocketSet socket_set;
     IPaddress serverIp;
     TCPsocket serverSoc;
 
+    void PushUnfinishedPacket(Packet p);
+    Packet PopUnfinishedPacket();
     int SendPacket(TCPsocket& socket, Packet& Packet);
     Packet ConsumePacket(TCPsocket& socket);
     void ConsumePackets(TCPsocket& socket, std::vector<Packet>& outPackets);

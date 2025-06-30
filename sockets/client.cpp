@@ -255,14 +255,14 @@ void ProcessServerUpdate() {
 void GetAllEntities() {
     // After init and before game loop below, we should start ask server for the world initialization data
     const int WAIT_TIME = 300;
-    bool receivedStartingData = false;
-    while (!receivedStartingData) {
+    bool recvComplete = false;
+    while (!recvComplete) {
         int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
         if (clients_ready == -1) {
             Log::error("Error returned by SDLNet_CheckSockets\n");
         }
         else if (clients_ready > 0) {
-        
+            
             if(!SDLNet_SocketReady(driver.clientInfo.serverSoc)) {
                 Log::emit("SDLnET\n)");
                 continue;
@@ -273,7 +273,7 @@ void GetAllEntities() {
             
             for (auto p : consumedPackets) {
                 if (p.flags.test(Packet::Flag_t::bEndOfPacketGroup)) {
-                    receivedStartingData = true;
+                    recvComplete = true;
                     break;
                 }
                 else if (p.flags.test(Packet::Flag_t::bNewEntity)) {
