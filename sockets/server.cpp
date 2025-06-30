@@ -57,9 +57,11 @@ void SendAllEntities(TCPsocket socket) {
     for (MapEntity* entity : driver.map.allEntities) {
         Packet newPacket(Packet::Flag_t::bNewEntity);
         newPacket.EncodePoly(*entity, entity->GetTypeIndex());
+        Log::emit("Sending Initial Entity with type size: %d, newPacket.size is %d\n", sizeof(*entity), newPacket.size);
         driver.ntwk.SendPacket(socket, newPacket);
     }
     Packet newPacket(Packet::Flag_t::bEndOfPacketGroup);
+    Log::emit("Sending Terminate Packet for InitialEntityTransfer newPacket.size is %d\n", newPacket.size);
     driver.ntwk.SendPacket(socket, newPacket);
 }
 
@@ -124,8 +126,10 @@ int main(int argc, char* argv[]) {
         }
         else if (clients_ready > 0) {
             // Log::emit("One or more sockets ready\n");
+            int newPlayerInd = -1;
             if(SDLNet_SocketReady(driver.ntwk.serverSoc)) {
                 // Log::emit("Server socket is ready\n)");
+                newPlayerInd = driver.ntwk.next_ind;
                 int indx = driver.ntwk.TryAddClient();
                 if (indx >= 0) {
                     Player* joinedPlayer = driver.map.SpawnEntity<Player>();
@@ -137,6 +141,9 @@ int main(int argc, char* argv[]) {
             }
             
             for (int socketIndx = 0; socketIndx < driver.ntwk.MAX_SOCKETS; socketIndx++) {
+                if (newPlayerInd == socketIndx) {
+                    continue; // i think client might be saying its ready right after but has not packets
+                }
                 if (!SDLNet_SocketReady(driver.ntwk.clientSockets[socketIndx])) {
                     continue;
                 }
