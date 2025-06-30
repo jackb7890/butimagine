@@ -20,11 +20,20 @@ Networking::~Networking() {
 
 const char* Packet::ToString() {
     // needs safety, rushed
-    if (flags.test(Packet::Flag_t::bNewEntity)) {
+    if (flags.test(Flag_t::bNewEntity)) {
         description = std::string("new entity packet: typeID: ") + std::to_string(polyTypeID);
     }
+    else if (flags.test(Flag_t::bQuit)) {
+        description = std::string("quit packet");
+    }
+    else if (flags.test(Flag_t::bMoving)) {
+        description = std::string("movement packet");
+    }
+    else if (flags.test(Flag_t::bEndOfPacketGroup)) {
+        description = std::string("packet list terminator packet");
+    }
     else {
-        description = std::string("dont care packet");
+        description = std::string("unknown packet type");
     }
     return description.c_str();
 }
@@ -61,6 +70,12 @@ void Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsO
     } 
 
     Packet::TCPToPackets(&temp_data[0], num_recv, packetsOut);
+
+    if (packetsOut.empty()) {
+        Log::emit("ConsumePackets failed: no packet read\n");
+        return;
+    }
+    
     Log::emit("Consumed packet(%dbytes): %s\n", num_recv, packetsOut[0].ToString());
 }
 
@@ -206,59 +221,118 @@ bool Client::Connect() {
 // Packet functions
 // ----------------
 void Packet::WriteBuffer(void* buffer) {
+    Log::emit("Writing Packet to buffer...\n");
+
     memcpy(buffer, &size, sizeof(size));
+    Log::emit("Encoding %d bytes for size(%d)\n", sizeof(size), size);
     buffer = (char*) buffer + sizeof(size); 
+
     memcpy(buffer, &flags.bits, sizeof(flags.bits));
+    Log::emit("Encoding %d bytes for flags.bits(%d)\n", sizeof(flags.bits), size);
     buffer = (char*) buffer + sizeof(flags.bits);
+
     memcpy(buffer, &polyTypeID, sizeof(polyTypeID));
+    Log::emit("Encoding %d bytes for polyTypeID(%d)\n", sizeof(polyTypeID), polyTypeID);
     buffer = (char*) buffer + sizeof(polyTypeID);
+
     memcpy(buffer, data.get(), size);
+    Log::emit("Encoding %d bytes for data\n", size);
 }
 
-Packet Packet::TCPToPacket(void* p_packet, size_t _size) {
-
-    if (_size - sizeof(Flag_t::bits_t) < 0) {
-        Log::error("Error in TCPToPacket\n");
+void Networking::PushUnfinishedPacket(Packet p) {
+    if (buf1Count == buf1Size) {
+        // buf1 (array) is full, use buf2
+        buf2.push(p);
     }
+    else {
+        // save in quicker access buf1
+        buf1[buf1Next] = p;
+        buf1Count++;
+        buf1Next = (buf1Next + 1 ) % buf1Size;
+    }   
+}
+
+Packet Networking::PopUnfinishedPacket() {
+    if (buf1Count == 0 && buf2.size() == 0) {
+        // error?
+        return Packet();
+    }
+
+    if (buf1Count != 0) {
+        // buf1 (array) is full, use buf2
+        buf1Next = (buf1Next - 1 ) % buf1Size;
+        return buf1[buf1Next];
+    }
+    else {
+        // get from buf2
+        Packet retVal = buf2.front();
+        buf2.pop();
+        return retVal;
+    }   
+}
+
+// advances the pointer to pointer p_packet
+Packet Packet::TCPToPacket(void** p_packet, size_t _size, size_t* remaining = nullptr) {
+    // assert size > 0
+    if (remaining) {
+        *remaining = 0;
+    }
+    // we need something to make sure we at least have size data to read
+    if (_size < EXPECTED_BASE_PACKET_SIZE) {
+        Log::emit("TcpToPacket failed: _size too small\n");
+        return Packet();
+    }
+
     Packet newPacket;
-    newPacket.size = *reinterpret_cast<decltype(size)*>(p_packet);
-    p_packet = (char*) p_packet + sizeof(decltype(size));
-    newPacket.flags = *reinterpret_cast<Flag_t::bits_t*>(p_packet);
-    p_packet = (char*) p_packet + sizeof(Flag_t::bits_t);
+    newPacket.size = *reinterpret_cast<decltype(size)*>(*p_packet);
 
-    newPacket.polyTypeID = *reinterpret_cast<short*>(p_packet);
-    p_packet = (char*) p_packet + sizeof(short);
+    if (newPacket.size > MAX_INCOMING_PACKET_SIZE) {
+        Log::emit("TcpToPacket failed: Packet size too large\n"
+        "\tnewPacket: %d _size: %d\n");
+        return Packet();
+    }
+    else if (newPacket.size < EXPECTED_BASE_PACKET_SIZE) {
+        Log::emit("TcpToPacket failed: Packet size too small\n"
+        "\tnewPacket: %d _size: %d\n");
+        return Packet();
+    }
 
-    newPacket.data = std::make_shared<char[]>(_size - sizeof(Flag_t::bits_t));
-    memcpy(newPacket.data.get(), p_packet, _size - sizeof(Flag_t::bits_t));
+    if (_size - EXPECTED_BASE_PACKET_SIZE < newPacket.size) {
+        Log::emit("TcpToPacket: packet unfinished\n");
+        newPacket.unfinished = true;
+    }
 
+    void* p_packet_orig = *p_packet;
+
+    *p_packet = (char*) *p_packet + sizeof(decltype(size));
+    newPacket.flags = *reinterpret_cast<Flag_t::bits_t*>(*p_packet);
+    *p_packet = (char*) *p_packet + sizeof(Flag_t::bits_t);
+
+    newPacket.polyTypeID = *reinterpret_cast<short*>(*p_packet);
+    *p_packet = (char*) *p_packet + sizeof(short);
+
+    newPacket.data = std::make_shared<char[]>(newPacket.size);
+    memcpy(newPacket.data.get(), *p_packet, newPacket.size);
+
+    *p_packet = (char*) *p_packet + newPacket.size;
+
+    if (remaining) {
+        *remaining  = _size - ((char*)*p_packet - (char*)p_packet_orig);
+        // assert this is 0 or more
+    }
     return newPacket;
 }
 
 void Packet::TCPToPackets(void* p_packet, size_t _size, std::vector<Packet>& packetsOut) {
+    // assert _size > 0
 
-    if (_size - sizeof(Flag_t::bits_t) < 0) {
-        Log::error("Error in TCPToPacket\n");
+    size_t remaining;
+    Packet newPacket = Packet::TCPToPacket(&p_packet, _size, &remaining);
+    if (!newPacket.IsInvalid()) {
+        packetsOut.push_back(newPacket);
     }
-    Packet newPacket;
-    newPacket.size = *reinterpret_cast<decltype(size)*>(p_packet);
-    p_packet = (char*) p_packet + sizeof(decltype(size));
 
-    newPacket.flags = *reinterpret_cast<Flag_t::bits_t*>(p_packet);
-    p_packet = (char*) p_packet + sizeof(Flag_t::bits_t);
-
-    newPacket.polyTypeID = *reinterpret_cast<short*>(p_packet);
-    p_packet = (char*) p_packet + sizeof(short);
-
-    newPacket.data = std::make_shared<char[]>(newPacket.size);
-    memcpy(newPacket.data.get(), p_packet, newPacket.size);
-    p_packet = (char*) p_packet + newPacket.size;
-
-    packetsOut.push_back(newPacket);
-
-    long long remaining = _size - sizeof(Flag_t::bits_t) - sizeof(decltype(newPacket.size)) - sizeof(decltype(newPacket.polyTypeID)) - newPacket.size;
     if (remaining > 0) {
-        // start of a new packet
-        TCPToPackets(p_packet, remaining, packetsOut);
+        Packet::TCPToPackets(p_packet, remaining, packetsOut);
     }
 }
