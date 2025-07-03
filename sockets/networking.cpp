@@ -20,34 +20,35 @@ Networking::~Networking() {
 
 const char* Packet::ToString() {
     // needs safety, rushed
+    this->description = std::string("packet datasize: ") + std::to_string(size) + std::string(" ");
     if (flags.test(Flag_t::bNewEntity)) {
-        description = std::string("new entity packet: typeID: ") + std::to_string(polyTypeID);
+        description += std::string("new entity packet: typeID: ") + std::to_string(polyTypeID);
     }
     else if (flags.test(Flag_t::bQuit)) {
-        description = std::string("quit packet");
+        description += std::string("quit packet");
     }
     else if (flags.test(Flag_t::bMoving)) {
-        description = std::string("movement packet");
+        description += std::string("movement packet");
     }
     else if (flags.test(Flag_t::bEndOfPacketGroup)) {
-        description = std::string("packet list terminator packet");
+        description += std::string("packet list terminator packet");
     }
     else {
-        description = std::string("unknown packet type");
+        description += std::string("unknown packet type");
     }
     return description.c_str();
 }
 
 int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
-    if (packet.Size() > max_packet_size) {
+    if (packet.EncodeSize() > max_packet_size) {
         Log::error("Trying to send packet larger than buffer size allows."
-            "\n\tpacket.size: %d, maximum: %d\n", packet.Size(), max_packet_size);
+            "\n\tpacket.size: %d, maximum: %d\n", packet.EncodeSize(), max_packet_size);
     }
     uint8_t temp_data[max_packet_size];
     packet.WriteBuffer(&temp_data[0]);
 
-    int num_sent = SDLNet_TCP_Send(socket, temp_data, (int)packet.Size());
-    if(num_sent < packet.Size()) {
+    int num_sent = SDLNet_TCP_Send(socket, temp_data, (int)packet.EncodeSize());
+    if(num_sent < packet.EncodeSize()) {
         Log::error("ER: SDLNet_TCP_Send: %s\n", SDLNet_GetError());
     }
 
@@ -237,6 +238,9 @@ void Packet::WriteBuffer(void* buffer) {
 
     memcpy(buffer, data.get(), size);
     Log::emit("Encoding %d bytes for data\n", size);
+
+    size_t totalSize = sizeof(size) + sizeof(flags.bits) + sizeof(polyTypeID) + size;
+    Log::emit("Total encoded size: %d\n", totalSize);
 }
 
 void Networking::PushUnfinishedPacket(Packet p) {
@@ -291,11 +295,6 @@ Packet Packet::TCPToPacket(void** p_packet, size_t _size, size_t* remaining = nu
         "\tnewPacket: %d _size: %d\n");
         return Packet();
     }
-    else if (newPacket.size < EXPECTED_BASE_PACKET_SIZE) {
-        Log::emit("TcpToPacket failed: Packet size too small\n"
-        "\tnewPacket: %d _size: %d\n");
-        return Packet();
-    }
 
     if (_size - EXPECTED_BASE_PACKET_SIZE < newPacket.size) {
         Log::emit("TcpToPacket: packet unfinished\n");
@@ -317,7 +316,7 @@ Packet Packet::TCPToPacket(void** p_packet, size_t _size, size_t* remaining = nu
     *p_packet = (char*) *p_packet + newPacket.size;
 
     if (remaining) {
-        *remaining  = _size - ((char*)*p_packet - (char*)p_packet_orig);
+        *remaining  = _size - (((char*)*p_packet) - (char*)p_packet_orig);
         // assert this is 0 or more
     }
     return newPacket;
