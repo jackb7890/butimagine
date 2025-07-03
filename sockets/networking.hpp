@@ -84,7 +84,7 @@ struct Packet {
     static void TCPToPackets(void* p_packet, size_t _size, std::vector<Packet>& packetsOut);
     const char* ToString();
 
-    bool inline IsInvalid() { return data == nullptr || size == 0; }
+    bool inline IsInvalid() { return unfinished; }
 
     template <typename T>
     void Encode(T obj) {
@@ -135,6 +135,7 @@ struct Packet {
 
     template <typename T>
     T ReadAsType(size_t byteoffset = 0) {
+        // assert !unfinished
         T dataAsTypeT;
         std::memcpy(&dataAsTypeT, data.get() + byteoffset, sizeof(T));
         return dataAsTypeT;
@@ -152,8 +153,8 @@ struct Packet {
         flags.clear(_flags);
     }
 
-    inline size_t Size() {
-        return flags.size() + size;
+    inline size_t EncodeSize() {
+        return size + EXPECTED_BASE_PACKET_SIZE;
     }
 };
 
