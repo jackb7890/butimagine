@@ -54,15 +54,20 @@ void ProcessData(Packet& data, int client) {
 
 void SendAllEntities(TCPsocket socket) {
     // Send them all the entities on the world
+    Log::emit("Running SendAllEntities...\n");
     for (MapEntity* entity : driver.map.allEntities) {
         Packet newPacket(Packet::Flag_t::bNewEntity);
         newPacket.EncodePoly(*entity, entity->GetTypeIndex());
-        Log::emit("Sending Initial Entity with type size: %d, newPacket.size is %d\n", sizeof(*entity), newPacket.size);
+        Log::emit("Sending one entity... total encoded size %d bytes\n", newPacket.EncodeSize());
         driver.ntwk.SendPacket(socket, newPacket);
     }
+
     Packet newPacket(Packet::Flag_t::bEndOfPacketGroup);
-    Log::emit("Sending Terminate Packet for InitialEntityTransfer newPacket.size is %d\n", newPacket.size);
+
+    Log::emit("Sending end-of-list packet... total encoded size %d bytes\n", newPacket.EncodeSize());
     driver.ntwk.SendPacket(socket, newPacket);
+
+    Log::emit("Finished SendAllEntities - success!\n");
 }
 
 void SendPacketToAllButOne(Packet p, int socketIndx) {
@@ -128,7 +133,7 @@ int main(int argc, char* argv[]) {
             // Log::emit("One or more sockets ready\n");
             int newPlayerInd = -1;
             if(SDLNet_SocketReady(driver.ntwk.serverSoc)) {
-                // Log::emit("Server socket is ready\n)");
+                Log::emit("Server: new player has connected!\n");
                 newPlayerInd = driver.ntwk.next_ind;
                 int indx = driver.ntwk.TryAddClient();
                 if (indx >= 0) {
@@ -148,14 +153,18 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                // Log::emit("Client socket is ready\n)");
+                Log::emit("Incoming packets from client %d\n", socketIndx);
                 std::vector<Packet> consumedPackets;
                 driver.ntwk.ConsumePackets(driver.ntwk.clientSockets[socketIndx], consumedPackets);
 
+                if (consumedPackets.size() == 0) {
+                    Log::emit("Server: error in reading packets from client %d\n", socketIndx);
+                }
                 // process client packet
                 for (auto packet : consumedPackets) {
                     // is it the client moving?
                     if (packet.flags.test(Packet::Flag_t::bMoving)) {
+                        Log::emit("client %d sent moving packet\n", socketIndx);
                         // update our server map
                         ImMoving moving = packet.ReadAsType<ImMoving>();
                         Player* client = driver.clientEntities[socketIndx];
