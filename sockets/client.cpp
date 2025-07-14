@@ -254,17 +254,22 @@ void ProcessServerUpdate() {
 
 void GetAllEntities() {
     // After init and before game loop below, we should start ask server for the world initialization data
+
+    Log::emit("Start of GetAllEntities (initial server transmission)\n");
     const int WAIT_TIME = 300;
     bool recvComplete = false;
     while (!recvComplete) {
         int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
-        if (clients_ready == -1) {
+        Log::emit("GetAllEntites: clients_ready=%d\n", clients_ready);
+        if (clients_ready < 0) {
             Log::error("Error returned by SDLNet_CheckSockets\n");
         }
-        else if (clients_ready > 0) {
-            
+        else if (clients_ready == 0) {
+            Log::emit("GetAllEntities waiting for socket...\n");
+        }
+        else {
             if(!SDLNet_SocketReady(driver.clientInfo.serverSoc)) {
-                Log::emit("SDLnET\n)");
+                Log::error("Error: CheckSockets shows > 0 ready, but SocketReady is false\n)");
                 continue;
             }
 
@@ -273,31 +278,37 @@ void GetAllEntities() {
             
             for (auto p : consumedPackets) {
                 if (p.flags.test(Packet::Flag_t::bEndOfPacketGroup)) {
+                    Log::emit("GetAllEntities: recevied end-of-list packet\n");
                     recvComplete = true;
                     break;
                 }
                 else if (p.flags.test(Packet::Flag_t::bNewEntity)) {
                     // we need to build the entity type again
                     
+                    Log::emit("GetAllEntities: received new-entity packet\n");
+
                     // get the type id from data
                     if (p.polyTypeID == TypeDetails<Player>::index) {
+                        Log::emit("new-entity packet is a Player\n");
                         Player transmitted = p.ReadAsType<Player>();
                         Player* player = driver.map.SpawnEntity<>(transmitted);
                         driver.entitiesToDraw.push_back(player);
                     }
                     else if (p.polyTypeID == TypeDetails<Wall>::index) {
+                        Log::emit("new-entity packet is a Wall\n");
                         Wall transmitted = p.ReadAsType<Wall>();
                         Wall* wall = driver.map.SpawnEntity<>(transmitted);
                         driver.entitiesToDraw.push_back(wall);
                     }
                     else if (p.polyTypeID == TypeDetails<MapEntity>::index) {
+                        Log::emit("new-entity packet is a MapEntity\n");
                         MapEntity transmitted = p.ReadAsType<Player>();
                         driver.map.SpawnEntity<>(transmitted);
                         MapEntity* entity = driver.map.SpawnEntity<>(transmitted);
                         driver.entitiesToDraw.push_back(entity);
                     }
                     else {
-                        Log::error("received NewEntity packet but it wasn't any of the expeted types");
+                        Log::error("GetAllEntites: Error unexpected new-entity polyTypeID=%d\n", p.polyTypeID);
                     }
                     // RegisterNewEntity allocates memory and adds it to the list of entities;
                 }
