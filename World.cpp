@@ -93,7 +93,10 @@ MapEntity* Map::GetEntity(size_t id) {
 }
 
 Display::Display(SDL_Window* _w, Map* _map) : window(_w), map(_map) {
-    surface = SDL_GetWindowSurface(window);
+}
+
+SDL_Surface* Display::GetCurrentSurface() {
+    return SDL_GetWindowSurface(window);
 }
 
 Display::~Display() {
@@ -102,7 +105,9 @@ Display::~Display() {
 
 void Display::DrawBackground() {
     SDL_Rect bg = {0, 0, MAP_WIDTH, MAP_HEIGHT};
-    SDL_FillRect(surface, &bg, 0);
+    SDL_Surface* surface = GetCurrentSurface();
+    unsigned color = RGBColor(0, 0, 0).ConvertToSDL(surface);
+    SDL_FillRect(surface, &bg, color);
 }
 
 void Display::Publish() {
@@ -111,6 +116,7 @@ void Display::Publish() {
 
 void Display::DrawEntity(MapEntity* entity) {
     SDL_Rect rect = entity->GetSDLRect();
+    SDL_Surface* surface = GetCurrentSurface();
     SDL_FillRect(surface, &rect, entity->color.ConvertToSDL(surface));
 }
 

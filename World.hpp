@@ -243,13 +243,13 @@ struct Map {
 // TODO move this to util
 struct Display {
     SDL_Window* window = nullptr;
-    SDL_Surface* surface = nullptr;
     Map* map = nullptr;
 
     Display() {};
     Display(SDL_Window* _w, Map* map);
     ~Display();
 
+    SDL_Surface* GetCurrentSurface();
     void DrawBackground();
     void Publish();
     void DrawEntity(MapEntity* entity);

@@ -5,7 +5,14 @@ for /f "delims=" %%x in (hehehe) do set nowayitwasthathard=%%x
 call %nowayitwasthathard%
 del hehehe
 
-set PATH=%PATH%;%~dp0\scripts
+set OLD_PATH=%PATH%
+set PROJ_DIR=%~dp0
 
-set VCPKG_INC="%~dp0\..\butimagine\build\vcpkg_installed\x64-windows\include"
+set VCPKG_INC="%PROJ_DIR%\..\butimagine\build\vcpkg_installed\x64-windows\include"
 set VCPKG_ROOT_F=%VCPKG_ROOT:\=/%
+
+set DEBUG_BIN=%PROJ_DIR%\build\Debug\
+set RELEASE_BIN=%PROJ_DIR%\build\Release\
+
+:: debug_bin is on the path so its easier running project when debugging
+set PATH=%PATH%;%PROJ_DIR%;%PROJ_DIR%\scripts;%DEBUG_BIN%;
