@@ -299,7 +299,7 @@ Packet Networking::PopUnfinishedPacket() {
 // our Packet type
 Packet Packet::TCPToPacket(void** p_packet, size_t _size, size_t* remaining = nullptr) {
     // assert size > 0
-    Log::emit("Running TCPToPacket | _size=%d\n", _size);
+    Log::emit("Running TCPToPacket: _size=%d\n", _size);
     if (remaining) {
         *remaining = 0;
     }
@@ -312,22 +312,22 @@ Packet Packet::TCPToPacket(void** p_packet, size_t _size, size_t* remaining = nu
     Packet newPacket;
     newPacket.size = *reinterpret_cast<decltype(size)*>(*p_packet);
 
+    Log::emit("\tTCPToPacket: newPacket.size=%d\n", newPacket.size);
+
     if (newPacket.size > MAX_INCOMING_PACKET_SIZE) {
         Log::emit("TCPToPacket failed: Packet size too large\n"
         "\tnewPacket: %d _size: %d\n");
         return Packet();
     }
 
-    int payload_size = _size - EXPECTED_BASE_PACKET_SIZE;
-    if (payload_size < 0) {
-        Log::error("payload_size < 0");
+    size_t sizeWoutFlags = _size - EXPECTED_BASE_PACKET_SIZE;
+
+    if (sizeWoutFlags < newPacket.size) {
+        Log::error("can this happen? TCPtoPacket processed incomplete Packet\n"
+        "\t(TCPToPacket was called with buffer of size=%d, but decoded packet is of size=%d)\n",_size, newPacket.size);
     }
 
-    if (payload_size < newPacket.size) {
-        Log::error("can this happen? TCPtoPacket processed incomplete Packet\n");
-    }
-
-    if (payload_size > newPacket.size) {
+    if (sizeWoutFlags > newPacket.size) {
         Log::emit("incoming TCP data is multiple packets\n");
         newPacket.unfinished = true;
     }

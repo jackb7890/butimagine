@@ -255,6 +255,7 @@ struct Display {
     Display(SDL_Window* _w, Map* map);
     ~Display();
 
+    SDL_Surface* GetCurrentSurface();
     void DrawBackground();
     void Publish();
     void DrawEntity(MapEntity* entity);
