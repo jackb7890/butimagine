@@ -51,6 +51,10 @@ struct MovementCode {
         wasd = {0, 0, 0, 0};
     }
 
+    int asBits() {
+        return wasd[D] | (wasd[S] << 1) | (wasd[A] << 2) | (wasd[W] << 3);
+    }
+
     void set(MovementKey mvkey) {
         if (mvkey >= wasd.size()) {
             Log::emit("Unexpected mvkey value outside of array range: %d\n", mvkey);
@@ -100,14 +104,16 @@ struct MovementCode {
 
 struct ClientDriver {
     public:
-    ClientDriver() {};
     MovementCode currentMovementInfo;
+    bool justMoved;
     MovementCode lastMovementInfo;
     Client clientInfo;
     Map map;
     Player* me;
     Display display;
     std::vector<MapEntity*> entitiesToDraw;
+
+    ClientDriver() : justMoved(false) {};
 };
 
 ClientDriver driver;
@@ -132,78 +138,8 @@ bool InputIsUserMovement(const SDL_Event& ev) {
     return false;
 }
 
-void ProcessUserMovement(SDL_Event ev) {
-    if (ev.type == SDL_KEYDOWN) {
-        SDL_Keycode key = ev.key.keysym.sym;
-        switch (key) {
-        case SDLK_w:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::W);
-            break;
-        case SDLK_a:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::A);
-            break;
-        case SDLK_s:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::S);
-            break;
-        case SDLK_d:
-            driver.currentMovementInfo.set(MovementCode::MovementKey::D);
-            break;
-        default:
-            Log::error("Err: Calling PrcessUserMovement for unexpected key press");
-            break;
-        }
-    }
-    else if (ev.type == SDL_KEYUP) {
-        SDL_Keycode key = ev.key.keysym.sym;
-        switch (key) {
-        case SDLK_w:
-            driver.currentMovementInfo.clear(MovementCode::MovementKey::W);
-            break;
-        case SDLK_a:
-            driver.currentMovementInfo.clear(MovementCode::MovementKey::A);
-            break;
-        case SDLK_s:
-            driver.currentMovementInfo.clear(MovementCode::MovementKey::S);
-            break;
-        case SDLK_d:
-            driver.currentMovementInfo.clear(MovementCode::MovementKey::D);
-            break;
-        default:
-            Log::error("Err: Calling PrcessUserMovement for unexpected key unpress");
-            break;
-        }
-    }
-    else {
-        Log::error("Err: Calling PrcessUserMovement for unexpected input");
-    }
-
-    if (!driver.currentMovementInfo.IsMoving()) {
-        return;
-    }
-
-    // first send this information to the server
-    ImMoving moving;
-    if (driver.currentMovementInfo.IsMovingUp()) {
-        moving.yOff = 1;
-    }
-    else if (driver.currentMovementInfo.IsMovingDown()) {
-        moving.yOff = -1;
-    }
-
-    if (driver.currentMovementInfo.IsMovingRight()) {
-        moving.xOff = 1;
-    }
-    else if (driver.currentMovementInfo.IsMovingLeft()) {
-        moving.xOff = -1;
-    }
-
-    Packet newPacket(Packet::Flag_t::bMoving);
-    newPacket.Encode(moving);
-    driver.clientInfo.SendPacket(driver.clientInfo.serverSoc, newPacket);
-
-    // next update our own map
-    
-
+std::pair<int, bool> EventGetMovementInfo(SDL_Event ev) {
+    return std::pair(ev.key.keysym.sym, ev.type == SDL_KEYUP);
 }
 
 bool InputIsQuitGame(const SDL_Event& ev) {
@@ -213,18 +149,107 @@ bool InputIsQuitGame(const SDL_Event& ev) {
 // returns false to kill program.
 // true otherwise
 bool ProcessUserInput(SDL_Event ev) {
+
+    Log::emit("Running ProcessUserInput...\n");
+
+    if (InputIsQuitGame(ev)) {
+        Log::emit("\tdetected quit game\n");
+        return true;
+    }
+
     if (InputIsUserMovement(ev)) {
-        ProcessUserMovement(ev);
+
+        driver.justMoved = true;
+
+        Log::emit("\tdetected user movement\n");
+
+        auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
+        if (!isKeyRelease) {
+            switch (sdlKey) {
+            case SDLK_w:
+                driver.currentMovementInfo.set(MovementCode::MovementKey::W);
+                break;
+            case SDLK_a:
+                driver.currentMovementInfo.set(MovementCode::MovementKey::A);
+                break;
+            case SDLK_s:
+                driver.currentMovementInfo.set(MovementCode::MovementKey::S);
+                break;
+            case SDLK_d:
+                driver.currentMovementInfo.set(MovementCode::MovementKey::D);
+                break;
+            default:
+                Log::error("ProcessUserInput - Error: key release, sdlKey = %d\n", sdlKey);
+                break;
+            }
+        }
+        else {
+            switch (sdlKey) {
+            case SDLK_w:
+                driver.currentMovementInfo.clear(MovementCode::MovementKey::W);
+                break;
+            case SDLK_a:
+                driver.currentMovementInfo.clear(MovementCode::MovementKey::A);
+                break;
+            case SDLK_s:
+                driver.currentMovementInfo.clear(MovementCode::MovementKey::S);
+                break;
+            case SDLK_d:
+                driver.currentMovementInfo.clear(MovementCode::MovementKey::D);
+                break;
+            default:
+                Log::error("ProcessUserInput - Error: key press, sdlKey = %d\n", sdlKey);
+                break;
+            }
+        }
     }
     
-    if (InputIsQuitGame(ev)) {
-        return false;
+    Log::emit("Finished ProcessUserMovement - success\n");
+    Log::emit("\n");
+
+    return false;
+}
+
+void TransmitNewStatus() {
+    
+    Log::emit("Running TransmitNewStatus...\n");
+
+    if (driver.justMoved) {
+        driver.justMoved = false;
+
+        Log::emit("Transmitting movement code: %d\n", driver.currentMovementInfo.asBits());
+
+        ImMoving moving;
+        if (driver.currentMovementInfo.IsMovingUp()) {
+            moving.yOff = 1;
+        }
+        else if (driver.currentMovementInfo.IsMovingDown()) {
+            moving.yOff = -1;
+        }
+
+        if (driver.currentMovementInfo.IsMovingRight()) {
+            moving.xOff = 1;
+        }
+        else if (driver.currentMovementInfo.IsMovingLeft()) {
+            moving.xOff = -1;
+        }
+
+        Packet newPacket(Packet::Flag_t::bMoving);
+        newPacket.Encode(moving);
+        driver.clientInfo.SendPacket(driver.clientInfo.serverSoc, newPacket);
+
+        // next update our own map
     }
-    return true;
+
+    Log::emit("Finished TransmitNewStatus - success!\n");
+    Log::emit("\n");
 }
 
 void ProcessServerUpdate() {
     const int WAIT_TIME = 300;
+
+    Log::emit("Running ProcessServerUpdate...\n");
+
     int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
     if (clients_ready == -1) {
         Log::error("Error returned by SDLNet_CheckSockets\n");
@@ -317,7 +342,10 @@ void GetAllEntities() {
     }
 
     // last entity sent should be ourselves
+    // ^this appears to still be true
     driver.me = dynamic_cast<Player*>(driver.map.allEntities.back());
+    
+    Log::emit("Finished GetAllEntites - success!");
 }
 
 void setup_screen() {
@@ -330,6 +358,8 @@ void setup_screen() {
 
 int main() {
     init();
+
+    setup_screen();
 
     driver.clientInfo = Client("localhost");
     if (!driver.clientInfo.Connect()) {
@@ -346,7 +376,7 @@ int main() {
     while (running) {
         // first check for any input from the client device
         if (SDL_PollEvent(&ev) != 0) {
-            running = ProcessUserInput(ev);      
+            running = !ProcessUserInput(ev);      
         }
         
         // next check if the server has anything for us
