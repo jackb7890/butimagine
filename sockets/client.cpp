@@ -104,7 +104,7 @@ struct ClientDriver {
     Client clientInfo;
     Map map;
     Player* me;
-    Display display;
+    Display* display;
     std::vector<MapEntity*> entitiesToDraw;
 
     ClientDriver() : justMoved(false) {};
@@ -114,35 +114,41 @@ ClientDriver driver;
 
 void init() {
 
-    // initialize SDL subsystems
-    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) != 0) {
-        Log::error("ER: SDL_Init: %sn", SDL_GetError());
-    }
-
     // initialize user screen
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 
+    // initialize SDL subsystems
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        Log::error("ER: SDL_Init: %sn", SDL_GetError());
+    }
+
     //A- Window should be the same as it was before the rendering swap
-    window = SDL_CreateWindow("My window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, MAP_WIDTH, MAP_HEIGHT, NULL);
+    window = SDL_CreateWindow("my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {
         Log::error("Failed to create window! Error: %s\n", SDL_GetError());
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-        Log::error("Failed to create renderer! Error: %s\n", SDL_GetError());
-    }
+    SDL_UpdateWindowSurface(window);
 
-    driver.display = Display(window, renderer, &driver.map);
+    //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    //if (!renderer) {
+    //    Log::error("Failed to create renderer! Error: %s\n", SDL_GetError());
+    //}
 
-    SDL_RenderClear(renderer);
+    //driver.display = new Display(window, renderer, &driver.map);
+    driver.display = new Display(window, &driver.map);
+
+
+    //SDL_RenderClear(renderer);
     // finished initializing user screen
 }
 
 void cleanup() {
 
+    delete driver.display;
+
     // cleanup user screen
-    SDL_DestroyRenderer(renderer);
+    //SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
     //A- Idk is we need these NULL but the tutorial had them
@@ -156,7 +162,7 @@ void cleanup() {
 using namespace std;
 
 bool InputIsUserMovement(const SDL_Event& ev) {
-    if (ev.type != SDL_KEYDOWN || ev.type != SDL_KEYUP) {
+    if (ev.type != SDL_KEYDOWN && ev.type != SDL_KEYUP) {
         return false;
     }
 
@@ -184,8 +190,6 @@ bool InputIsQuitGame(const SDL_Event& ev) {
 // returns false to kill program.
 // true otherwise
 bool ProcessUserInput(SDL_Event ev) {
-
-    Log::emit("Running ProcessUserInput...\n");
 
     if (InputIsQuitGame(ev)) {
         Log::emit("\tdetected quit game\n");
@@ -238,9 +242,6 @@ bool ProcessUserInput(SDL_Event ev) {
             }
         }
     }
-    
-    Log::emit("Finished ProcessUserMovement - success\n");
-    Log::emit("\n");
 
     return false;
 }
@@ -254,7 +255,7 @@ void TransmitNewStatus() {
 
         Log::emit("Transmitting movement code: %d\n", driver.currentMovementInfo.asBits());
 
-        ImMoving moving;
+        ImMoving moving {1, 2};
         if (driver.currentMovementInfo.IsMovingUp()) {
             moving.yOff = 1;
         }
@@ -311,10 +312,8 @@ void ProcessServerUpdate() {
         }
     }
 }
-
+// ask server for the world initialization data
 void GetAllEntities() {
-    // After init and before game loop below, we should start ask server for the world initialization data
-
     Log::emit("Start of GetAllEntities (initial server transmission)\n");
     const int WAIT_TIME = 300;
     bool recvComplete = false;
@@ -380,7 +379,7 @@ void GetAllEntities() {
     // ^this appears to still be true
     driver.me = dynamic_cast<Player*>(driver.map.allEntities.back());
     
-    Log::emit("Finished GetAllEntites - success!");
+    Log::emit("Finished GetAllEntites - success!\n");
 }
 
 int main() {
@@ -389,7 +388,7 @@ int main() {
 
     driver.clientInfo = Client("localhost");
     if (!driver.clientInfo.Connect()) {
-        Log::error("Failed to connect to server\n");
+       Log::error("Failed to connect to server\n");
     }
 
     // build up the entities sent over from the server to start with
@@ -402,21 +401,24 @@ int main() {
     while (running) {
         // first check for any input from the client device
         if (SDL_PollEvent(&ev) != 0) {
-            running = !ProcessUserInput(ev);      
+
+            Log::emit("processing event: %d\n", ev.type);
+            running = !ProcessUserInput(ev);
+            TransmitNewStatus();
         }
         
         // next check if the server has anything for us
         int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
 
         if (clients_ready == -1) {
-            Log::error("Error returned by SDLNet_CheckSockets\n");
+           Log::error("Error returned by SDLNet_CheckSockets\n");
         }
         else if (clients_ready > 0) {
-            ProcessServerUpdate();
+           ProcessServerUpdate();
         }
 
         // finally, update the screen
-        driver.display.DrawFrame(driver.map.allEntities);
+        // driver.display->DrawFrame(driver.map.allEntities);
     }
 
     cleanup();
