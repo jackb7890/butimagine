@@ -347,6 +347,7 @@ Packet Packet::TCPToPacket(void** p_packet, size_t _size, size_t* remaining = nu
     *p_packet = (char*) *p_packet + newPacket.size;
 
     if (remaining) {
+        // assert (((char*)*p_packet) - (char*)p_packet_orig) == EXPECTED_BASE_PACKET_SIZE
         *remaining  = _size - (((char*)*p_packet) - (char*)p_packet_orig);
         // assert this is 0 or more
     }
@@ -370,7 +371,7 @@ void Packet::TCPToPackets(void* p_packet, size_t _size, std::vector<Packet>& pac
         Log::error("Error: TCPToPackets processed invalid packet\n");
     }
 
-    Log::emit("Remaining bytes to process: %d\n");
+    Log::emit("Remaining bytes to process: %d\n", remaining);
 
     if (remaining > 0) {
         Packet::TCPToPackets(p_packet, remaining, packetsOut);

@@ -253,6 +253,7 @@ struct Display {
 
     Display() {};
     Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
+    Display(SDL_Window* _w, Map* map);
 
     ~Display();
 
