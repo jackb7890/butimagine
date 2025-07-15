@@ -96,7 +96,6 @@ void Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsO
     }
     
     Log::emit("ConsumePackets successfully consumed %d packets\n", num_recv);
-    Log::emit("\n");
 }
 
 void Networking::CloseSocket(TCPsocket* socket) {

@@ -247,9 +247,6 @@ bool ProcessUserInput(SDL_Event ev) {
 }
 
 void TransmitNewStatus() {
-    
-    Log::emit("Running TransmitNewStatus...\n");
-
     if (driver.justMoved) {
         driver.justMoved = false;
 
@@ -275,10 +272,9 @@ void TransmitNewStatus() {
         driver.clientInfo.SendPacket(driver.clientInfo.serverSoc, newPacket);
 
         // next update our own map
+        Log::emit("Finished transmitting movement code\n");
+        Log::emit("\n");
     }
-
-    Log::emit("Finished TransmitNewStatus - success!\n");
-    Log::emit("\n");
 }
 
 void ProcessServerUpdate() {
