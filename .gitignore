@@ -10,3 +10,6 @@
 
 .vs/
 build/
+
+vcpkg-configuration.json
+todo.txt

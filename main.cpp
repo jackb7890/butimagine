@@ -10,8 +10,7 @@
 #include "SDL_image.h"
 #include "time.h"
 
-#include "TileMap.hpp"
-#include "TextureManager.hpp"
+#include "World.hpp"
 
 using namespace std;
 
@@ -54,41 +53,31 @@ int main(int argc, char* argv[]) {
     Map map;
     Display display(window, renderer, &map);
 
-    map.CreateBackground();
+    HitBox dummyHB = { 0, 0, MAP_WIDTH, MAP_HEIGHT };
+    RGBColor dummyC = { 40, 40, 40 };
+    MapEntity* dummyBG = new MapEntity(dummyHB, dummyC, &map, false);
 
-    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 10, 10};
-    RGBColor player1Color = {120, 200, 200};
-    Player player1(player1HitBox, player1Color, &map);
+    HitBox testHB = { MAP_WIDTH / 3, MAP_HEIGHT / 2, 100, 100 };
+    RGBColor testC = { 0, 200, 0 };
+    MapEntity* testEntityOver = new MapEntity(testHB, testC, &map, false);
+    
+    HitBox testHB1 = { MAP_WIDTH / 3 + 100, MAP_HEIGHT / 2, 100, 100 };
+    RGBColor testC1 = { 200, 200, 0 };
+    MapEntity* testEntityUnder = new MapEntity(testHB1, testC1, &map, false);
 
-    //A- As I remember the only way I could get a tile to render with our current setup was to really force it.
-    HitBox tilehb = { 100, 100, 32, 32 };
-    //A- The texture doesn't render, if I remember it's because the Display class never looks for textures.
-    SDL_Texture* tiletex = TextureManager::LoadTexture("assets/tiles/grass.png", renderer);
-    Tile tile1(tilehb, tiletex, 15);
-    tile1.map = &map;
-    //A- I also had to force it to be valid to render. I don't remember why.
-    tile1.valid = 1;
-    map.Add(player1);
-    map.Add(tile1);
+    HitBox testHB2 = { MAP_WIDTH / 3 - 100, MAP_HEIGHT / 2, 100, 100 };
+    RGBColor testC2 = { 0, 50, 200 };
+    MapEntity* testEntityCol = new MapEntity(testHB2, testC2, &map, true);
 
+    HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 15, 15};
+    RGBColor player1Color = {100, 100, 255};
+    Player* player1 = new Player(player1HitBox, player1Color, &map);
 
-
-    // short walls are 25 long
-    // long walls on bot/top are 50 long
-    // long back wall is 75 long
-
-    RGBColor wallColor = {170, 170, 170};
-
-    Wall lowerFront = Wall({205, 255}, 25, true, wallColor, &map);
-    map.Add(lowerFront);
-    Wall bottom = Wall({155, 280}, 50, false, wallColor, &map);
-    map.Add(bottom);
-    Wall back = Wall({155, 205}, 75, true, wallColor, &map);
-    map.Add(back);
-    Wall top = Wall({155, 205}, 50, false, wallColor, &map);
-    map.Add(top);
-    Wall upperFront = Wall({205, 205}, 25, true, wallColor, &map);
-    map.Add(upperFront);
+    map.AddEntity(dummyBG);
+    map.AddEntity(testEntityOver);
+    map.AddEntity(player1);
+    map.AddEntity(testEntityUnder);
+    map.AddEntity(testEntityCol);
 
     display.Update(); // this updates the map stored within display
     
@@ -98,13 +87,13 @@ int main(int argc, char* argv[]) {
     Uint32 totalFrames = 0;
     Uint32 FPSTicks = SDL_GetTicks();
     //A- Target fps = fps cap. Change if you want to change the fps
-    const Uint32 TARGET_FPS = 60;
+    const Uint32 TARGET_FPS = 30;
     const Uint32 TICKS_PER_FRAME = 1000 / TARGET_FPS;
 
-    player1.X_velocity = 0.0;
-    player1.Y_velocity = 0.0;
-    int speed = 10;
-    const float GRAVITY = 8.0f;
+    player1->X_velocity = 0.0;
+    player1->Y_velocity = 0.0;
+    int speed = 15;
+    const float GRAVITY = 10.0f;
 
     //A- Speed cap, if you want to use it.
     bool capSpeed = TRUE;
@@ -116,7 +105,7 @@ int main(int argc, char* argv[]) {
     vels.fill(false);
 
     while (runLoop) {
-        //A- Timing starts at beginnig of core loop
+        //A- Timing starts at beginning of core loop
         //A- SDL_GetTicks() is the global timer in ms
         Uint32 startTick = SDL_GetTicks();
         while (SDL_PollEvent(&ev) != 0) {
@@ -184,68 +173,72 @@ int main(int argc, char* argv[]) {
 
         //A- Changes velocity accoring to what buttons are pressed
         if (vels[XPOS] && !vels[XNEG]) {
-            player1.X_velocity += speed;
+            player1->X_velocity += speed;
         }
         if (vels[XNEG] && !vels[XPOS]) {
-            player1.X_velocity -= speed;
+            player1->X_velocity -= speed;
         }
         if (vels[YPOS] && !vels[YNEG]) {
-            player1.Y_velocity += speed;
+            player1->Y_velocity += speed;
         }
         if (vels[YNEG] && !vels[YPOS]) {
-            player1.Y_velocity -= speed;
+            player1->Y_velocity -= speed;
         }
 
         // deceleration combinations
         // slow down when theres no buttons being pressed
 
         if (!vels[XPOS] && !vels[XNEG]) {
-            if (player1.X_velocity >= 0 && player1.X_velocity < GRAVITY) {
-                player1.X_velocity = 0.0;
+            if (player1->X_velocity >= 0 && player1->X_velocity < GRAVITY) {
+                player1->X_velocity = 0.0;
             }
             else {
-                player1.X_velocity -= player1.X_velocity > 0 ? GRAVITY : -GRAVITY;
+                player1->X_velocity -= player1->X_velocity > 0 ? GRAVITY : -GRAVITY;
             }
         }
         if (!vels[YPOS] && !vels[YNEG]) {
-            if (player1.Y_velocity >= 0 && player1.Y_velocity < GRAVITY) {
-                player1.Y_velocity = 0.0;
+            if (player1->Y_velocity >= 0 && player1->Y_velocity < GRAVITY) {
+                player1->Y_velocity = 0.0;
             }
             else {
-                player1.Y_velocity -= player1.Y_velocity > 0 ? GRAVITY : -GRAVITY;
+                player1->Y_velocity -= player1->Y_velocity > 0 ? GRAVITY : -GRAVITY;
             }
         }
         //A- This block supposedly keeps physics independent of the current FPS
         //A- Very important as otherwise faster FPS = faster movement (bad)
         //A- Doesn't seem to work, or doesn't work as much as intended, still figuring out why
         //A- Currently player still moves faster at a faster FPS, but maybe not by as much(?)
+
+        //A- Update^ Player seemingly moves faster/slower because inputs/velocity changes are also limited by framerate.
+        //A- So both the "physics" and rendering are limited by framerate, when it's just supposed to be rendering.
+        //A- No fix currently
         Uint32 time = SDL_GetTicks();
-        float dT = (time - player1.lastUpdate) / 1000.0f;
+        float dT = (time - player1->lastUpdate) / 1000.0f;
 
         //A- Move the player if velocity isn't 0
-        if (player1.X_velocity != 0.0 || player1.Y_velocity != 0.0) {
+        if (player1->X_velocity != 0.0 || player1->Y_velocity != 0.0) {
             if (capSpeed) {
-                if (player1.X_velocity > speedCap) {
-                    player1.X_velocity = speedCap;
+                if (player1->X_velocity > speedCap) {
+                    player1->X_velocity = speedCap;
                 }
-                if (player1.X_velocity < -speedCap) {
-                    player1.X_velocity = -speedCap;
+                if (player1->X_velocity < -speedCap) {
+                    player1->X_velocity = -speedCap;
                 }
-                if (player1.Y_velocity > speedCap) {
-                    player1.Y_velocity = speedCap;
+                if (player1->Y_velocity > speedCap) {
+                    player1->Y_velocity = speedCap;
                 }
-                if (player1.Y_velocity < -speedCap) {
-                    player1.Y_velocity = -speedCap;
+                if (player1->Y_velocity < -speedCap) {
+                    player1->Y_velocity = -speedCap;
                 }
             }
-            //A- I saw you added move() instead of move horz/vert so I changed this
-            //A- Side effect - you can't slide against walls, hitting any wall will stop all movement
-            player1.Move(player1.X_velocity * dT, player1.Y_velocity * dT);
+            player1->Move(player1->X_velocity * dT, player1->Y_velocity * dT);
         }
         //A- Re-render the player
-        display.Update(player1);
+        display.Update();
         //A- Update for DT
-        player1.lastUpdate = SDL_GetTicks();
+        player1->lastUpdate = SDL_GetTicks();
+
+        std::cout << player1->oldPos.x << std::endl;
 
         //A- End of loop, increase frame counter & get end time.
         totalFrames++;

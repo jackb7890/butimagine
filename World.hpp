@@ -1,8 +1,15 @@
 #pragma once
 
 #define SDL_MAIN_HANDLED 1
-#include "SDL.h"
 
+#include <iostream>
+#include <fstream>
+#include <list>
+
+#include "SDL.h"
+#include "SDL_image.h"
+
+#include "TextureManager.hpp"
 #include "util.hpp"
 
 #define MAP_WIDTH 1280
@@ -58,23 +65,32 @@ class RGBColor {
     unsigned ConvertToSDL(SDL_Surface* surface);
 };
 
-class MapObject {
+class MapEntity {
     // base class for things that go on the map
-    // for collosion detection sake, assume everything is rectangular for now
-    // if mfers want triangles do it yourself
-    //A- Variables regarding updated positions or movement was moved to MapEntity.
-    //A- MapObjects DO NOT MOVE. Great for things like walls or the background.
 
     public:
-    bool valid;
     HitBox hitbox;
     RGBColor color;
+    SDL_Texture* texture;
     bool hasCollision;
-    int ID;
-    Map* map;
+    Map* map = nullptr;
+    int ID = NULL;
 
-    MapObject(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
-    inline MapObject() : valid(false) {}
+    double X_velocity, Y_velocity;
+    bool hasMovedOffScreen = false;
+    GridPos oldPos;
+
+    inline MapEntity(HitBox _hb, RGBColor _c, bool _hasCol = true) :
+        hitbox(_hb), color(_c), hasCollision(_hasCol) {
+    }
+    inline MapEntity(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol) :
+        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol) {
+    }
+
+    MapEntity(HitBox _hb, SDL_Texture* tex, bool _hasCol = true);
+    MapEntity(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true);
+
+    bool Valid();
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
@@ -108,98 +124,73 @@ class MapObject {
     inline SDL_Rect GetSDLRect() const {
         return SDL_Rect {GetCurrentPos().x, GetCurrentPos().y, GetWidth(), GetDepth()};
     }
-};
-
-class MapEntity : public MapObject {
-    public:
-
-    double X_velocity,Y_velocity;
-    bool hasMovedOffScreen = false;
-    GridPos oldPos;
-
-    //A- I Don't know any better so the MapEntity constructor just calls the MapObject ctour.
-    //A- Not having this broke the Player constructor
-    inline MapEntity(HitBox _hb, RGBColor _c, Map* _map) :
-        MapObject(_hb, _c, _map) {}
 
     inline GridPos GetOldPos() const {
         return oldPos;
     }
-    //A- Force move ignores all collision
-    void ForceMove(int xD, int yD);
+
     void Move(int xD, int yD);
 };
 
-class Wall : public MapObject {
+class Wall : public MapEntity {
     private:
     bool isVert;
     const static int thickness = 2;
 
     public:
     // default color 112,112,112 is gray
-    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
+    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c);
 };
 
 class Player : public MapEntity {
 
-    public:
+public:
     int health = 100;
     int runEnergy = 100;
     Uint32 born = 0;
     Uint32 lastUpdate = 0;
 
-    
-    inline Player(HitBox _hb, RGBColor _c, Map* _map) :
-        //A- I tried to change this to MapObject, but it complained that it wasn't inherited
-        //A- So I guess it can't see past MapEntity? Even though it should?
-        MapEntity(_hb, _c, _map) {}
-
-    friend struct Display;
+    inline Player(HitBox _hb, RGBColor _c, Map* _m) :
+        MapEntity(_hb, _c, _m, true) {
+    }
 };
 
+//A- Map is a collection of game entities.
 struct Map {
-    int numberOfEntities = 0;
-    Arr2d<MapObject> grid;
-    Arr2d<MapObject> background;
+    std::list<MapEntity*> allEntities;
+    Arr2d<MapEntity*> grid;
+    //Arr2d<MapEntity> background;
 
-    // npcs
+    Map();
 
-    // walls
+    inline int GetNumberOfEntities() {
+        return allEntities.size();
+    }
 
-    Map ();
+    //A- Permanently deletes all MapEntities.
+    inline void DeleteAllEntities() {
+        allEntities.clear();
+    }
 
-    // Drawing each pixel based on each entry of grid for the map
-    // will be slow compared to if we can do some SDL_FillRects, but
-    // idk how to we'd do that
-    void CreateBackground();
+    //Removes most recently added MapEntity.
+    //Pop does not return the last element, just deletes it.
+    inline void PopEntity() {
+        allEntities.pop_back();
+    }
 
-    // Clears the map at area covered by player
-    void Clear(Player player);
+    void AddToGrid(MapEntity& entity);
 
-    // These add functions add data that get's drawn differently
-    // than drawing via display.Update(wall) or for player.
-    // For example, if we add a wall to the map, it will store wall.color.r
-    // in the map, and when we display.Update(map) it will use wall.color.r to color that pixel
-    // But if we do display.Update(wall) it will use the full rgb color correctly.
-
-    // I think to fix this we should start storing entire objects in the grid,
-    // and to do that, we will need to make them the same type. So that means we gotta
-    // add inheritence aka a parent class for wall and player called like MapEntry or something
-    // Then we have a grid full of MapEntry objects, some of which are players, some of which are walls.
-
-    // Adds a player to the map
-    void Add(Player player);
-
-    void Add(Wall wall);
-
-    void Add(MapObject entity);
-    void Clear(MapObject entity);
+    //Adds an entity to the map.
+    //This will also update the map variable stored within the entity, making the entity valid.
+    void AddEntity(MapEntity* entity);
+    void AddEntity(Player* player);
+    void AddEntity(Wall* wall);
 
     bool CheckForCollision(const HitBox& movingPiece, int ID);
+
 };
 
 struct Display {
-    //A- Tutorial said it was a good idea to have a single static renderer
     SDL_Renderer* renderer;
     SDL_Window* window = nullptr;
     Map* map = nullptr;
@@ -208,13 +199,7 @@ struct Display {
 
     ~Display();
 
-    void Update(bool updateScreen = true);
+    void Update();
 
-    void Erase(Player player, bool updateScreen = true);
-
-    void Update(Player player, bool updateScreen = true);
-
-    void Update(Wall wall, bool updateScreen = true);
-
-    void Update(MapObject object, bool updateScreen = true);
+    void Render();
 };
