@@ -8,7 +8,7 @@ Random notes & things I plan on doing will go here.
 
 -Make Display compatible with textures
 	Textures use a different SDL function to render
--	I think a simple if statement will do. If the map object has a texture, render that instead of the RGB color.
+-	I think a simple if statement will do. If the map entity has a texture, render that instead of the RGB color.
 
 -Make Map compatible with textures & tiles.
 	The tilemap would have the same basic output as what we have currently but function differently.
@@ -17,11 +17,11 @@ Random notes & things I plan on doing will go here.
 	Probably best off as a different class that extends Map.
 
 -Add Tiles struct
-	Extends MapObject (maybe).
+	Extends MapEntity (maybe).
 	Include unique collision properties, scalable size
 
--Move gameobjects to new file.
-	Future files for NPCs & Players will want to use GameObjects class without including all the worldmaking shit
+-Move gameentities to new file.
+	Future files for NPCs & Players will want to use GameEntities class without including all the worldmaking shit
 
 -Clean up "world" file to only include things used for the world making.
 	Self explanitory it's very cluttered atm.

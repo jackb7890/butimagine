@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <list>
+
 #include "SDL.h"
 #include "SDL_image.h"
 
@@ -63,7 +65,7 @@ class RGBColor {
     unsigned ConvertToSDL(SDL_Surface* surface);
 };
 
-class MapObject {
+class MapEntity {
     // base class for things that go on the map
 
     public:
@@ -74,20 +76,19 @@ class MapObject {
     Map* map = nullptr;
     int ID = NULL;
 
-    bool immobile;
     double X_velocity, Y_velocity;
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    inline MapObject(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
-        hitbox(_hb), color(_c), hasCollision(_hasCol), immobile(_im) {
+    inline MapEntity(HitBox _hb, RGBColor _c, bool _hasCol = true) :
+        hitbox(_hb), color(_c), hasCollision(_hasCol) {
     }
-    inline MapObject(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol, bool _im) :
-        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol), immobile(_im) {
+    inline MapEntity(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol) :
+        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol) {
     }
 
-    MapObject(HitBox _hb, SDL_Texture* tex, bool _hasCol = true, bool _im = true);
-    MapObject(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true, bool _im = true);
+    MapEntity(HitBox _hb, SDL_Texture* tex, bool _hasCol = true);
+    MapEntity(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true);
 
     bool Valid();
 
@@ -128,11 +129,10 @@ class MapObject {
         return oldPos;
     }
 
-    void ForceMove(int xD, int yD);
     void Move(int xD, int yD);
 };
 
-class Wall : public MapObject {
+class Wall : public MapEntity {
     private:
     bool isVert;
     const static int thickness = 2;
@@ -142,7 +142,7 @@ class Wall : public MapObject {
     Wall(GridPos _pos, int _length, bool _isV, RGBColor _c);
 };
 
-class Player : public MapObject {
+class Player : public MapEntity {
 
 public:
     int health = 100;
@@ -151,53 +151,42 @@ public:
     Uint32 lastUpdate = 0;
 
     inline Player(HitBox _hb, RGBColor _c, Map* _m) :
-        MapObject(_hb, _c, _m, true, false) {
+        MapEntity(_hb, _c, _m, true) {
     }
 };
 
-//A- Map is a collection of game objects.
+//A- Map is a collection of game entities.
 struct Map {
-    std::vector<MapObject*> allObjects;
-    Arr2d<MapObject*> grid;
-    //Arr2d<MapObject> background;
+    std::list<MapEntity*> allEntities;
+    Arr2d<MapEntity*> grid;
+    //Arr2d<MapEntity> background;
 
     Map();
 
-    inline int GetNumberOfObjects() {
-        return allObjects.size();
+    inline int GetNumberOfEntities() {
+        return allEntities.size();
     }
 
-    //A- Permanently deletes all MapObjects.
-    inline void DeleteAllObjects() {
-        allObjects.clear();
+    //A- Permanently deletes all MapEntities.
+    inline void DeleteAllEntities() {
+        allEntities.clear();
     }
 
-    //Removes most recently added MapObject.
+    //Removes most recently added MapEntity.
     //Pop does not return the last element, just deletes it.
-    inline void PopObject() {
-        allObjects.pop_back();
+    inline void PopEntity() {
+        allEntities.pop_back();
     }
 
-    //Returns an Object reference from an ID
-    inline MapObject& GetObject(int ID) {
-        MapObject* object = allObjects.at(ID);
-        //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
-        return *object;
-    }
+    void AddToGrid(MapEntity& entity);
 
-    void AddToGrid(MapObject& object);
-
-    //Adds an object to the map.
-    //This will also update the map variable stored within the object, making the object valid.
-    void AddObject(MapObject* object);
-    void AddObject(Player* player);
-    void AddObject(Wall* wall);
+    //Adds an entity to the map.
+    //This will also update the map variable stored within the entity, making the entity valid.
+    void AddEntity(MapEntity* entity);
+    void AddEntity(Player* player);
+    void AddEntity(Wall* wall);
 
     bool CheckForCollision(const HitBox& movingPiece, int ID);
-
-
-    //Unused
-    void CreateBackground();
 
 };
 
@@ -210,19 +199,7 @@ struct Display {
 
     ~Display();
 
-    //A- ChangeMap swaps map in display with a different one.
-    void ChangeMap(Map* /* pointer? */);
-
-    //A- Clear wipes the screen completly. Use before changing maps.
-    void Clear();
-
     void Update();
 
     void Render();
-
-    //Unused
-    void Erase(Player player, bool renderChange = true);
-    void Update(Player player);
-    void Update(Wall wall);
-    void Update(MapObject object);
 };

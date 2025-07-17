@@ -10,3 +10,5 @@
 
 .vs/
 build/
+
+vcpkg-configuration.json
