@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <list>
 #include "SDL.h"
 #include "SDL_image.h"
 
@@ -80,22 +81,21 @@ class MapEntity {
     Map* map = nullptr;
     int ID = NULL;
 
-    bool immobile;
     double X_velocity, Y_velocity;
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    inline MapEntity(HitBox _hb, RGBColor _c, bool _hasCol = true, bool _im = true) :
-        hitbox(_hb), color(_c), hasCollision(_hasCol), immobile(_im) {
+    inline MapEntity(HitBox _hb, RGBColor _c, bool _hasCol = true) :
+        hitbox(_hb), color(_c), hasCollision(_hasCol){
     }
-    inline MapEntity(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol = true, bool _im = true) :
-        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol), immobile(_im) {
+    inline MapEntity(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol = true) :
+        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol){
     }
-    inline MapEntity(HitBox _hb, SDL_Texture* _tex, bool _hasCol = true, bool _im = true) :
-        hitbox(_hb), texture(_tex), hasCollision(_hasCol), immobile(_im) {
+    inline MapEntity(HitBox _hb, SDL_Texture* _tex, bool _hasCol = true) :
+        hitbox(_hb), texture(_tex), hasCollision(_hasCol){
     }
-    inline MapEntity(HitBox _hb, SDL_Texture* _tex, Map* _m, bool _hasCol, bool _im) :
-        hitbox(_hb), texture(_tex), map(_m), hasCollision(_hasCol), immobile(_im) {
+    inline MapEntity(HitBox _hb, SDL_Texture* _tex, Map* _m, bool _hasCol) :
+        hitbox(_hb), texture(_tex), map(_m), hasCollision(_hasCol){
     }
 
     bool Valid();
@@ -149,7 +149,6 @@ class MapEntity {
         return texture;
     }
 
-    void ForceMove(int xD, int yD);
     void Move(int xD, int yD);
 };
 
@@ -172,7 +171,7 @@ public:
     Uint32 lastUpdate = 0;
 
     inline Player(HitBox _hb, RGBColor _c, Map* _m) :
-        MapEntity(_hb, _c, _m, true, false) {
+        MapEntity(_hb, _c, _m, true) {
     }
 };
 
@@ -265,7 +264,7 @@ private:
 
 //A- Map is a collection of game Entities.
 struct Map {
-    std::vector<MapEntity*> allEntities;
+    std::list<MapEntity*> allEntities;
     //Arr2d<MapEntity> background;
     Arr2d<MapEntity*> grid;
 
@@ -286,13 +285,6 @@ struct Map {
         allEntities.pop_back();
     }
 
-    //Returns an Entity reference from an ID
-    inline MapEntity& GetEntity(int ID) {
-        MapEntity* entity = allEntities.at(ID);
-        //The ".at()" function automatically performs error checking, like if we passed an ID that's out of bounds or negative.
-        return *entity;
-    }
-
     void AddToGrid(MapEntity& entity);
 
     //Adds an entity to the map.
@@ -303,10 +295,6 @@ struct Map {
     void AddEntity(Tile* tile);
 
     bool CheckForCollision(const HitBox& movingPiece, int ID);
-
-    //Unused
-    void CreateBackground();
-
 };
 
 struct Display {
@@ -318,19 +306,7 @@ struct Display {
 
     ~Display();
 
-    //A- ChangeMap swaps map in display with a different one.
-    void ChangeMap(Map* /* pointer? */);
-
-    //A- Clear wipes the screen completly. Use before changing maps.
-    void Clear();
-
     void Update();
 
     void Render();
-
-    //Unused
-    void Erase(Player player, bool renderChange = true);
-    void Update(Player player);
-    void Update(Wall wall);
-    void Update(MapEntity entity);
 };

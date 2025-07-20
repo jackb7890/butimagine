@@ -14,7 +14,6 @@ bool MapEntity::Valid() {
 }
 
 void MapEntity::Move(int xD, int yD) {
-    if (!immobile) {
         hasMovedOffScreen = true;
         oldPos = GetCurrentPos();
         GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
@@ -38,21 +37,6 @@ void MapEntity::Move(int xD, int yD) {
         newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
 
         SetPos(newPos);
-    }
-    else {
-        //A "this" just prints the memory address. I know there's a better way but too lazy to look that up.
-        std::cout << "Attempt to move immobile MapEntity; " << this << std::endl;
-    }
-}
-
-void MapEntity::ForceMove(int xD, int yD) {
-    //A- If the entity *does* have collision, this just turns it off temporarily to move it, then turns it back on.
-    if (this->hasCollision == true) {
-        this->hasCollision = false;
-        Move(xD, yD);
-        this->hasCollision = true;
-    }
-    else Move(xD, yD);
 }
 
 Map::Map () {
@@ -112,17 +96,16 @@ void Display::Update() {
     //Isn't the most optimal thing but an easy enough fix later
     //Would just need some kind of "updated" flag in MapEntity (or Map).
 
-    for (int i = 0; i < map->GetNumberOfEntities(); i++) {
-        MapEntity entity = map->GetEntity(i);
-        if (entity.Valid()) {
-            SDL_Rect point{entity.GetSDLRect()};
+    for (MapEntity* entity : map->allEntities){
+        if (entity->Valid()) {
+            SDL_Rect point{entity->GetSDLRect()};
             //A- If a texture exist, it will be prefered over RGB color.
-            if (entity->texture != nullptr) {
+            if (entity->texture) {
                 //A- RenderCopy is used for textures, in place of RenderFillRect.
-                SDL_RenderCopy(renderer, entity.texture, NULL, &point);
+                SDL_RenderCopy(renderer, entity->texture, NULL, &point);
             }
             else {
-                SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+                SDL_SetRenderDrawColor(renderer, entity->color.r, entity->color.g, entity->color.b, 255);
                 SDL_RenderFillRect(renderer, &point);
             }
         }
@@ -165,56 +148,3 @@ void TileMap::GenerateTileMap(int arr[TILESWIDTH][TILESHEIGHT]) {
 void TileMap::DisplayMap() {
 
 }
-
-
-
-/* UNUSED FUNCTIONS */
-/*
-void Map::CreateBackground() {
-    background = Arr2d<MapEntity>(MAP_WIDTH, MAP_HEIGHT);
-    for (int x = 0; x < MAP_WIDTH; x++) {
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            HitBox hb = HitBox(x, y, 1, 1);
-            int index = x * MAP_HEIGHT + y;
-            RGBColor color = RGBColor(index % 255 / 2, (1 / (index + 1)) % 255, (index / 10000) % 255);
-            background(x, y) = MapEntity(hb, color, this, false);
-        }
-    }
-}
-
-void Display::Erase(Player player, bool renderChange) {
-    for (int i = player.GetOldPos().x; i < player.GetOldPos().x + player.GetWidth(); i++) {
-        for (int j = player.GetOldPos().y; j < player.GetOldPos().y + player.GetDepth(); j++) {
-            MapEntity background = map->background(i % MAP_WIDTH, j % MAP_HEIGHT);
-            SDL_Rect rect = background.GetSDLRect();
-            SDL_SetRenderDrawColor(renderer, background.color.r, background.color.g, background.color.b, 255);
-            SDL_RenderFillRect(renderer, &rect);
-        }
-    }
-    if (renderChange) {
-        Render();
-    }
-}
-
-void Display::Update(Player player) {
-    if (player.hasMovedOffScreen) {
-        //Erase(player, false);
-    }
-    Update((MapEntity) player);
-    player.hasMovedOffScreen = false;  // we just drew it, so it hasn't moved from what's on the screen for now
-}
-
-void Display::Update(Wall wall) {
-    Update((MapEntity) wall);
-}
-
-void Display::Update(MapEntity entity) {
-    SDL_Rect rect = entity.GetSDLRect();
-    SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
-    SDL_RenderFillRect(renderer, &rect);
-    Render();
-}
-
-
-
-*/

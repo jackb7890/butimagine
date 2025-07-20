@@ -55,29 +55,28 @@ int main(int argc, char* argv[]) {
 
     HitBox dummyHB = { 0, 0, MAP_WIDTH, MAP_HEIGHT };
     RGBColor dummyC = { 40, 40, 40 };
-    MapEntity* dummyBG = new MapEntity(dummyHB, dummyC, &map, false, true);
+    MapEntity* dummyBG = new MapEntity(dummyHB, dummyC, false);
     
     HitBox testHB = { MAP_WIDTH / 3, MAP_HEIGHT / 2, 100, 100 };
     RGBColor testC = { 0, 200, 0 };
-    MapEntity* testEntityOver = new MapEntity(testHB, testC, &map, false, true);
+    MapEntity* testEntityOver = new MapEntity(testHB, testC, false);
     
     HitBox testHB1 = { MAP_WIDTH / 3 + 100, MAP_HEIGHT / 2, 100, 100 };
     RGBColor testC1 = { 200, 200, 0 };
-    MapEntity* testEntityUnder = new MapEntity(testHB1, testC1, &map, false, true);
+    MapEntity* testEntityUnder = new MapEntity(testHB1, testC1, false);
 
     HitBox testHB2 = { MAP_WIDTH / 3 - 100, MAP_HEIGHT / 2, 100, 100 };
     RGBColor testC2 = { 0, 50, 200 };
-    MapEntity* testEntityCol = new MapEntity(testHB2, testC2, &map, true, true);
+    MapEntity* testEntityCol = new MapEntity(testHB2, testC2, true);
 
     HitBox player1HitBox = {MAP_WIDTH/2, MAP_HEIGHT/2, 15, 15};
     RGBColor player1Color = {100, 100, 255};
     Player* player1 = new Player(player1HitBox, player1Color, &map);
 
     HitBox tileHB = { 100, 100, 32, 32 };
-    SDL_Texture* tileTex = TextureManager::LoadTexture("assets/tiles/Dirt.png", renderer);
+    SDL_Texture* tileTex = (TextureManager::LoadTexture("C:/Users/Gronk/Documents/butimagine/assets/tiles/Dirt.png", display.renderer));
     Tile* testTile = new Tile(tileHB, tileTex, 0);
     testTile->color = testC2;
-    testTile->SetTexture(tileTex);
 
     map.AddEntity(dummyBG);
 
@@ -245,8 +244,6 @@ int main(int argc, char* argv[]) {
         display.Update();
         //A- Update for DT
         player1->lastUpdate = SDL_GetTicks();
-
-        std::cout << testTile->texture << std::endl;
 
         //A- End of loop, increase frame counter & get end time.
         totalFrames++;
