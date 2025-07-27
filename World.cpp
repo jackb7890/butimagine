@@ -1,114 +1,186 @@
 #include "World.hpp"
+#include "util.hpp"
 #include <algorithm>
+#include <type_traits>
+#include <functional>
 
 unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
 }
 
-//A- Just checks if a map entity has a map.
-bool MapEntity::Valid() {
-    if (this->map) {
-        return true;
+std::string MapEntity::ToString() {
+    char buf[256];
+
+    sprintf_s(buf, 256, "ID: %zd, rgb: %d:%d:%d, location: (%d, %d), size(XxY): %dx%d",
+        this->ID, this->color.r, this->color.g, this->color.b, this->hitbox.origin.x, 
+        this->hitbox.origin.y, this->hitbox.dim.width, this->hitbox.dim.depth);
+
+    return std::string((char*)buf);
+}
+
+void MapEntity::UpdateGrid(HitBox oldArea, HitBox newArea) {
+    for (int i = oldArea.origin.x; i < oldArea.origin.x + oldArea.dim.width; i++) {
+        for (int j = oldArea.origin.y; j < oldArea.origin.y + oldArea.dim.depth; j++) {
+            map->grid(i % MAP_WIDTH, j % MAP_HEIGHT).Remove(this);
+        }
     }
-    return false;
+
+    for (int i = newArea.origin.x; i < newArea.origin.x + newArea.dim.width; i++) {
+        for (int j = newArea.origin.y; j < newArea.origin.y + newArea.dim.depth; j++) {
+            map->grid(i % MAP_WIDTH, j % MAP_HEIGHT).Add(this);
+        }
+    }
 }
 
 void MapEntity::Move(int xD, int yD) {
-        hasMovedOffScreen = true;
-        oldPos = GetCurrentPos();
-        GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
+    Log logger("MapEntity Move: ");
+    logger.Emit("entity=%d, attempting to move (xD=%d, yD=%d)\n", this->ID, xD, yD);
 
-        int smallerXCoord = std::min(oldPos.x, newPos.x);
-        int smallerYCoord = std::min(oldPos.y, newPos.y);
-        int xCollision = GetWidth() + std::abs(xD);
-        int yCollision = GetDepth() + std::abs(yD);
-        const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
+    if (!xD && !yD) {
+        logger.Emit("failed to move, called with (0,0)\n");
+        return;
+    }
 
-        if (this->hasCollision) {
-           if (map->CheckForCollision(collisionPath, this->ID)) {
-                //A- Collisions set velocity to 0. Makes bumping into walls less annoying
-                this->X_velocity = 0.0;
-                this->Y_velocity = 0.0;
-                return;
-            }
-        }
+    hasMovedOffScreen = true;
+    HitBox oldHb = this->hitbox;
+    oldPos = this->GetCurrentPos();
 
-        newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
-        newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
+    logger.Emit("prior location: (%d, %d)\n", oldPos.x, oldPos.y);
 
-        SetPos(newPos);
+    GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
+
+    int smallerXCoord = std::min(oldPos.x, newPos.x);
+    int smallerYCoord = std::min(oldPos.y, newPos.y);
+    int xCollision = GetWidth() + std::abs(xD);
+    int yCollision = GetDepth() + std::abs(yD);
+    const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
+
+    if (map->CheckForCollision(collisionPath, ID)) {
+        logger.Emit("failed to move, collision encountered\n");
+        return;
+    }
+
+    newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
+    newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
+
+    logger.Emit("new location: (%d, %d)\n", newPos.x, newPos.y);
+
+    this->SetPos(newPos);
+
+    // Update grid structure
+    HitBox newHb = this->hitbox;
+    this->UpdateGrid(oldHb, newHb);
 }
 
 Map::Map () {
-    //A- Map_width & height are the same as the window width & height currently
-    grid = Arr2d<MapEntity*>(MAP_WIDTH, MAP_HEIGHT);
+    numberOfEntities = 0;
+    grid = Arr2d<MapEntityList>(MAP_WIDTH, MAP_HEIGHT);
 }
 
-void Map::AddToGrid(MapEntity& entity) {
-    for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
-        for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = &entity;
-        }
+Map::~Map () {
+    for (MapEntity* entity : allEntities) {
+        delete entity;
     }
 }
 
-void Map::AddEntity(MapEntity* entity) {
-    entity->map = this;
-    //A- Conveniently the size of the vector before an entity is added will equal its index.
-    entity->ID = allEntities.size();
-    allEntities.push_back(entity);
-    AddToGrid(*entity);
-}
-
-//A- In the future we may want special behavior for adding players.
-void Map::AddEntity(Player* player) {
-    AddEntity((MapEntity*)player);
-}
-void Map::AddEntity(Wall* wall) {
-    AddEntity((MapEntity*)wall);
-}
-
-bool Map::CheckForCollision(const HitBox& movingPiece, int ID) {
+bool Map::CheckForCollision(const HitBox& movingPiece, size_t ID)  {
     int xBound = movingPiece.origin.x + movingPiece.dim.width;
     int yBound = movingPiece.origin.y + movingPiece.dim.depth;
-        for (int x = movingPiece.origin.x; x < xBound; x++) {
-            for (int y = movingPiece.origin.y; y < yBound; y++) {
-                MapEntity* possibleEntity = grid(Wrap(x - 1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
-                if (possibleEntity->Valid() && possibleEntity->hasCollision && possibleEntity->ID != ID) {
+    for (int x = movingPiece.origin.x; x < xBound; x++) {
+        for (int y = movingPiece.origin.y; y < yBound; y++) {
+                        
+            MapEntityList entitiesAtPoint = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
+            for (MapEntity* entity : entitiesAtPoint.list) {
+                if (entity->hasCollision &&
+                    entity->ID != ID) {
                     return true;
+                }
             }
         }
     }
     return false;
 }
 
-Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {}
+MapEntity* Map::GetEntity(size_t id) {
+    for (auto entity : allEntities) {
+        if (entity->ID == id) {
+            return entity;
+        } 
+    }
+    return nullptr;
+}
+
+//A- Renderer added to display struct
+Display::Display(SDL_Window* _w, SDL_Renderer* _r, Map* _map) : window(_w), renderer(_r), map(_map) {
+    //A- Surface isn't used anymore, can probably remove
+    surface = SDL_GetWindowSurface(window);
+}
+
+Display::Display(SDL_Window* _w, Map* _map) : window(_w), renderer(nullptr), map(_map) {
+    //A- Surface isn't used anymore, can probably remove
+    surface = SDL_GetWindowSurface(window);
+}
+
+Display::Display(Map* _map) : map(_map) {
+    surface = nullptr;
+}
 
 Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::Update() {
-    //This will always draw & render all entities 1 by 1, even if they haven't changed in any way.
-    //Isn't the most optimal thing but an easy enough fix later
-    //Would just need some kind of "updated" flag in MapEntity (or Map).
+void Display::DrawEntity(MapEntity entity) {
+    Log::emit("Drawing Entity...\n");
+    Log::emit("\tEntity description -> %s\n", entity.ToString().c_str());
 
-    for (MapEntity* entity : map->allEntities) {
-        if (entity->Valid()) {
-            SDL_SetRenderDrawColor(renderer, entity->color.r, entity->color.g, entity->color.b, 255);
-            SDL_Rect point{entity->GetSDLRect()};
-            SDL_RenderFillRect(renderer, &point);
-        }
+    SDL_Rect point = SDL_Rect {
+        entity.hitbox.origin.x,
+        entity.hitbox.origin.y,
+        entity.hitbox.dim.width,
+        entity.hitbox.dim.depth
+    };
+
+    //A- Unlike SDL_FillRect from the window based rendering,
+    //A- RenderFillRect doesn't have a color input.
+    //A- Color is set beforehand by SetRenderDrawColor
+    //A- It's also one field for each RGB, so use (map)entity.color.(r/g/b) instead of RGBColor.ConvertToSDL()
+
+    SDL_SetRenderDrawColor(this->renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+    SDL_RenderFillRect(this->renderer, &point);
+}
+
+void Display::DrawBackground() {
+    Log::emit("Drawing Background...\n");
+
+    SDL_Rect rect = SDL_Rect { 0, 0, map->width, map->height };
+    RGBColor color = RGBColor { 0, 0, 0 };
+
+    SDL_SetRenderDrawColor(this->renderer, color.r, color.g, color.b, 255);
+    SDL_RenderFillRect(this->renderer, &rect);
+}
+
+void Display::DrawFrame(std::vector<MapEntity*> entities) {
+
+    Log::emit("Clear Renderer\n");
+    SDL_RenderClear(this->renderer);
+
+    DrawBackground();
+
+    for (auto entity : entities) {
+        DrawEntity(*entity);
     }
-    Render();
+
+    Log::emit("Present Renderer\n");
+    SDL_RenderPresent(this->renderer);
 }
 
-void Display::Render() {
-    SDL_RenderPresent(renderer);
+MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :
+    hitbox(_hb), color(_c), map(_map), hasCollision(_hasCol) {
+    ID = map->numberOfEntities++;
 }
 
-Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c) : 
-    MapEntity(HitBox(_pos, GridDimension(thickness, _length)), _c),
+Wall::Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map) : 
+    MapEntity(HitBox(_pos, GridDimension(thickness, _length)), _c, _map),
     isVert(_isV) {
     // SetWidth(thickness); // fix the place holder
     if (!isVert) {

@@ -1,47 +1,207 @@
-#include "winsock2.h"
+#include <cstdio>
+#include <array>
+#include <windows.h>
+#include <string>
+#include <iostream>
+#include <vector>
 
-int main() {
+#define SDL_MAIN_HANDLED 1
 
-    // create server socket
+#include "SDL.h"
+#include "SDL_image.h"
+#include "time.h"
 
-    bool runLoop = true;
+#include "../World.hpp"
 
-    while (runLoop) {
-        // listen on the port for a client, loop until you find one.
-        // I guess there is some way in the socket functions to tell its the client from our game
-        // maybe we can hardcode a passcode in the client, and pass that on its port to this server socket
+#include "SDL_net.h"
+#include "networking.hpp"
 
-        // once you have a connection,
-        // wait for it to send you data
-        // probably just keyboard input for now
+using namespace std;
 
-        // once you have the keyboard input,
-        // we can use the event processing code thats in the eventful-walls branch
-        // + Map, Player, and Wall code in the main branch to move a player on the map, and then return the map back to the client
+#pragma warning(disable : 4244)
 
-        // then the client can display the map, and send another keyboard input to the server and repeat
+void init() {
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+    SDL_Init(SDL_INIT_EVERYTHING);
+    //A- Note the global timer starts at SDL initilization
+}
 
-        // server.cpp will have the map, player, and wall objects to keep track of the state of the game
-        // it will also have the logic to parse the keyboard input from the client
-        // then it will send back a the new state of the game for the player to display
+void cleanup() {
+    SDL_Quit();
+}
 
-        // ORRRRRRR
+class ServerDriver {
+    public:
+    Map map;
+    Server ntwk;
+    std::array<Player*, Server::MAX_SOCKETS> clientEntities; // move this to map.players
+};
 
-        // i just got different idea
-        // we could have the map, player, walls, etc on the client side and the server side
-        // so when we do like WASD on the client to move around, we could
-            // 1) process the keyboard input on the client side
-            // 2) update the map with the new player location
-            // 3) send the keyboard input to the server as well
-            // 4) and the server can use the keyboard input to make sure its version of the map
-            //      is updated in the same way
-            // 5) The server will only have to send this data to other clients
-            //      so that they are aware that another client has moved
-            // 
-            // I like this because the size of the data being transferred is a lot smaller
-            // in the first one, its the entire world map, every keystroke
-            // in this one, its just the single keystroke
+ServerDriver driver;
+
+// assumes error handling already done
+void ProcessMoveData(std::vector<Player>& clientPlayers, Packet& packet, int client) {
+    int8_t x = packet.ReadAsType<int8_t>(0);
+    int8_t y = packet.ReadAsType<int8_t>(1);
+    clientPlayers[client].Move(x, y);
+}
+
+void ProcessData(Packet& data, int client) {
+    // if (data.IsMove()) {
+    //     ProcessMoveData(data, client);
+    // }
+}
+
+void SendAllEntities(TCPsocket socket) {
+    // Send them all the entities on the world
+    Log::emit("Running SendAllEntities...\n");
+    for (MapEntity* entity : driver.map.allEntities) {
+        Packet newPacket(Packet::Flag_t::bNewEntity);
+        newPacket.EncodePoly(*entity, entity->GetTypeIndex());
+        Log::emit("Sending one entity... total encoded size %d bytes\n", newPacket.EncodeSize());
+        driver.ntwk.SendPacket(socket, newPacket);
     }
 
+    Packet newPacket(Packet::Flag_t::bEndOfPacketGroup);
+
+    Log::emit("Sending end-of-list packet... total encoded size %d bytes\n", newPacket.EncodeSize());
+    driver.ntwk.SendPacket(socket, newPacket);
+
+    Log::emit("Finished SendAllEntities - success!\n");
+}
+
+void SendPacketToAllButOne(Packet p, int socketIndx) {
+    for (int i = 0; i < driver.ntwk.MAX_SOCKETS; i++) {
+        TCPsocket clientSocket = driver.ntwk.clientSockets[i];
+        if (!clientSocket) {
+            continue;
+        }
+        if (i == socketIndx) {
+            continue;
+        }
+        driver.ntwk.SendPacket(clientSocket, p);
+    }
+}
+
+int main(int argc, char* argv[]) {
+    // process args
+    std::vector<std::string> args;
+    if (argc > 1) {
+        for (int i = 1; i <= argc - 1; i++) {
+            if (!argv[i]) {
+                Log::emit("error reading args to main\n");
+            }
+            args.push_back(argv[i]);
+        }
+    }
+
+    const int MAX_PLAYERS = Server::MAX_SOCKETS-1;
+    std::vector<Player> clientPlayers;
+
+    int timeoutTime = 500; // in ms
+    if (args.size() != 0) {
+        timeoutTime = stoi(args[0]);
+    }
+    Log::emit("timeout set to %dms\n", timeoutTime);
+
+    init();
+
+    // Init network connection
+    if (!(driver.ntwk.Setup())) {
+        Log::error("Failed server setup\n");
+    }
+    
+    bool runLoop = true;
+    const int WAIT_TIME = 100;
+    while (runLoop) {
+
+        if (timeoutTime <= 0) {
+            runLoop = false;
+        }
+        timeoutTime--;
+
+        int clients_ready = SDLNet_CheckSockets(driver.ntwk.socket_set, WAIT_TIME);
+
+        if (clients_ready == -1) {
+            Log::error("Error returned by SDLNet_CheckSockets\n");
+        }
+        else if (clients_ready == 0) {
+            // Log::emit("No clients ready at this time\n");
+            // no clients ready, process things in server work queue
+        }
+        else if (clients_ready > 0) {
+            // Log::emit("One or more sockets ready\n");
+            int newPlayerInd = -1;
+            if(SDLNet_SocketReady(driver.ntwk.serverSoc)) {
+                Log::emit("Server: new player has connected!\n");
+                newPlayerInd = driver.ntwk.next_ind;
+                int indx = driver.ntwk.TryAddClient();
+                if (indx >= 0) {
+                    Player* joinedPlayer = driver.map.SpawnEntity<Player>();
+                    joinedPlayer->multiplayerID = indx;
+                    joinedPlayer->online = true;
+                    joinedPlayer->SetWidth(25);
+                    joinedPlayer->SetDepth(40);
+                    driver.clientEntities[indx] = joinedPlayer;
+                    // Send starter data to player client
+                    SendAllEntities(driver.ntwk.clientSockets[indx]);
+                }
+            }
+            
+            for (int socketIndx = 0; socketIndx < driver.ntwk.MAX_SOCKETS; socketIndx++) {
+                if (newPlayerInd == socketIndx) {
+                    continue; // i think client might be saying its ready right after but has not packets
+                }
+                if (!SDLNet_SocketReady(driver.ntwk.clientSockets[socketIndx])) {
+                    continue;
+                }
+
+                Log::emit("Incoming packets from client %d\n", socketIndx);
+                std::vector<Packet> consumedPackets;
+                driver.ntwk.ConsumePackets(driver.ntwk.clientSockets[socketIndx], consumedPackets);
+
+                if (consumedPackets.size() == 0) {
+                    Log::emit("Server: error in reading packets from client %d\n", socketIndx);
+                }
+                // process client packet
+                for (auto packet : consumedPackets) {
+                    // is it the client moving?
+                    if (packet.flags.test(Packet::Flag_t::bMoving)) {
+                        Log::emit("client %d sent moving packet\n", socketIndx);
+                        // update our server map
+                        ImMoving moving = packet.ReadAsType<ImMoving>();
+                        Player* client = driver.clientEntities[socketIndx];
+                        client->Move(moving.xOff, moving.yOff);
+
+                        // send notifcation to the other clients about this update
+                        Packet outgoingPacket(Packet::Flag_t::bMoving);
+                        EntityMoveUpdate data = EntityMoveUpdate {client->ID, moving.xOff, moving.yOff};
+                        outgoingPacket.Encode<EntityMoveUpdate>(data);
+                        SendPacketToAllButOne(outgoingPacket, socketIndx);
+                    }
+                }
+            }
+        }
+    }
+    cleanup();
     return 0;
 }
+
+// stuff I made, and stopped using, but don't wanna throw away yet so I can reference it
+// namespace Junkyard {
+//     void DrawPlayer(Player player, SDL_Surface* winSurface) {
+//         SDL_Rect rect = SDL_Rect {player.position.x, player.position.y, player.width, player.height};
+//         SDL_FillRect( winSurface, &rect, SDL_MapRGB( winSurface->format, 255, 90, 120 ));
+//     }
+
+//     void InitSurface(Player player1, SDL_Surface* winSurface) {
+//         const int stride = 5;
+//         for (int i = 0; i < MAP_WIDTH; i+=stride) {
+//             for (int j = 0; j < MAP_HEIGHT; j+=stride) {
+//                 SDL_Rect rect {i, j, stride, stride};
+//                 SDL_FillRect(winSurface, &rect, i*MAP_HEIGHT + j);
+//             }
+//         }
+//         DrawPlayer(player1, winSurface);
+//     }
+// };

@@ -11,58 +11,42 @@
 
 #include "TextureManager.hpp"
 #include "util.hpp"
+#include "sockets/networking.hpp"
 
-#define MAP_WIDTH 1280
-#define MAP_HEIGHT 720
+#include <unordered_map>
+
+#include <type_traits>
+#include <list>
+#include <string>
+
+//#define MAP_WIDTH 1280
+//#define MAP_HEIGHT 720
+
+#define MAP_WIDTH 720
+#define MAP_HEIGHT 360
 
 struct Map;
 struct Display;
 
-struct GridPos {
-    int x, y;
+struct MapEntityList {
+    std::list<MapEntity*> list;
 
-    inline GridPos() : x(0), y(0) {}
-    inline GridPos(int _x, int _y) : x(_x), y(_y) {}
-};
-
-struct GridDimension {
-    int width;
-    int depth;
-
-    inline GridDimension() : width(0), depth(0) {}
-    inline GridDimension(int _w, int _d) : width(_w), depth(_d) {}
-};
-
-struct HitBox {
-    GridPos origin;
-    GridDimension dim;
-
-    inline HitBox() :
-        origin(0, 0), dim(1, 1) {}
-    inline HitBox(GridPos _pos, GridDimension _dim) :
-        origin(_pos), dim(_dim) {}
-    inline HitBox(int _x, int _y, int _w, int _d) :
-        origin(_x, _y), dim(_w, _d) {}
-};
-
-class RGBColor {
-    public:
-    int r;
-    int g;
-    int b;
-
-    inline RGBColor() :
-        r(255), g(255), b(255) {}
-    inline RGBColor(int _r, int _g, int _b) :
-        r(_r), g(_g), b(_b) {
-        // eventually make the asserts debug only so they don't slow down the program
-        assert(0 <= r && r <= 255);
-        assert(0 <= g && g <= 255);
-        assert(0 <= b && b <= 255);
-
+    void Add(MapEntity* en) {
+        // assert tail.next is null
+        for (auto el : list) {
+            if (!el) {
+                continue;
+            }
+            if (el == en) {
+                return;
+            }
+        }
+        list.push_back(en);
     }
 
-    unsigned ConvertToSDL(SDL_Surface* surface);
+    void Remove(MapEntity* en) {
+        list.remove(en);
+    }
 };
 
 class MapEntity {
@@ -73,24 +57,27 @@ class MapEntity {
     RGBColor color;
     SDL_Texture* texture;
     bool hasCollision;
-    Map* map = nullptr;
-    int ID = NULL;
+    size_t ID;
+    Map* map;
 
     double X_velocity, Y_velocity;
     bool hasMovedOffScreen = false;
     GridPos oldPos;
 
-    inline MapEntity(HitBox _hb, RGBColor _c, bool _hasCol = true) :
-        hitbox(_hb), color(_c), hasCollision(_hasCol) {
-    }
-    inline MapEntity(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol) :
-        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol) {
+    public:
+    MapEntity() {}
+    MapEntity(Map* _map, size_t _ID) : map(_map), ID(_ID) {}
+    MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
+
+    std::string ToString();
+
+    inline void SetMap(Map* _map) {
+        map = _map;
     }
 
-    MapEntity(HitBox _hb, SDL_Texture* tex, bool _hasCol = true);
-    MapEntity(HitBox _hb, SDL_Texture* tex, Map* _m, bool _hasCol = true);
-
-    bool Valid();
+    inline void SetID(int _ID) {
+        ID = _ID;
+    }
 
     inline GridPos GetCurrentPos() const {
         return hitbox.origin;
@@ -130,6 +117,11 @@ class MapEntity {
     }
 
     void Move(int xD, int yD);
+    void UpdateGrid(HitBox oldArea, HitBox newArea);
+
+    virtual int GetTypeIndex() {
+        return TypeDetails<MapEntity>::index;
+    }
 };
 
 class Wall : public MapEntity {
@@ -139,7 +131,12 @@ class Wall : public MapEntity {
 
     public:
     // default color 112,112,112 is gray
-    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c);
+    Wall() {}
+    Wall(GridPos _pos, int _length, bool _isV, RGBColor _c, Map* _map);
+
+    virtual int GetTypeIndex() {
+        return TypeDetails<Wall>::index;
+    }
 };
 
 class Player : public MapEntity {
@@ -150,56 +147,114 @@ public:
     Uint32 born = 0;
     Uint32 lastUpdate = 0;
 
-    inline Player(HitBox _hb, RGBColor _c, Map* _m) :
-        MapEntity(_hb, _c, _m, true) {
+    int multiplayerID;
+    bool online;
+
+    inline Player() {}
+    inline Player(HitBox _hb, RGBColor _c, Map* _map) :
+        MapEntity(_hb, _c, _map) {}
+
+    inline Player(Map* _map, size_t ID) : 
+        MapEntity(_map, ID) {}
+
+    virtual int GetTypeIndex() {
+        return TypeDetails<Player>::index;
     }
+
+    // pretty sure we can remove this but not checking rn
+    friend struct Display;
 };
 
-//A- Map is a collection of game entities.
+template <typename T>
+concept MapEntityT = std::is_base_of<MapEntity, T>::value;
+
 struct Map {
-    std::list<MapEntity*> allEntities;
-    Arr2d<MapEntity*> grid;
-    //Arr2d<MapEntity> background;
 
-    Map();
+    static constexpr unsigned int width = MAP_WIDTH;
+    static constexpr unsigned int height = MAP_HEIGHT;
 
-    inline int GetNumberOfEntities() {
+    int numberOfEntities = 0;
+    Arr2d<MapEntityList> grid;
+
+    std::vector<Player*> players;
+    std::vector<MapEntity*> allEntities;
+    std::vector<MapEntity*> drawMeBuf;
+
+    Map ();
+    ~Map ();
+
+    template <MapEntityT T>
+    T* SpawnEntity() {
+        T* newEntity = AllocateNewEntity<T>();
+        newEntity->SetMap(this);
+        newEntity->SetID(numberOfEntities++);
+        return newEntity;
+    }
+
+    template <MapEntityT T>
+    T* SpawnEntity(const T& copy) {
+        T* newEntity = AllocateNewEntity<T>(copy);
+        newEntity->SetMap(this);
+        newEntity->SetID(numberOfEntities++);
+        return newEntity;
+    }
+
+    template <MapEntityT T>
+    T* AllocateNewEntity() {
+        T* newEntity = new T();
+        allEntities.push_back(newEntity);
+        return newEntity;
+    }
+
+    template <MapEntityT T>
+    T* AllocateNewEntity(const T& copy) {
+        T* newEntity = new T(copy);
+        allEntities.push_back(newEntity);
+        return newEntity;
+    }
+
+        inline size_t GetNumberOfEntities() {
         return allEntities.size();
     }
 
-    //A- Permanently deletes all MapEntities.
-    inline void DeleteAllEntities() {
-        allEntities.clear();
-    }
+    // Clears the map at area covered by player
+    void Clear(Player player);
 
-    //Removes most recently added MapEntity.
-    //Pop does not return the last element, just deletes it.
-    inline void PopEntity() {
-        allEntities.pop_back();
-    }
+    MapEntity* GetEntity(size_t id);
 
-    void AddToGrid(MapEntity& entity);
+    // These add functions add data that get's drawn differently
+    // than drawing via display.Update(wall) or for player.
+    // For example, if we add a wall to the map, it will store wall.color.r
+    // in the map, and when we display.Update(map) it will use wall.color.r to color that pixel
+    // But if we do display.Update(wall) it will use the full rgb color correctly.
 
-    //Adds an entity to the map.
-    //This will also update the map variable stored within the entity, making the entity valid.
-    void AddEntity(MapEntity* entity);
-    void AddEntity(Player* player);
-    void AddEntity(Wall* wall);
+    // I think to fix this we should start storing entire objects in the grid,
+    // and to do that, we will need to make them the same type. So that means we gotta
+    // add inheritence aka a parent class for wall and player called like MapEntry or something
+    // Then we have a grid full of MapEntry objects, some of which are players, some of which are walls.
 
-    bool CheckForCollision(const HitBox& movingPiece, int ID);
 
+    void Add(MapEntity* entity);
+    void Clear(MapEntity* entity);
+
+    bool CheckForCollision(const HitBox& movingPiece, size_t ID);
 };
 
+// TODO move this to util
 struct Display {
+    SDL_Window* window;
     SDL_Renderer* renderer;
-    SDL_Window* window = nullptr;
+    SDL_Surface* surface ;
     Map* map = nullptr;
 
+    Display() {};
     Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
+    Display(SDL_Window* _w, Map* map);
+    Display(Map* map);
 
     ~Display();
 
-    void Update();
-
-    void Render();
+    void DrawBackground();
+    void DrawEntity(MapEntity entity);
+    void DrawFrame(std::vector<MapEntity*> entities);
 };
