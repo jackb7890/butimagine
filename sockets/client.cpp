@@ -189,10 +189,14 @@ bool InputIsQuitGame(const SDL_Event& ev) {
 
 // returns false to kill program.
 // true otherwise
-bool ProcessUserInput(SDL_Event ev) {
+bool ProcessEvent(SDL_Event ev) {
+
+    Log logger("ProcessEvent: ");
+    logger.Emit("begin\n");
+    logger.Emit("\tevent type = %d", ev.type);
 
     if (InputIsQuitGame(ev)) {
-        Log::emit("\tdetected quit game\n");
+        logger.Emit("\tquit game (return 'true')\n");
         return true;
     }
 
@@ -200,10 +204,10 @@ bool ProcessUserInput(SDL_Event ev) {
 
         driver.justMoved = true;
 
-        Log::emit("\tdetected user movement\n");
-
         auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
         if (!isKeyRelease) {
+            logger.Emit("\tevent is a keyPress\n");
+            logger.Emit("\told movement status %X", driver.currentMovementInfo.asBits());
             switch (sdlKey) {
             case SDLK_w:
                 driver.currentMovementInfo.set(MovementCode::MovementKey::W);
@@ -218,11 +222,13 @@ bool ProcessUserInput(SDL_Event ev) {
                 driver.currentMovementInfo.set(MovementCode::MovementKey::D);
                 break;
             default:
-                Log::error("ProcessUserInput - Error: key release, sdlKey = %d\n", sdlKey);
+                logger.Error("Error: key press not one of w,a,s,d. sdlKey = %d\n", sdlKey);
                 break;
             }
         }
         else {
+            logger.Emit("\tevent is a keyRelease\n");
+            logger.Emit("\told movement status %X", driver.currentMovementInfo.asBits());
             switch (sdlKey) {
             case SDLK_w:
                 driver.currentMovementInfo.clear(MovementCode::MovementKey::W);
@@ -237,10 +243,12 @@ bool ProcessUserInput(SDL_Event ev) {
                 driver.currentMovementInfo.clear(MovementCode::MovementKey::D);
                 break;
             default:
-                Log::error("ProcessUserInput - Error: key press, sdlKey = %d\n", sdlKey);
+                logger.Error("Error: key release not one of w,a,s,d. sdlKey = %d\n", sdlKey);
                 break;
             }
         }
+
+        logger.Emit("\tnew movement status %X", driver.currentMovementInfo.asBits());
     }
 
     return false;
@@ -397,9 +405,7 @@ int main() {
     while (running) {
         // first check for any input from the client device
         if (SDL_PollEvent(&ev) != 0) {
-
-            Log::emit("processing event: %d\n", ev.type);
-            running = !ProcessUserInput(ev);
+            running = !ProcessEvent(ev);
             TransmitNewStatus();
         }
         

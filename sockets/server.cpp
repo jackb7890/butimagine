@@ -34,7 +34,7 @@ class ServerDriver {
     public:
     Map map;
     Server ntwk;
-    std::vector<Player*> clientEntities;
+    std::array<Player*, Server::MAX_SOCKETS> clientEntities; // move this to map.players
 };
 
 ServerDriver driver;
@@ -140,8 +140,9 @@ int main(int argc, char* argv[]) {
                     Player* joinedPlayer = driver.map.SpawnEntity<Player>();
                     joinedPlayer->multiplayerID = indx;
                     joinedPlayer->online = true;
+                    driver.clientEntities[indx] = joinedPlayer;
                     // Send starter data to player client
-                    SendAllEntities(driver.ntwk.clientSockets[joinedPlayer->multiplayerID]);
+                    SendAllEntities(driver.ntwk.clientSockets[indx]);
                 }
             }
             
