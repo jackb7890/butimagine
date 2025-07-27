@@ -16,3 +16,5 @@ set RELEASE_BIN=%PROJ_DIR%\build\Release\
 
 :: debug_bin is on the path so its easier running project when debugging
 set PATH=%PATH%;%PROJ_DIR%;%PROJ_DIR%\scripts;%DEBUG_BIN%;
+
+git config --global format.pretty oneline
