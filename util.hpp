@@ -218,6 +218,8 @@ struct Arr2d {
 int Wrap(int oldIndex, int change, int bound);
 const char* MapEventIdToName(unsigned int id);
 
+int Wrap(int oldIndex, int change, int bound);
+const char* MapEventIdToName(unsigned int id);
 
 struct Log {
 
