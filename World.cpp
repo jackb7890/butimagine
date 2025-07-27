@@ -1,4 +1,5 @@
 #include "World.hpp"
+#include "util.hpp"
 #include <algorithm>
 #include <type_traits>
 #include <functional>
@@ -9,9 +10,11 @@ unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
 
 std::string MapEntity::ToString() {
     char buf[256];
+
     sprintf_s(buf, 256, "ID: %zd, rgb: %d:%d:%d, location: (%d, %d), size(XxY): %dx%d",
         this->ID, this->color.r, this->color.g, this->color.b, this->hitbox.origin.x, 
         this->hitbox.origin.y, this->hitbox.dim.width, this->hitbox.dim.depth);
+
     return std::string((char*)buf);
 }
 
@@ -30,10 +33,22 @@ void MapEntity::UpdateGrid(HitBox oldArea, HitBox newArea) {
 }
 
 void MapEntity::Move(int xD, int yD) {
+    Log logger("MapEntity Move: ");
+    logger.Emit("entity=%d, attempting to move (xD=%d, yD=%d)\n", this->ID, xD, yD);
+
+    if (!xD && !yD) {
+        logger.Emit("failed to move, called with (0,0)\n");
+        return;
+    }
+
     hasMovedOffScreen = true;
     HitBox oldHb = this->hitbox;
     oldPos = this->GetCurrentPos();
+
+    logger.Emit("prior location: (%d, %d)\n", oldPos.x, oldPos.y);
+
     GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
+
     int smallerXCoord = std::min(oldPos.x, newPos.x);
     int smallerYCoord = std::min(oldPos.y, newPos.y);
     int xCollision = GetWidth() + std::abs(xD);
@@ -41,11 +56,14 @@ void MapEntity::Move(int xD, int yD) {
     const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
 
     if (map->CheckForCollision(collisionPath, ID)) {
+        logger.Emit("failed to move, collision encountered\n");
         return;
     }
 
     newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
     newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
+
+    logger.Emit("new location: (%d, %d)\n", newPos.x, newPos.y);
 
     this->SetPos(newPos);
 
