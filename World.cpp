@@ -121,11 +121,15 @@ Display::Display(SDL_Window* _w, Map* _map) : window(_w), renderer(nullptr), map
     surface = SDL_GetWindowSurface(window);
 }
 
+Display::Display(Map* _map) : map(_map) {
+    surface = nullptr;
+}
+
 Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::DrawEntity(MapEntity entity) {
+void Display::DrawEntity(const MapEntity& entity) {
     SDL_Rect point = SDL_Rect {
         entity.hitbox.origin.x,
         entity.hitbox.origin.y,
@@ -140,8 +144,8 @@ void Display::DrawEntity(MapEntity entity) {
         //A- It's also one field for each RGB, so use (map)entity.color.(r/g/b) instead of RGBColor.ConvertToSDL()
         
         
-        // SDL_SetRenderDrawColor(renderer, entity.color.r, entity.color.g, entity.color.b, 255);
-        // SDL_RenderFillRect(renderer, &point);
+        SDL_SetRenderDrawColor(this->renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+        SDL_RenderFillRect(this->renderer, &point);
     }
 }
 
@@ -149,11 +153,13 @@ void Display::DrawBackground() {
     SDL_Rect rect = SDL_Rect { 0, 0, map->width, map->height };
     RGBColor color = RGBColor { 0, 0, 0 };
 
-    // SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-    // SDL_RenderFillRect(renderer, &rect);
+    SDL_SetRenderDrawColor(this->renderer, color.r, color.g, color.b, 255);
+    SDL_RenderFillRect(this->renderer, &rect);
 }
 
 void Display::DrawFrame(std::vector<MapEntity*> entities) {
+
+
 
     DrawBackground();
 

@@ -158,6 +158,8 @@ struct Log {
     std::string prefix1;
     int prefixLevel;
 
+    static inline bool _loglevel = 1;
+
     Log() {
         prefixLevel = 0;
         prefix1 = "";
@@ -173,6 +175,12 @@ struct Log {
         prefixLevel = 1;
     }
 
+    ~Log() {
+        if (!prefixLevel) {
+            Log::emit("%s End of Logger\n--------------------\n\n", prefix1.c_str());
+        }
+    }
+
     inline void SetPrefix(std::string str) {
         prefix1 = str;
         prefixLevel = 1;
@@ -186,10 +194,10 @@ struct Log {
     template<typename First, typename ...Args>
     void Emit(First str, Args... args) {
         if (!prefixLevel) {
-            printf("%s", prefix1);
+            Log::emit("%s", prefix1);
         }
         #if defined(LOG)
-            printf(str, args...);
+            Log::emit(str, args...);
         #else
             return;
         #endif
@@ -198,9 +206,9 @@ struct Log {
     template<typename First, typename ...Args>
     void Error(First str, Args... args) {
         if (!prefixLevel) {
-            printf("%s", prefix1);
+            Log::emit("%s", prefix1);
         }
-        printf(str, args...);
+        Log::emit(str, args...);
         #if defined(DEBUG)
             __debugbreak();
         #elif defined(QUIET_ERRORS)
@@ -213,6 +221,9 @@ struct Log {
 
     template<typename First, typename ...Args>
     static void emit(First str, Args... args) {
+        if constexpr (!_loglevel) {
+            return;
+        }
         #if defined(LOG)
             printf(str, args...);
         #else

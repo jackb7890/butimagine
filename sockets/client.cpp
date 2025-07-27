@@ -92,10 +92,6 @@ struct MovementCode {
     }
 };
 
-// TODO: move these to driver
-SDL_Window* window;
-SDL_Renderer* renderer;
-
 struct ClientDriver {
     public:
     MovementCode currentMovementInfo;
@@ -122,24 +118,25 @@ void init() {
         Log::error("ER: SDL_Init: %sn", SDL_GetError());
     }
 
+    driver.display = new Display(&driver.map);
+    //driver.display = new Display(window, &driver.map);
+
     //A- Window should be the same as it was before the rendering swap
-    window = SDL_CreateWindow("my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow("my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {
         Log::error("Failed to create window! Error: %s\n", SDL_GetError());
     }
 
-    SDL_UpdateWindowSurface(window);
+    driver.display->window = window;
 
-    //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    //if (!renderer) {
-    //    Log::error("Failed to create renderer! Error: %s\n", SDL_GetError());
-    //}
+    // SDL_UpdateWindowSurface(window);
 
-    //driver.display = new Display(window, renderer, &driver.map);
-    driver.display = new Display(window, &driver.map);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+       Log::error("Failed to create renderer! Error: %s\n", SDL_GetError());
+    }
 
-
-    //SDL_RenderClear(renderer);
+    driver.display->renderer = renderer;
     // finished initializing user screen
 }
 
@@ -148,12 +145,9 @@ void cleanup() {
     delete driver.display;
 
     // cleanup user screen
-    //SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(driver.display->renderer);
+    //SDL_DestroyWindow(driver.display->window);
     SDL_Quit();
-    //A- Idk is we need these NULL but the tutorial had them
-    renderer = NULL;
-    window = NULL;
 
     // cleanup SDL subsystems
     SDL_Quit();
@@ -193,10 +187,10 @@ bool ProcessEvent(SDL_Event ev) {
 
     Log logger("ProcessEvent: ");
     logger.Emit("begin\n");
-    logger.Emit("\tevent type = %d", ev.type);
+    logger.Emit("event type = %d", ev.type);
 
     if (InputIsQuitGame(ev)) {
-        logger.Emit("\tquit game (return 'true')\n");
+        logger.Emit("quit game (return 'true')\n");
         return true;
     }
 
@@ -206,8 +200,8 @@ bool ProcessEvent(SDL_Event ev) {
 
         auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
         if (!isKeyRelease) {
-            logger.Emit("\tevent is a keyPress\n");
-            logger.Emit("\told movement status %X", driver.currentMovementInfo.asBits());
+            logger.Emit("event is a keyPress\n");
+            logger.Emit("old movement status %X\n", driver.currentMovementInfo.asBits());
             switch (sdlKey) {
             case SDLK_w:
                 driver.currentMovementInfo.set(MovementCode::MovementKey::W);
@@ -227,8 +221,8 @@ bool ProcessEvent(SDL_Event ev) {
             }
         }
         else {
-            logger.Emit("\tevent is a keyRelease\n");
-            logger.Emit("\told movement status %X", driver.currentMovementInfo.asBits());
+            logger.Emit("event is a keyRelease\n");
+            logger.Emit("old movement status %X\n", driver.currentMovementInfo.asBits());
             switch (sdlKey) {
             case SDLK_w:
                 driver.currentMovementInfo.clear(MovementCode::MovementKey::W);
@@ -248,31 +242,42 @@ bool ProcessEvent(SDL_Event ev) {
             }
         }
 
-        logger.Emit("\tnew movement status %X", driver.currentMovementInfo.asBits());
+        logger.Emit("new movement status %X", driver.currentMovementInfo.asBits());
     }
 
     return false;
 }
 
-void TransmitNewStatus() {
+void RunAllClientJobs() {
+    Log logger("RunAllClientJobs: ");
+    logger.Emit("begin\n");
     if (driver.justMoved) {
         driver.justMoved = false;
 
-        Log::emit("Transmitting movement code: %d\n", driver.currentMovementInfo.asBits());
+        logger.Emit("driver moved this iteration\n");
 
-        ImMoving moving {1, 2};
+        ImMoving moving {0, 0};
         if (driver.currentMovementInfo.IsMovingUp()) {
+            logger.Emit("moving up\n");
             moving.yOff = 1;
         }
         else if (driver.currentMovementInfo.IsMovingDown()) {
+            logger.Emit("moving down\n");
             moving.yOff = -1;
         }
 
         if (driver.currentMovementInfo.IsMovingRight()) {
+            logger.Emit("moving right\n");
             moving.xOff = 1;
         }
         else if (driver.currentMovementInfo.IsMovingLeft()) {
+            logger.Emit("moving left\n");
             moving.xOff = -1;
+        }
+
+        // assert we are indeed moving
+        if (!moving.xOff && !moving.yOff) {
+            logger.Error("Error: All IsMoving* calls returned 'false'\n");
         }
 
         Packet newPacket(Packet::Flag_t::bMoving);
@@ -280,8 +285,7 @@ void TransmitNewStatus() {
         driver.clientInfo.SendPacket(driver.clientInfo.serverSoc, newPacket);
 
         // next update our own map
-        Log::emit("Finished transmitting movement code\n");
-        Log::emit("\n");
+        driver.me->Move(moving.xOff, moving.yOff);
     }
 }
 
@@ -304,14 +308,18 @@ void ProcessServerUpdate() {
         }
         // We have something from the server
         std::vector<Packet> consumedPackets;
-        driver.clientInfo.ConsumePackets(driver.clientInfo.serverSoc, consumedPackets);
+        if(!driver.clientInfo.ConsumePackets(driver.clientInfo.serverSoc, consumedPackets)) {
+            Log::emit("ConsumePackets failed during ProcessServerUpdate\n");
+            return;
+        }
+        
         for (auto p : consumedPackets) {
             if (p.flags.test(Packet::Flag_t::bMoving)) {
                 // something has moved in the world
                 EntityMoveUpdate data = p.ReadAsType<EntityMoveUpdate>();
                 MapEntity* entityToMove = driver.map.GetEntity(data.id);
                 entityToMove->Move(data.xOff, data.yOff);
-                driver.entitiesToDraw.push_back(entityToMove);
+                driver.map.drawMeBuf.push_back(entityToMove);
             }
         }
     }
@@ -355,20 +363,20 @@ void GetAllEntities() {
                         Log::emit("new-entity packet is a Player\n");
                         Player transmitted = p.ReadAsType<Player>();
                         Player* player = driver.map.SpawnEntity<>(transmitted);
-                        driver.entitiesToDraw.push_back(player);
+                        driver.map.drawMeBuf.push_back(player);
                     }
                     else if (p.polyTypeID == TypeDetails<Wall>::index) {
                         Log::emit("new-entity packet is a Wall\n");
                         Wall transmitted = p.ReadAsType<Wall>();
                         Wall* wall = driver.map.SpawnEntity<>(transmitted);
-                        driver.entitiesToDraw.push_back(wall);
+                        driver.map.drawMeBuf.push_back(wall);
                     }
                     else if (p.polyTypeID == TypeDetails<MapEntity>::index) {
                         Log::emit("new-entity packet is a MapEntity\n");
                         MapEntity transmitted = p.ReadAsType<Player>();
                         driver.map.SpawnEntity<>(transmitted);
                         MapEntity* entity = driver.map.SpawnEntity<>(transmitted);
-                        driver.entitiesToDraw.push_back(entity);
+                        driver.map.drawMeBuf.push_back(entity);
                     }
                     else {
                         Log::error("GetAllEntites: Error unexpected new-entity polyTypeID=%d\n", p.polyTypeID);
@@ -406,7 +414,7 @@ int main() {
         // first check for any input from the client device
         if (SDL_PollEvent(&ev) != 0) {
             running = !ProcessEvent(ev);
-            TransmitNewStatus();
+            RunAllClientJobs();
         }
         
         // next check if the server has anything for us
@@ -420,7 +428,12 @@ int main() {
         }
 
         // finally, update the screen
-        // driver.display->DrawFrame(driver.map.allEntities);
+        if (!driver.map.drawMeBuf.empty()) {
+            SDL_RenderClear(driver.display->renderer);
+            driver.display->DrawFrame(driver.map.drawMeBuf);
+            driver.map.drawMeBuf.clear();
+        }
+        
     }
 
     cleanup();
