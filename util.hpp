@@ -160,7 +160,7 @@ struct Log {
     std::string prefix1;
     int prefixLevel;
 
-    static inline bool _loglevel = 1;
+    static inline bool _loglevel = 0;
 
     Log() {
         prefixLevel = 0;
@@ -193,6 +193,7 @@ struct Log {
         prefixLevel = 1;
     }
 
+    // Use me when logging through a specific Log object
     template<typename First, typename ...Args>
     void Emit(First str, Args... args) {
         if (prefixLevel) {
@@ -205,6 +206,7 @@ struct Log {
         #endif
     }
 
+    // Use me when logging through a Log object
     template<typename First, typename ...Args>
     void Error(First str, Args... args) {
         if (!prefixLevel) {
@@ -221,6 +223,7 @@ struct Log {
         return;
     }
 
+    // Use me when logging you do not have a Log object (static)
     template<typename First, typename ...Args>
     static void emit(First str, Args... args) {
         if (!Log::_loglevel) {

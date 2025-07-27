@@ -323,13 +323,13 @@ Packet Packet::TCPToPacket(void** p_packet, size_t _size, size_t* remaining = nu
     size_t sizeWoutFlags = _size - EXPECTED_BASE_PACKET_SIZE;
 
     if (sizeWoutFlags < newPacket.size) {
+        newPacket.unfinished = true;
         Log::error("can this happen? TCPtoPacket processed incomplete Packet\n"
         "\t(TCPToPacket was called with buffer of size=%d, but decoded packet is of size=%d)\n",_size, newPacket.size);
     }
 
     if (sizeWoutFlags > newPacket.size) {
         Log::emit("incoming TCP data is multiple packets\n");
-        newPacket.unfinished = true;
     }
 
     void* p_packet_orig = *p_packet;

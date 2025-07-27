@@ -217,20 +217,20 @@ void RunAllClientJobs() {
         ImMoving moving {0, 0};
         if (driver.currentMovementInfo.IsMovingUp()) {
             logger.Emit("moving up\n");
-            moving.yOff = 1;
+            moving.yOff = -10;
         }
         else if (driver.currentMovementInfo.IsMovingDown()) {
             logger.Emit("moving down\n");
-            moving.yOff = -1;
+            moving.yOff = 10;
         }
 
         if (driver.currentMovementInfo.IsMovingRight()) {
             logger.Emit("moving right\n");
-            moving.xOff = 1;
+            moving.xOff = 10;
         }
         else if (driver.currentMovementInfo.IsMovingLeft()) {
             logger.Emit("moving left\n");
-            moving.xOff = -1;
+            moving.xOff = -10;
         }
 
         // justMoved means key release or key press currently (sorry)
@@ -369,12 +369,6 @@ int main() {
     bool running = true;
 
     while (running) {
-        // first check for any input from the client device
-        if (SDL_PollEvent(&ev) != 0) {
-            running = !ProcessEvent(ev);
-            RunAllClientJobs();
-        }
-        
         // next check if the server has anything for us
         int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
 
@@ -385,12 +379,19 @@ int main() {
            ProcessServerUpdate();
         }
 
+        // first check for any input from the client device
+        if (SDL_PollEvent(&ev) != 0) {
+            running = !ProcessEvent(ev);
+        }
+
+        RunAllClientJobs();
+
         // finally, update the screen
+        driver.map.drawMeBuf.push_back(driver.me);
         if (!driver.map.drawMeBuf.empty()) {
             driver.display->DrawFrame(driver.map.drawMeBuf);
             driver.map.drawMeBuf.clear();
         }
-        
     }
 
     cleanup();
