@@ -58,17 +58,11 @@ class MapEntity {
     SDL_Texture* texture;
     bool hasCollision;
     size_t ID;
+    Map* map;
 
     double X_velocity, Y_velocity;
     bool hasMovedOffScreen = false;
     GridPos oldPos;
-
-    inline MapEntity(HitBox _hb, RGBColor _c, bool _hasCol = true) :
-        hitbox(_hb), color(_c), hasCollision(_hasCol) {
-    }
-    inline MapEntity(HitBox _hb, RGBColor _c, Map* _m, bool _hasCol) :
-        hitbox(_hb), color(_c), map(_m), hasCollision(_hasCol) {
-    }
 
     public:
     MapEntity() {}
@@ -186,12 +180,6 @@ struct Map {
     std::vector<MapEntity*> allEntities;
     std::vector<MapEntity*> drawMeBuf;
 
-    Map();
-
-    inline int GetNumberOfEntities() {
-        return allEntities.size();
-    }
-
     Map ();
     ~Map ();
 
@@ -225,12 +213,9 @@ struct Map {
         return newEntity;
     }
 
-    // Drawing each pixel based on each entry of grid for the map
-    // will be slow compared to if we can do some SDL_FillRects, but
-    // idk how to we'd do that
-    void InitializeWorld();
-
-    void InitializeWorld2();
+        inline size_t GetNumberOfEntities() {
+        return allEntities.size();
+    }
 
     // Clears the map at area covered by player
     void Clear(Player player);
@@ -257,11 +242,9 @@ struct Map {
 
 // TODO move this to util
 struct Display {
+    SDL_Window* window;
     SDL_Renderer* renderer;
-    SDL_Window* window = nullptr;
-    //A- Rendeder added to display
-    SDL_Renderer* renderer = nullptr;
-    SDL_Surface* surface = nullptr;
+    SDL_Surface* surface ;
     Map* map = nullptr;
 
     Display() {};
