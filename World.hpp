@@ -17,9 +17,13 @@
 
 #include <type_traits>
 #include <list>
+#include <string>
 
-#define MAP_WIDTH 1280
-#define MAP_HEIGHT 720
+//#define MAP_WIDTH 1280
+//#define MAP_HEIGHT 720
+
+#define MAP_WIDTH 720
+#define MAP_HEIGHT 360
 
 struct Map;
 struct Display;
@@ -70,6 +74,8 @@ class MapEntity {
     MapEntity() {}
     MapEntity(Map* _map, size_t _ID) : map(_map), ID(_ID) {}
     MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol = true);
+
+    std::string ToString();
 
     inline void SetMap(Map* _map) {
         map = _map;
@@ -266,6 +272,6 @@ struct Display {
     ~Display();
 
     void DrawBackground();
-    void DrawEntity(const MapEntity& entity);
-    void DrawFrame(const std::vector<MapEntity*> entities);
+    void DrawEntity(MapEntity entity);
+    void DrawFrame(std::vector<MapEntity*> entities);
 };

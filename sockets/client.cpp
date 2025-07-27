@@ -108,51 +108,6 @@ struct ClientDriver {
 
 ClientDriver driver;
 
-void init() {
-
-    // initialize user screen
-    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
-
-    // initialize SDL subsystems
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        Log::error("ER: SDL_Init: %sn", SDL_GetError());
-    }
-
-    driver.display = new Display(&driver.map);
-    //driver.display = new Display(window, &driver.map);
-
-    //A- Window should be the same as it was before the rendering swap
-    SDL_Window* window = SDL_CreateWindow("my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN);
-    if (!window) {
-        Log::error("Failed to create window! Error: %s\n", SDL_GetError());
-    }
-
-    driver.display->window = window;
-
-    // SDL_UpdateWindowSurface(window);
-
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-       Log::error("Failed to create renderer! Error: %s\n", SDL_GetError());
-    }
-
-    driver.display->renderer = renderer;
-    // finished initializing user screen
-}
-
-void cleanup() {
-
-    delete driver.display;
-
-    // cleanup user screen
-    SDL_DestroyRenderer(driver.display->renderer);
-    //SDL_DestroyWindow(driver.display->window);
-    SDL_Quit();
-
-    // cleanup SDL subsystems
-    SDL_Quit();
-}
-
 using namespace std;
 
 bool InputIsUserMovement(const SDL_Event& ev) {
@@ -187,10 +142,13 @@ bool ProcessEvent(SDL_Event ev) {
 
     Log logger("ProcessEvent: ");
     logger.Emit("begin\n");
-    logger.Emit("event type = %d", ev.type);
+
+    const char* description = MapEventIdToName(ev.type);
+
+    logger.Emit("event type = %s\n", description);
 
     if (InputIsQuitGame(ev)) {
-        logger.Emit("quit game (return 'true')\n");
+        logger.Emit("quit game (returning 'true')\n");
         return true;
     }
 
@@ -242,7 +200,7 @@ bool ProcessEvent(SDL_Event ev) {
             }
         }
 
-        logger.Emit("new movement status %X", driver.currentMovementInfo.asBits());
+        logger.Emit("new movement status %X\n", driver.currentMovementInfo.asBits());
     }
 
     return false;
@@ -275,10 +233,7 @@ void RunAllClientJobs() {
             moving.xOff = -1;
         }
 
-        // assert we are indeed moving
-        if (!moving.xOff && !moving.yOff) {
-            logger.Error("Error: All IsMoving* calls returned 'false'\n");
-        }
+        // justMoved means key release or key press currently (sorry)
 
         Packet newPacket(Packet::Flag_t::bMoving);
         newPacket.Encode(moving);
@@ -394,6 +349,9 @@ void GetAllEntities() {
     Log::emit("Finished GetAllEntites - success!\n");
 }
 
+void init(void);
+void cleanup(void);
+
 int main() {
 
     init();
@@ -429,7 +387,6 @@ int main() {
 
         // finally, update the screen
         if (!driver.map.drawMeBuf.empty()) {
-            SDL_RenderClear(driver.display->renderer);
             driver.display->DrawFrame(driver.map.drawMeBuf);
             driver.map.drawMeBuf.clear();
         }
@@ -437,4 +394,49 @@ int main() {
     }
 
     cleanup();
+}
+
+void init() {
+
+    // initialize user screen
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+
+    // initialize SDL subsystems
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        Log::error("ER: SDL_Init: %sn", SDL_GetError());
+    }
+
+    driver.display = new Display(&driver.map);
+    //driver.display = new Display(window, &driver.map);
+
+    //A- Window should be the same as it was before the rendering swap
+    SDL_Window* window = SDL_CreateWindow("my window", 100, 100, MAP_WIDTH, MAP_HEIGHT, SDL_WINDOW_SHOWN);
+    if (!window) {
+        Log::error("Failed to create window! Error: %s\n", SDL_GetError());
+    }
+
+    driver.display->window = window;
+
+    // SDL_UpdateWindowSurface(window);
+
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+       Log::error("Failed to create renderer! Error: %s\n", SDL_GetError());
+    }
+
+    driver.display->renderer = renderer;
+    // finished initializing user screen
+}
+
+void cleanup() {
+
+    delete driver.display;
+
+    // cleanup user screen
+    SDL_DestroyRenderer(driver.display->renderer);
+    //SDL_DestroyWindow(driver.display->window);
+    SDL_Quit();
+
+    // cleanup SDL subsystems
+    SDL_Quit();
 }
