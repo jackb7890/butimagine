@@ -178,6 +178,7 @@ struct Map {
 
     std::vector<Player*> players;
     std::vector<MapEntity*> allEntities;
+    std::vector<MapEntity*> drawMeBuf;
 
     Map();
 
@@ -260,10 +261,11 @@ struct Display {
     Display() {};
     Display(SDL_Window* _w, SDL_Renderer* _r, Map* map);
     Display(SDL_Window* _w, Map* map);
+    Display(Map* map);
 
     ~Display();
 
     void DrawBackground();
-    void DrawEntity(MapEntity entity);
-    void DrawFrame(std::vector<MapEntity*> entities);
+    void DrawEntity(const MapEntity& entity);
+    void DrawFrame(const std::vector<MapEntity*> entities);
 };

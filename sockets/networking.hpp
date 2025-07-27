@@ -187,7 +187,7 @@ class Networking {
     Packet PopUnfinishedPacket();
     int SendPacket(TCPsocket& socket, Packet& Packet);
     Packet ConsumePacket(TCPsocket& socket);
-    void ConsumePackets(TCPsocket& socket, std::vector<Packet>& outPackets);
+    bool ConsumePackets(TCPsocket& socket, std::vector<Packet>& outPackets);
     void CloseSocket(TCPsocket* socket);
     
     protected:

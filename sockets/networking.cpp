@@ -68,7 +68,7 @@ int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
     return num_sent; 
 }
 
-void Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsOut) {
+bool Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsOut) {
     uint8_t temp_data[max_packet_size];
 
     Log::emit("Running ConsumePackets...\n");
@@ -84,18 +84,19 @@ void Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsO
             Log::emit("SDLNet_TCP_Recv: %sn\n", errmsg);
         }
 
-        Log::error("Error in ConsumePacket, num_recv=%d\n", num_recv);
-        return;
+        Log::emit("SDLNet_TCP_Recv failed, num_recv=%d\n", num_recv);
+        return false;
     } 
 
     Packet::TCPToPackets(&temp_data[0], num_recv, packetsOut);
 
     if (packetsOut.empty()) {
-        Log::error("ConsumePackets failed\n");
-        return;
+        Log::emit("ConsumePackets failed to parse atleast one full packet\n");
+        return false;
     }
     
     Log::emit("ConsumePackets successfully consumed %d packets\n", num_recv);
+    return true;
 }
 
 void Networking::CloseSocket(TCPsocket* socket) {
