@@ -7,6 +7,14 @@ unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
 }
 
+std::string MapEntity::ToString() {
+    char buf[256];
+    sprintf_s(buf, 256, "ID: %zd, rgb: %d:%d:%d, location: (%d, %d), size(XxY): %dx%d",
+        this->ID, this->color.r, this->color.g, this->color.b, this->hitbox.origin.x, 
+        this->hitbox.origin.y, this->hitbox.dim.width, this->hitbox.dim.depth);
+    return std::string((char*)buf);
+}
+
 void MapEntity::UpdateGrid(HitBox oldArea, HitBox newArea) {
     for (int i = oldArea.origin.x; i < oldArea.origin.x + oldArea.dim.width; i++) {
         for (int j = oldArea.origin.y; j < oldArea.origin.y + oldArea.dim.depth; j++) {
@@ -111,7 +119,10 @@ Display::~Display() {
     SDL_DestroyWindow(window);
 }
 
-void Display::DrawEntity(const MapEntity& entity) {
+void Display::DrawEntity(MapEntity entity) {
+    Log::emit("Drawing Entity...\n");
+    Log::emit("\tEntity description -> %s\n", entity.ToString().c_str());
+
     SDL_Rect point = SDL_Rect {
         entity.hitbox.origin.x,
         entity.hitbox.origin.y,
@@ -119,19 +130,18 @@ void Display::DrawEntity(const MapEntity& entity) {
         entity.hitbox.dim.depth
     };
 
-    if (entity.valid) {
-        //A- Unlike SDL_FillRect from the window based rendering,
-        //A- RenderFillRect doesn't have a color input.
-        //A- Color is set beforehand by SetRenderDrawColor
-        //A- It's also one field for each RGB, so use (map)entity.color.(r/g/b) instead of RGBColor.ConvertToSDL()
-        
-        
-        SDL_SetRenderDrawColor(this->renderer, entity.color.r, entity.color.g, entity.color.b, 255);
-        SDL_RenderFillRect(this->renderer, &point);
-    }
+    //A- Unlike SDL_FillRect from the window based rendering,
+    //A- RenderFillRect doesn't have a color input.
+    //A- Color is set beforehand by SetRenderDrawColor
+    //A- It's also one field for each RGB, so use (map)entity.color.(r/g/b) instead of RGBColor.ConvertToSDL()
+
+    SDL_SetRenderDrawColor(this->renderer, entity.color.r, entity.color.g, entity.color.b, 255);
+    SDL_RenderFillRect(this->renderer, &point);
 }
 
 void Display::DrawBackground() {
+    Log::emit("Drawing Background...\n");
+
     SDL_Rect rect = SDL_Rect { 0, 0, map->width, map->height };
     RGBColor color = RGBColor { 0, 0, 0 };
 
@@ -141,13 +151,17 @@ void Display::DrawBackground() {
 
 void Display::DrawFrame(std::vector<MapEntity*> entities) {
 
-
+    Log::emit("Clear Renderer\n");
+    SDL_RenderClear(this->renderer);
 
     DrawBackground();
 
     for (auto entity : entities) {
-        Display::DrawEntity(*entity);
+        DrawEntity(*entity);
     }
+
+    Log::emit("Present Renderer\n");
+    SDL_RenderPresent(this->renderer);
 }
 
 MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :

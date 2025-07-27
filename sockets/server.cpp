@@ -140,6 +140,8 @@ int main(int argc, char* argv[]) {
                     Player* joinedPlayer = driver.map.SpawnEntity<Player>();
                     joinedPlayer->multiplayerID = indx;
                     joinedPlayer->online = true;
+                    joinedPlayer->SetWidth(25);
+                    joinedPlayer->SetDepth(40);
                     driver.clientEntities[indx] = joinedPlayer;
                     // Send starter data to player client
                     SendAllEntities(driver.ntwk.clientSockets[indx]);
