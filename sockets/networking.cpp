@@ -77,7 +77,7 @@ void Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsO
 
     Log::emit("ConsumePackets found %d incoming bytes to process\n", num_recv);
 
-    if(num_recv <= 0) {
+    if(num_recv < 0) {
         const char* errmsg = SDLNet_GetError();
 
         if(errmsg && strlen(errmsg) > 0) {
