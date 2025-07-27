@@ -6,6 +6,7 @@
 #include <vector>
 #include <assert.h>
 #include <typeinfo>
+#include <string>
 
 // SDL_event cheat sheet
 /*
@@ -151,7 +152,65 @@ struct Arr2d {
 
 int Wrap(int oldIndex, int change, int bound);
 
+
 struct Log {
+
+    std::string prefix1;
+    int prefixLevel;
+
+    Log() {
+        prefixLevel = 0;
+        prefix1 = "";
+    };
+
+    Log(std::string str) {
+        prefix1 = str;
+        prefixLevel = 1;
+    }
+
+    Log(const char * str) {
+        prefix1 = std::string(str);
+        prefixLevel = 1;
+    }
+
+    inline void SetPrefix(std::string str) {
+        prefix1 = str;
+        prefixLevel = 1;
+    }
+
+    inline void SetPrefix(const char * str) {
+        prefix1 = std::string(str);
+        prefixLevel = 1;
+    }
+
+    template<typename First, typename ...Args>
+    void Emit(First str, Args... args) {
+        if (!prefixLevel) {
+            printf("%s", prefix1);
+        }
+        #if defined(LOG)
+            printf(str, args...);
+        #else
+            return;
+        #endif
+    }
+
+    template<typename First, typename ...Args>
+    void Error(First str, Args... args) {
+        if (!prefixLevel) {
+            printf("%s", prefix1);
+        }
+        printf(str, args...);
+        #if defined(DEBUG)
+            __debugbreak();
+        #elif defined(QUIET_ERRORS)
+            // just print and return
+        #else
+            abort();
+        #endif
+        return;
+    }
+
     template<typename First, typename ...Args>
     static void emit(First str, Args... args) {
         #if defined(LOG)
