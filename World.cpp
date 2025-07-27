@@ -72,32 +72,6 @@ void MapEntity::Move(int xD, int yD) {
     this->UpdateGrid(oldHb, newHb);
 }
 
-void MapEntity::Move(int xD, int yD) {
-        hasMovedOffScreen = true;
-        oldPos = GetCurrentPos();
-        GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
-
-        int smallerXCoord = std::min(oldPos.x, newPos.x);
-        int smallerYCoord = std::min(oldPos.y, newPos.y);
-        int xCollision = GetWidth() + std::abs(xD);
-        int yCollision = GetDepth() + std::abs(yD);
-        const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
-
-        if (this->hasCollision) {
-           if (map->CheckForCollision(collisionPath, this->ID)) {
-                //A- Collisions set velocity to 0. Makes bumping into walls less annoying
-                this->X_velocity = 0.0;
-                this->Y_velocity = 0.0;
-                return;
-            }
-        }
-
-        newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
-        newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
-
-        SetPos(newPos);
-}
-
 Map::Map () {
     numberOfEntities = 0;
     grid = Arr2d<MapEntityList>(MAP_WIDTH, MAP_HEIGHT);
@@ -117,7 +91,7 @@ bool Map::CheckForCollision(const HitBox& movingPiece, size_t ID)  {
                         
             MapEntityList entitiesAtPoint = grid(Wrap(x-1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
             for (MapEntity* entity : entitiesAtPoint.list) {
-                if (entity->valid && entity->hasCollision &&
+                if (entity->hasCollision &&
                     entity->ID != ID) {
                     return true;
                 }

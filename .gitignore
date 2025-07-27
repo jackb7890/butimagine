@@ -8,8 +8,7 @@
 
 *.vscode
 
+*.txt
+
 .vs/
 build/
-
-vcpkg-configuration.json
-todo.txt
