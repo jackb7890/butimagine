@@ -150,8 +150,10 @@ struct Arr2d {
     }
 };
 
-int Wrap(int oldIndex, int change, int bound);
+// util.cpp function declarations
 
+int Wrap(int oldIndex, int change, int bound);
+const char* MapEventIdToName(unsigned int id);
 
 struct Log {
 
@@ -193,8 +195,8 @@ struct Log {
 
     template<typename First, typename ...Args>
     void Emit(First str, Args... args) {
-        if (!prefixLevel) {
-            Log::emit("%s", prefix1);
+        if (prefixLevel) {
+            Log::emit("%s", prefix1.c_str());
         }
         #if defined(LOG)
             Log::emit(str, args...);
@@ -221,7 +223,7 @@ struct Log {
 
     template<typename First, typename ...Args>
     static void emit(First str, Args... args) {
-        if constexpr (!_loglevel) {
+        if (!Log::_loglevel) {
             return;
         }
         #if defined(LOG)
