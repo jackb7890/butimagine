@@ -18,7 +18,6 @@ add_executable(butimagine main.cpp World.cpp util.cpp TextureManager.cpp)
 find_path(SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2)
 
 add_compile_options(-DLOG)
-# add_compile_options(-DDEBUG)
 
 add_executable(client sockets/client.cpp sockets/networking.cpp World.cpp util.cpp)
 target_include_directories(client PRIVATE ${SDL2_INCLUDE_DIR})

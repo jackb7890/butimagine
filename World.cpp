@@ -36,11 +36,6 @@ void MapEntity::Move(int xD, int yD) {
     Log logger("MapEntity Move: ");
     logger.Emit("entity=%d, attempting to move (xD=%d, yD=%d)\n", this->ID, xD, yD);
 
-    if (!xD && !yD) {
-        logger.Emit("failed to move, called with (0,0)\n");
-        return;
-    }
-
     hasMovedOffScreen = true;
     HitBox oldHb = this->hitbox;
     oldPos = this->GetCurrentPos();
