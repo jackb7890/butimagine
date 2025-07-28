@@ -160,7 +160,7 @@ struct Log {
     std::string prefix1;
     int prefixLevel;
 
-    static inline bool _loglevel = 0;
+    static inline bool _loglevel = 1;
 
     Log() {
         prefixLevel = 0;

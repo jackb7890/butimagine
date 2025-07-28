@@ -154,12 +154,14 @@ bool ProcessEvent(SDL_Event ev) {
 
     if (InputIsUserMovement(ev)) {
 
-        driver.justMoved = true;
-
         auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
-        if (!isKeyRelease) {
+        
+        if (!isKeyRelease) {   
             logger.Emit("event is a keyPress\n");
             logger.Emit("old movement status %X\n", driver.currentMovementInfo.asBits());
+
+            driver.justMoved = true;
+
             switch (sdlKey) {
             case SDLK_w:
                 driver.currentMovementInfo.set(MovementCode::MovementKey::W);
@@ -181,6 +183,7 @@ bool ProcessEvent(SDL_Event ev) {
         else {
             logger.Emit("event is a keyRelease\n");
             logger.Emit("old movement status %X\n", driver.currentMovementInfo.asBits());
+            
             switch (sdlKey) {
             case SDLK_w:
                 driver.currentMovementInfo.clear(MovementCode::MovementKey::W);
@@ -232,8 +235,6 @@ void RunAllClientJobs() {
             logger.Emit("moving left\n");
             moving.xOff = -10;
         }
-
-        // justMoved means key release or key press currently (sorry)
 
         Packet newPacket(Packet::Flag_t::bMoving);
         newPacket.Encode(moving);
