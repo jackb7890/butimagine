@@ -1,6 +1,10 @@
 #include "World.hpp"
 #include <algorithm>
 
+void Tile::PushEntityToList(MapEntity* entitiy) {
+    entitiesInTile.push_back(entity);
+}
+
 unsigned RGBColor::ConvertToSDL(SDL_Surface* surface) {
     return SDL_MapRGB(surface->format, r, g, b);
 }
@@ -41,13 +45,13 @@ void MapEntity::Move(int xD, int yD) {
 
 Map::Map () {
     //A- Map_width & height are the same as the window width & height currently
-    grid = Arr2d<MapEntity*>(MAP_WIDTH, MAP_HEIGHT);
+    grid = Arr2d<Tile>(MAP_WIDTH, MAP_HEIGHT);
 }
 
-void Map::AddToGrid(MapEntity& entity) {
+void Map::AddToGrid(MapEntity* entity) {
     for (int i = entity.GetCurrentPos().x; i < entity.GetCurrentPos().x + entity.GetWidth(); i++) {
         for (int j = entity.GetCurrentPos().y; j < entity.GetCurrentPos().y + entity.GetDepth(); j++) {
-            grid(i % MAP_WIDTH, j % MAP_HEIGHT) = &entity;
+            grid(i % MAP_WIDTH, j % MAP_HEIGHT).PushEntityToList(entity);
         }
     }
 }
@@ -57,7 +61,7 @@ void Map::AddEntity(MapEntity* entity) {
     //A- Conveniently the size of the vector before an entity is added will equal its index.
     entity->ID = allEntities.size();
     allEntities.push_back(entity);
-    AddToGrid(*entity);
+    AddToGrid(entity);
 }
 
 //A- In the future we may want special behavior for adding players.
@@ -73,12 +77,14 @@ bool Map::CheckForCollision(const HitBox& movingPiece, int ID) {
     int yBound = movingPiece.origin.y + movingPiece.dim.depth;
         for (int x = movingPiece.origin.x; x < xBound; x++) {
             for (int y = movingPiece.origin.y; y < yBound; y++) {
-                MapEntity* possibleEntity = grid(Wrap(x - 1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT));
-                if (possibleEntity->Valid() && possibleEntity->hasCollision && possibleEntity->ID != ID) {
-                    return true;
+                std::list<MapEntity*> entitiesAtXYPos = grid(Wrap(x - 1, 1, MAP_WIDTH), Wrap(y - 1, 1, MAP_HEIGHT)).entitiesInTile;
+                for (auto entity : entitiesAtXYPos) {
+                    if (entity->Valid() && entity->hasCollision && entity->ID != ID) {
+                        return true;
+                    }   
+                }
             }
         }
-    }
     return false;
 }
 
