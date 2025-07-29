@@ -11,10 +11,6 @@ find_package(sdl2_mixer CONFIG REQUIRED)
 find_package(sdl2_ttf CONFIG REQUIRED)
 find_package(sdl2_net CONFIG REQUIRED)
 
-add_compile_options(-DLOG)
-
-add_executable(butimagine main.cpp World.cpp util.cpp TextureManager.cpp)
-
 find_path(SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2)
 
 add_compile_options(-DLOG)
