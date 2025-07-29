@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT_F}/scripts/buildsystems/vcpkg.cmake)
+set (CMAKE_CXX_STANDARD 20)
 
 project(butimagine)
 
@@ -9,6 +10,8 @@ find_package(sdl2_image CONFIG REQUIRED)
 find_package(sdl2_mixer CONFIG REQUIRED)
 find_package(sdl2_ttf CONFIG REQUIRED)
 find_package(sdl2_net CONFIG REQUIRED)
+
+add_compile_options(-DLOG)
 
 add_executable(butimagine main.cpp World.cpp util.cpp TextureManager.cpp)
 
