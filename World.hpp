@@ -155,10 +155,16 @@ public:
     }
 };
 
+struct Tile {
+    std::list<MapEntity*> entitiesInTile;
+
+    PushEntityToList(MapEntity* entity);
+};
+
 //A- Map is a collection of game entities.
 struct Map {
     std::list<MapEntity*> allEntities;
-    Arr2d<MapEntity*> grid;
+    Arr2d<Tile> grid;
     //Arr2d<MapEntity> background;
 
     Map();
