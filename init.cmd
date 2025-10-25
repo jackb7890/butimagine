@@ -15,6 +15,7 @@ set DEBUG_BIN=%PROJ_DIR%\build\Debug\
 set RELEASE_BIN=%PROJ_DIR%\build\Release\
 
 :: debug_bin is on the path so its easier running project when debugging
+:: no its not
 set PATH=%PATH%;%PROJ_DIR%;%PROJ_DIR%\scripts;
 
 doskey debug=pushd %DEBUG_BIN%
