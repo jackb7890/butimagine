@@ -9,7 +9,6 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
-#include "TextureManager.hpp"
 #include "util.hpp"
 #include "sockets/networking.hpp"
 

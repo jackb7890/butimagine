@@ -33,14 +33,13 @@ void MapEntity::UpdateGrid(HitBox oldArea, HitBox newArea) {
 }
 
 void MapEntity::Move(int xD, int yD) {
-    Log logger("MapEntity Move: ");
-    logger.Emit("entity=%d, attempting to move (xD=%d, yD=%d)\n", this->ID, xD, yD);
+    //Log::emit("entity=%d, attempting to move (xD=%d, yD=%d)\n", this->ID, xD, yD);
 
     hasMovedOffScreen = true;
     HitBox oldHb = this->hitbox;
     oldPos = this->GetCurrentPos();
 
-    logger.Emit("prior location: (%d, %d)\n", oldPos.x, oldPos.y);
+    //Log::emit("prior location: (%d, %d)\n", oldPos.x, oldPos.y);
 
     GridPos newPos = GridPos(oldPos.x + xD, oldPos.y + yD);
 
@@ -51,14 +50,14 @@ void MapEntity::Move(int xD, int yD) {
     const HitBox collisionPath = HitBox(smallerXCoord, smallerYCoord, xCollision, yCollision);
 
     if (map->CheckForCollision(collisionPath, ID)) {
-        logger.Emit("failed to move, collision encountered\n");
+        //Log::emit("failed to move, collision encountered\n");
         return;
     }
 
     newPos.x = Wrap(oldPos.x, xD, MAP_WIDTH);
     newPos.y = Wrap(oldPos.y, yD, MAP_HEIGHT);
 
-    logger.Emit("new location: (%d, %d)\n", newPos.x, newPos.y);
+    //Log::emit("new location: (%d, %d)\n", newPos.x, newPos.y);
 
     this->SetPos(newPos);
 
@@ -125,8 +124,8 @@ Display::~Display() {
 }
 
 void Display::DrawEntity(MapEntity entity) {
-    Log::emit("Drawing Entity...\n");
-    Log::emit("\tEntity description -> %s\n", entity.ToString().c_str());
+    //Log::emit("Begin: Draw Entity\n");
+    //Log::emit("\tEntity description -> %s\n", entity.ToString().c_str());
 
     SDL_Rect point = SDL_Rect {
         entity.hitbox.origin.x,
@@ -142,21 +141,25 @@ void Display::DrawEntity(MapEntity entity) {
 
     SDL_SetRenderDrawColor(this->renderer, entity.color.r, entity.color.g, entity.color.b, 255);
     SDL_RenderFillRect(this->renderer, &point);
+
+    //Log::emit("End: Draw Entity\n");
 }
 
 void Display::DrawBackground() {
-    Log::emit("Drawing Background...\n");
+    //Log::emit("Begin: Draw Background\n");
 
     SDL_Rect rect = SDL_Rect { 0, 0, map->width, map->height };
     RGBColor color = RGBColor { 0, 0, 0 };
 
     SDL_SetRenderDrawColor(this->renderer, color.r, color.g, color.b, 255);
     SDL_RenderFillRect(this->renderer, &rect);
+
+    //Log::emit("End: Drawing Background\n");
 }
 
 void Display::DrawFrame(std::vector<MapEntity*> entities) {
 
-    Log::emit("Clear Renderer\n");
+    //Log::emit("Begin: Draw Frame\n");
     SDL_RenderClear(this->renderer);
 
     DrawBackground();
@@ -165,8 +168,8 @@ void Display::DrawFrame(std::vector<MapEntity*> entities) {
         DrawEntity(*entity);
     }
 
-    Log::emit("Present Renderer\n");
     SDL_RenderPresent(this->renderer);
+    //Log::emit("End: Draw Frame\n");
 }
 
 MapEntity::MapEntity(HitBox _hb, RGBColor _c, Map* _map, bool _hasCol) :

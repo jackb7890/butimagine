@@ -1,0 +1,1639 @@
+timeout set to 500ms
+Server: new player has connected!
+Successfully added new client to socket 0
+Running SendAllEntities...
+Sending one entity... total encoded size 116 bytes
+Running SendPacket... (116 bytes)
+Converting Packet to transmissable format...
+Encoding payload size (value=104 bytes=8)
+Encoding packet flags (value=4 bytes=2)
+Encoding polymorphic type ID (value=3 bytes=2)
+Encoding payload (bytes=104)
+Total encoded size: 116
+
+Transmitting raw packet
+Transmitted 116 bytes
+Finished SendPacket - success!
+
+Sending end-of-list packet... total encoded size 12 bytes
+Running SendPacket... (12 bytes)
+Converting Packet to transmissable format...
+Encoding payload size (value=0 bytes=8)
+Encoding packet flags (value=8 bytes=2)
+Encoding polymorphic type ID (value=-13108 bytes=2)
+Encoding payload (bytes=0)
+Total encoded size: 12
+
+Transmitting raw packet
+Transmitted 12 bytes
+Finished SendPacket - success!
+
+Finished SendAllEntities - success!
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found 14 incoming bytes to process
+Running TCPToPackets, size=14
+Running TCPToPacket: _size=14
+	TCPToPacket: newPacket.size=2
+Processed a packet, pushing to list...
+Remaining bytes to process: 0
+TCPToPackets finished. pushed 1 packets to 'packetsOut'
+ConsumePackets successfully consumed 14 packets
+client 0 sent moving packet
+MapEntity Move: entity=0, attempting to move (xD=10, yD=0)
+MapEntity Move: prior location: (0, 0)
+MapEntity Move: new location: (10, 0)
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found 14 incoming bytes to process
+Running TCPToPackets, size=14
+Running TCPToPacket: _size=14
+	TCPToPacket: newPacket.size=2
+Processed a packet, pushing to list...
+Remaining bytes to process: 0
+TCPToPackets finished. pushed 1 packets to 'packetsOut'
+ConsumePackets successfully consumed 14 packets
+client 0 sent moving packet
+MapEntity Move: entity=0, attempting to move (xD=0, yD=10)
+MapEntity Move: prior location: (10, 0)
+MapEntity Move: new location: (10, 10)
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0
+Incoming packets from client 0
+Running ConsumePackets...
+ConsumePackets found -1 incoming bytes to process
+SDLNet_TCP_Recv failed, num_recv=-1
+Server: error in reading packets from client 0

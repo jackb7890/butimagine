@@ -1,0 +1,259 @@
+Start of GetAllEntities (initial server transmission)
+GetAllEntites: clients_ready=1
+Running ConsumePackets...
+ConsumePackets found 128 incoming bytes to process
+Running TCPToPackets, size=128
+Running TCPToPacket: _size=128
+	TCPToPacket: newPacket.size=104
+incoming TCP data is multiple packets
+Processed a packet, pushing to list...
+Remaining bytes to process: 12
+Running TCPToPackets, size=12
+Running TCPToPacket: _size=12
+	TCPToPacket: newPacket.size=0
+Processed a packet, pushing to list...
+Remaining bytes to process: 0
+TCPToPackets finished. pushed 2 packets to 'packetsOut'
+TCPToPackets finished. pushed 2 packets to 'packetsOut'
+ConsumePackets successfully consumed 128 packets
+GetAllEntities: received new-entity packet
+new-entity packet is a Player
+GetAllEntities: recevied end-of-list packet
+Finished GetAllEntites - success!
+ProcessEvent: begin
+ProcessEvent: event type = SDL_AUDIODEVICEADDED
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_AUDIODEVICEADDED
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_WINDOWEVENT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_WINDOWEVENT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_TEXTEDITING
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_WINDOWEVENT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_WINDOWEVENT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_MOUSEMOTION
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_MOUSEBUTTONDOWN
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_MOUSEBUTTONUP
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (0, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_KEYDOWN
+ProcessEvent: event is a keyPress
+ProcessEvent: old movement status 0
+ProcessEvent: new movement status 1
+RunAllClientJobs: begin
+RunAllClientJobs: driver moved this iteration
+RunAllClientJobs: moving right
+Running SendPacket... (14 bytes)
+Converting Packet to transmissable format...
+Encoding payload size (value=2 bytes=8)
+Encoding packet flags (value=2 bytes=2)
+Encoding polymorphic type ID (value=-13108 bytes=2)
+Encoding payload (bytes=2)
+Total encoded size: 14
+
+Transmitting raw packet
+Transmitted 14 bytes
+Finished SendPacket - success!
+
+MapEntity Move: entity=0, attempting to move (xD=10, yD=0)
+MapEntity Move: prior location: (0, 0)
+MapEntity Move: new location: (10, 0)
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_TEXTINPUT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_KEYUP
+ProcessEvent: event is a keyRelease
+ProcessEvent: old movement status 1
+ProcessEvent: new movement status 0
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 0), size(XxY): 25x40
+Present Renderer
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 0), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_KEYDOWN
+ProcessEvent: event is a keyPress
+ProcessEvent: old movement status 0
+ProcessEvent: new movement status 2
+RunAllClientJobs: begin
+RunAllClientJobs: driver moved this iteration
+RunAllClientJobs: moving down
+Running SendPacket... (14 bytes)
+Converting Packet to transmissable format...
+Encoding payload size (value=2 bytes=8)
+Encoding packet flags (value=2 bytes=2)
+Encoding polymorphic type ID (value=-13108 bytes=2)
+Encoding payload (bytes=2)
+Total encoded size: 14
+
+Transmitting raw packet
+Transmitted 14 bytes
+Finished SendPacket - success!
+
+MapEntity Move: entity=0, attempting to move (xD=0, yD=10)
+MapEntity Move: prior location: (10, 0)
+MapEntity Move: new location: (10, 10)
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_TEXTINPUT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_KEYUP
+ProcessEvent: event is a keyRelease
+ProcessEvent: old movement status 2
+ProcessEvent: new movement status 0
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_WINDOWEVENT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_TEXTEDITING
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_MOUSEMOTION
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY): 25x40
+Present Renderer
+ProcessEvent: begin
+ProcessEvent: event type = SDL_WINDOWEVENT
+RunAllClientJobs: begin
+Clear Renderer
+Drawing Background...
+Drawing Entity...
+	Entity description -> ID: 0, rgb: 255:255:255, location: (10, 10), size(XxY

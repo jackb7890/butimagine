@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <typeinfo>
 #include <string>
+#include <fstream>
 
 // SDL_event cheat sheet
 /*
@@ -223,50 +224,70 @@ const char* MapEventIdToName(unsigned int id);
 
 struct Log {
 
-    std::string prefix1;
-    int prefixLevel;
+    std::string prefix;
 
-    static inline bool _loglevel = 1;
+    // TODO: file logging
+    std::ofstream log_file;
+    bool enableFileLogging;
 
     Log() {
-        prefixLevel = 0;
-        prefix1 = "";
+        prefix = std::string();
+        log_file = std::ofstream();
+        enableFileLogging = false;
     };
 
+    Log(std::string str, std::string out) {
+        prefix = str;
+        log_file = std::ofstream(out);
+        enableFileLogging = true;
+    }
+
     Log(std::string str) {
-        prefix1 = str;
-        prefixLevel = 1;
+        prefix = str;
+        log_file = std::ofstream();
+        enableFileLogging = false;
     }
 
     Log(const char * str) {
-        prefix1 = std::string(str);
-        prefixLevel = 1;
+        prefix = std::string(str);
+        log_file = std::ofstream();
+        enableFileLogging = false;
     }
 
     ~Log() {
-        if (!prefixLevel) {
-            Log::emit("%s End of Logger\n--------------------\n\n", prefix1.c_str());
-        }
+
     }
 
-    inline void SetPrefix(std::string str) {
-        prefix1 = str;
-        prefixLevel = 1;
+    inline void StartPhase(const char * str) {
+        prefix = std::string(str);
+        Log::emit("Start of Phase: %s\n", str);
     }
 
-    inline void SetPrefix(const char * str) {
-        prefix1 = std::string(str);
-        prefixLevel = 1;
+    inline void EndPhase() {
+        Log::emit("End of Phase: %s\n", prefix.c_str());
+        prefix = "";
     }
 
     // Use me when logging through a specific Log object
     template<typename First, typename ...Args>
     void Emit(First str, Args... args) {
-        if (prefixLevel) {
-            Log::emit("%s", prefix1.c_str());
+#if defined(LOG) || defined(LOG_VERBOSE)
+        if (!prefix.empty()) {
+            Log::emit("  %s: ", prefix.c_str());
         }
-        #if defined(LOG)
-            Log::emit(str, args...);
+        Log::emit(str, args...);
+#endif
+        return;
+    }
+
+    // Use me when logging through a specific Log object
+    template<typename First, typename ...Args>
+    void EmitVerbose(First str, Args... args) {
+        #if defined(LOG_VERBOSE)
+        if (!prefix.empty()) {
+            Log::emit("  %s: ", prefix.c_str());
+        }
+        Log::emit(str, args...);
         #else
             return;
         #endif
@@ -275,10 +296,7 @@ struct Log {
     // Use me when logging through a Log object
     template<typename First, typename ...Args>
     void Error(First str, Args... args) {
-        if (!prefixLevel) {
-            Log::emit("%s", prefix1);
-        }
-        Log::emit(str, args...);
+        this->Emit(str, args...);
         #if defined(DEBUG)
             __debugbreak();
         #elif defined(QUIET_ERRORS)
@@ -292,10 +310,7 @@ struct Log {
     // Use me when logging you do not have a Log object (static)
     template<typename First, typename ...Args>
     static void emit(First str, Args... args) {
-        if (!Log::_loglevel) {
-            return;
-        }
-        #if defined(LOG)
+        #if defined(LOG) || defined(LOG_VERBOSE)
             printf(str, args...);
         #else
             return;
