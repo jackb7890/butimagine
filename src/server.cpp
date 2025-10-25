@@ -11,10 +11,10 @@
 #include "SDL_image.h"
 #include "time.h"
 
-#include "../World.hpp"
+#include "World.hpp"
 
 #include "SDL_net.h"
-#include "networking.hpp"
+#include "sockets/networking.hpp"
 
 using namespace std;
 

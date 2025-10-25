@@ -5,16 +5,16 @@
 #include <chrono>
 #include <thread>
 #include <array>
-#include "../util.hpp"
+#include "util.hpp"
 
 #define SDL_MAIN_HANDLED 1
 
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_net.h"
-#include "networking.hpp"
+#include "sockets/networking.hpp"
 
-#include "../World.hpp"
+#include "World.hpp"
 
 //-----------------------------------------------------------------------------
 #define MAX_PACKET 0xFF
