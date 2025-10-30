@@ -109,6 +109,40 @@ struct ClientDriver {
 
 ClientDriver driver;
 
+class ClientDriver2 {
+    public:
+
+    // decides if we save or throw out user input
+    void SaveEvent(SDL_Event ev);
+
+    // returns true if we get the exit signal
+    bool HandleEvents();
+
+    // Calls this->userEntity->Move and sends that information
+    // to the server.
+    // This function assumes there is movement to be done
+    // and should throw an error otherwise.
+    void MoveUser();
+    private:
+    Player* userEntitiy;
+    std::queue<SDL_Event> eventBuf;
+    std::queue<Packet> packetsOutBuf;
+    
+    // was gonna put this in handle events
+    // but since handle events doesnt actually move
+    // (because inputs are both keypresses and keyreleases)
+    // i think i will put this in a separate function that does
+    // the Entity->Move() call
+    bool redrawScreen;
+
+    bool moveUp;
+    bool moveLeft;
+    bool moveDown;
+    bool moveRight;
+
+    Log logger;
+};
+
 using namespace std;
 
 bool InputIsUserMovement(const SDL_Event& ev) {
@@ -137,6 +171,89 @@ bool InputIsQuitGame(const SDL_Event& ev) {
     return ev.type == SDL_QUIT;
 }
 
+void ClientDriver2::SaveEvent(SDL_Event ev) {
+    if (InputIsQuitGame(ev)) {
+        eventBuf.push(ev);
+    }
+    else if (InputIsUserMovement(ev)) {
+        eventBuf.push(ev);
+    }
+}
+
+bool ClientDriver2::HandleEvents() {
+    while (!eventBuf.empty()) {
+        SDL_Event ev = eventBuf.front();
+        eventBuf.pop();
+        if (InputIsQuitGame(ev)) {
+            return true;
+        }
+        else if (InputIsUserMovement(ev)) {
+            auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
+            const int pixelsToMove = 5;
+
+            // 1) update our local state
+
+            if (!isKeyRelease) {
+                // start moving in a direction
+                switch (sdlKey) {
+                case SDLK_w:
+                    this->moveUp = true;
+                    break;
+                case SDLK_a:
+                    this->moveLeft = true;
+                    break;
+                case SDLK_s:
+                    this->moveDown = true;
+                    break;
+                case SDLK_d:
+                    this->moveRight = true;
+                    break;
+                default:
+                    this->logger.Error("Error: movement input was not any of WASD keys");
+                    return true;
+                    break;
+                }
+            }
+            else {
+                // stop moving in a direction
+                switch (sdlKey) {
+                case SDLK_w:
+                    this->moveUp = false;
+                    break;
+                case SDLK_a:
+                    this->moveLeft = false;
+                    break;
+                case SDLK_s:
+                    this->moveDown = false;
+                    break;
+                case SDLK_d:
+                    this->moveRight = false;
+                    break;
+                default:
+                    this->logger.Error("Error: movement input was not any of WASD keys");
+                    return true;
+                    break;
+                }
+            }
+
+            // 2) queue a packet to be sent to the server
+            // EDIT: no do this when we do Entity->Move()
+        }
+    }
+    return false;
+}
+
+void ClientDriver2::MoveUser() {
+    // ASSERT we are actually moving
+    // TODO: add asserts
+
+    // TODO: Move locally
+    // TODO: Move on the server
+    return;
+}
+
+
+// TODO: replace with ClientDriver2::HandleEvents
 // returns false to kill program.
 // true otherwise
 bool ProcessEvent(SDL_Event ev) {
@@ -209,6 +326,8 @@ bool ProcessEvent(SDL_Event ev) {
     return false;
 }
 
+// TODO: Do this functionality through ClientDriver2
+// Probably ClientDriver2::MoveUser()
 void RunAllClientJobs() {
     driver.logger.StartPhase("RunAllClientJobs");
     driver.logger.Emit("begin\n");
@@ -246,6 +365,7 @@ void RunAllClientJobs() {
     driver.logger.EndPhase();
 }
 
+// TODO: Integrate this into ClientDriver2
 void ProcessServerUpdate() {
     const int WAIT_TIME = 0;
 
@@ -282,6 +402,8 @@ void ProcessServerUpdate() {
     }
     driver.logger.EndPhase();
 }
+
+// TODO: Integrate this into ClientDriver2
 // ask server for the world initialization data
 void InitializeEntities() {
     driver.logger.StartPhase("InitializeEntities");
