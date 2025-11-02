@@ -295,7 +295,6 @@ void ClientDriver::ProcessServerUpdate() {
     logger.EndPhase();
 }
 
-// TODO: Integrate this into ClientDriver2
 // ask server for the world initialization data
 void ClientDriver::InitializeEntities() {
     logger.StartPhase("InitializeEntities");
@@ -365,8 +364,6 @@ void ClientDriver::InitializeEntities() {
     
     logger.EndPhase();
 }
-
-void cleanup(void);
 
 int main() {
 
