@@ -94,11 +94,15 @@ struct MovementCode {
 
 class ClientDriver {
     public:
+    ClientDriver() {}
     void Initialize();
     bool ProcessEvent(SDL_Event);
     void ExecuteFrame();
+
+    // networking functions
     void ProcessServerUpdate();
     void InitializeEntities();
+
     void Cleanup();
 
     private:
@@ -111,8 +115,6 @@ class ClientDriver {
     Display* display;
     std::vector<MapEntity*> entitiesToDraw;
     Log logger;
-
-    ClientDriver() : justMoved(false) {};
 };
 
 bool InputIsUserMovement(const SDL_Event& ev) {
@@ -245,6 +247,13 @@ void ClientDriver::ExecuteFrame() {
 
         // next update our own map
         me->Move(moving.xOff, moving.yOff);
+
+        // finally, update the screen
+        map.drawMeBuf.push_back(me);
+        if (!map.drawMeBuf.empty()) {
+            display->DrawFrame(map.drawMeBuf);
+            map.drawMeBuf.clear();
+        }
     }
     logger.EndPhase();
 }
@@ -361,14 +370,9 @@ void cleanup(void);
 
 int main() {
 
-    ClientDriver driver;
+    ClientDriver driver = ClientDriver();
 
     driver.Initialize();
-
-    clientInfo = Client("localhost");
-    if (!clientInfo.Connect()) {
-       Log::error("Failed to connect to server\n");
-    }
 
     // build up the entities sent over from the server to start with
     driver.InitializeEntities();
@@ -379,14 +383,7 @@ int main() {
 
     while (running) {
         // next check if the server has anything for us
-        int clients_ready = SDLNet_CheckSockets(clientInfo.socket_set, WAIT_TIME);
-
-        if (clients_ready == -1) {
-           Log::error("Error returned by SDLNet_CheckSockets\n");
-        }
-        else if (clients_ready > 0) {
-           driver.ProcessServerUpdate();
-        }
+        driver.ProcessServerUpdate();
 
         // first check for any input from the client device
         if (SDL_PollEvent(&ev) != 0) {
@@ -394,13 +391,6 @@ int main() {
         }
 
         driver.ExecuteFrame();
-
-        // finally, update the screen
-        driver.map.drawMeBuf.push_back(me);
-        if (!driver.map.drawMeBuf.empty()) {
-            driver.display->DrawFrame(map.drawMeBuf);
-            driver.map.drawMeBuf.clear();
-        }
     }
 
     driver.Cleanup();
@@ -436,6 +426,11 @@ void ClientDriver::Initialize() {
     // SDL_UpdateWindowSurface(window);
 
     this->display->renderer = renderer;
+
+    clientInfo = Client("localhost");
+    if (!clientInfo.Connect()) {
+       Log::error("Failed to connect to server\n");
+    }
 }
 
 // TODO: should this be a destructor?
