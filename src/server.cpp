@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    int timeoutTime = 500; // in ms
+    int timeoutTime = 500; // in like microns i think lol
     if (args.size() != 0) {
         timeoutTime = stoi(args[0]);
     }
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
     }
     
     bool runLoop = true;
-    const int WAIT_TIME = 100;
+    const int WAIT_TIME = 0;
     while (runLoop) {
 
         if (timeoutTime <= 0) {
