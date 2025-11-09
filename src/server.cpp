@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <ctime>
 
 #define SDL_MAIN_HANDLED 1
 
@@ -101,7 +102,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    int timeoutTime = 500; // in ms
+    std::time_t startTime = std::time(nullptr);
+    if (startTime == -1) {
+        // error
+    }
+
+
+    int timeoutTime = 15; // in seconds
     if (args.size() != 0) {
         timeoutTime = stoi(args[0]);
     }
@@ -118,13 +125,16 @@ int main(int argc, char* argv[]) {
     }
     
     bool runLoop = true;
-    const int WAIT_TIME = 100;
+    const int WAIT_TIME = 0;
     while (runLoop) {
-
-        if (timeoutTime <= 0) {
+        std::time_t frameTime = std::time(nullptr);
+        if (frameTime < startTime) {
+            // overflow, come back to this, for now, just switch them
+            Log::error("TODO handle overflow time (error for now)\n");
+        }
+        else if ((frameTime - startTime) >= timeoutTime) {
             runLoop = false;
         }
-        timeoutTime--;
 
         int clients_ready = SDLNet_CheckSockets(driver.ntwk.socket_set, WAIT_TIME);
 

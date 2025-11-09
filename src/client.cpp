@@ -247,7 +247,7 @@ void RunAllClientJobs() {
 }
 
 void ProcessServerUpdate() {
-    const int WAIT_TIME = 300;
+    const int WAIT_TIME = 0;
 
     driver.logger.StartPhase("ProcessServerUpdate");
 
@@ -285,7 +285,7 @@ void ProcessServerUpdate() {
 // ask server for the world initialization data
 void InitializeEntities() {
     driver.logger.StartPhase("InitializeEntities");
-    const int WAIT_TIME = 300;
+    const int WAIT_TIME = 0;
     bool recvComplete = false;
     while (!recvComplete) {
         int clients_ready = SDLNet_CheckSockets(driver.clientInfo.socket_set, WAIT_TIME);
@@ -367,7 +367,7 @@ int main() {
     // build up the entities sent over from the server to start with
     InitializeEntities();
 
-    const int WAIT_TIME = 300;
+    const int WAIT_TIME = 0;
     SDL_Event ev;
     bool running = true;
 
