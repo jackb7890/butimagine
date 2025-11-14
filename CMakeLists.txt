@@ -14,8 +14,6 @@ message("normal logging enabled")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG")
 endif()
 
-message("debug flags: ${CMAKE_CXX_FLAGS_DEBUG}")
-
 project(butimagine)
 
 find_package(sdl2 CONFIG REQUIRED)
