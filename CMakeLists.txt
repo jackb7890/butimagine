@@ -1,7 +1,17 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.30)
 
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT_F}/scripts/buildsystems/vcpkg.cmake)
-set (CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 20)
+
+# TODO: Currently this only adds logging for "--config == DEBUG",
+# but it would be nice to have the option to turn logging on for "--config == RELEASE" as well with another switch
+if("${LOGVERBOSE}" OR "$ENV{BUTI_LOGVERBOSE}")
+message("verbose logging enabled")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_VERBOSE")
+else()
+message("normal logging enabled")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG")
+endif()
 
 project(butimagine)
 
@@ -12,8 +22,6 @@ find_package(sdl2_ttf CONFIG REQUIRED)
 find_package(sdl2_net CONFIG REQUIRED)
 
 find_path(SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2)
-
-add_compile_options(-DLOG)
 
 add_executable(client src/client.cpp src/sockets/networking.cpp src/World.cpp src/util.cpp)
 target_include_directories(client PRIVATE ${SDL2_INCLUDE_DIR})
