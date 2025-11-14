@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.30)
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT_F}/scripts/buildsystems/vcpkg.cmake)
 set(CMAKE_CXX_STANDARD 20)
 
-
 # TODO: Currently this only adds logging for "--config == DEBUG",
 # but it would be nice to have the option to turn logging on for "--config == RELEASE" as well with another switch
 if("${LOGVERBOSE}" OR "$ENV{BUTI_LOGVERBOSE}")
