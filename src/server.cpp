@@ -37,18 +37,21 @@ class ServerDriver {
     Server ntwk;
     std::array<Player*, Server::MAX_SOCKETS> clientEntities; // move this to map.players
     Log logger;
+
+    std::vector<std::string> ProcessArgs(int argc, char* argv[]);
+    void SendAllEntities(TCPsocket socket);
+    void SendPacketToAllButOne(Packet p, int socketIndx);
+    void ProcessMoveData(std::vector<Player>& clientPlayers, Packet& packet, int client);
 };
 
-ServerDriver driver;
-
 // assumes error handling already done
-void ProcessMoveData(std::vector<Player>& clientPlayers, Packet& packet, int client) {
-    driver.logger.StartPhase("ProcessPlayerMove");
+void ServerDriver::ProcessMoveData(std::vector<Player>& clientPlayers, Packet& packet, int client) {
+    logger.StartPhase("ProcessPlayerMove");
 
     int8_t x = packet.ReadAsType<int8_t>(0);
     int8_t y = packet.ReadAsType<int8_t>(1);
     
-    driver.logger.Emit("player: %d -> dx: %d, dy: %d\n", client, x, y);
+    logger.Emit("player: %d -> dx: %d, dy: %d\n", client, x, y);
 
     clientPlayers[client].Move(x, y);
 }
@@ -59,54 +62,59 @@ void ProcessData(Packet& data, int client) {
     // }
 }
 
-void SendAllEntities(TCPsocket socket) {
+void ServerDriver::SendAllEntities(TCPsocket socket) {
     // Send them all the entities on the world
-    driver.logger.StartPhase("SendAllEntities");
-    for (MapEntity* entity : driver.map.allEntities) {
+    logger.StartPhase("SendAllEntities");
+    for (MapEntity* entity : map.allEntities) {
         Packet newPacket(Packet::Flag_t::bNewEntity);
         newPacket.EncodePoly(*entity, entity->GetTypeIndex());
-        driver.logger.Emit("Sending one entity... total encoded size %d bytes\n", newPacket.EncodeSize());
-        driver.ntwk.SendPacket(socket, newPacket);
+        logger.Emit("Sending one entity... total encoded size %d bytes\n", newPacket.EncodeSize());
+        ntwk.SendPacket(socket, newPacket);
     }
 
     Packet newPacket(Packet::Flag_t::bEndOfPacketGroup);
 
-    driver.logger.Emit("Sending end-of-list packet... total encoded size %d bytes\n", newPacket.EncodeSize());
-    driver.ntwk.SendPacket(socket, newPacket);
+    logger.Emit("Sending end-of-list packet... total encoded size %d bytes\n", newPacket.EncodeSize());
+    ntwk.SendPacket(socket, newPacket);
 
-    driver.logger.EndPhase();
+    logger.EndPhase();
 }
 
-void SendPacketToAllButOne(Packet p, int socketIndx) {
-    for (int i = 0; i < driver.ntwk.MAX_SOCKETS; i++) {
-        TCPsocket clientSocket = driver.ntwk.clientSockets[i];
+void ServerDriver::SendPacketToAllButOne(Packet p, int socketIndx) {
+    for (int i = 0; i < ntwk.MAX_SOCKETS; i++) {
+        TCPsocket clientSocket = ntwk.clientSockets[i];
         if (!clientSocket) {
             continue;
         }
         if (i == socketIndx) {
             continue;
         }
-        driver.ntwk.SendPacket(clientSocket, p);
+        ntwk.SendPacket(clientSocket, p);
     }
 }
 
-int main(int argc, char* argv[]) {
-    // process args
+std::vector<std::string> ServerDriver::ProcessArgs(int argc, char* argv[]) {
     std::vector<std::string> args;
     if (argc > 1) {
         for (int i = 1; i <= argc - 1; i++) {
             if (!argv[i]) {
-                driver.logger.Emit("error reading args to main\n");
+                logger.Emit("error reading args to main\n");
             }
             args.push_back(argv[i]);
         }
     }
+    return args;
+}
+
+int main(int argc, char* argv[]) {
+    ServerDriver driver;
+    // process args
+    std::vector<std::string> args = driver.ProcessArgs(argc, argv);
 
     std::time_t startTime = std::time(nullptr);
     if (startTime == -1) {
         // error
     }
-
 
     int timeoutTime = 15; // in seconds
     if (args.size() != 0) {
@@ -160,7 +168,7 @@ int main(int argc, char* argv[]) {
                     joinedPlayer->SetDepth(40);
                     driver.clientEntities[indx] = joinedPlayer;
                     // Send starter data to player client
-                    SendAllEntities(driver.ntwk.clientSockets[indx]);
+                    driver.SendAllEntities(driver.ntwk.clientSockets[indx]);
                 }
             }
             
@@ -193,7 +201,7 @@ int main(int argc, char* argv[]) {
                         Packet outgoingPacket(Packet::Flag_t::bMoving);
                         EntityMoveUpdate data = EntityMoveUpdate {client->ID, moving.xOff, moving.yOff};
                         outgoingPacket.Encode<EntityMoveUpdate>(data);
-                        SendPacketToAllButOne(outgoingPacket, socketIndx);
+                        driver.SendPacketToAllButOne(outgoingPacket, socketIndx);
                     }
                 }
             }
