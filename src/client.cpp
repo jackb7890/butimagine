@@ -1,10 +1,4 @@
-
-#include <cstdio>
-#include <string.h>
-#include <assert.h>
-#include <chrono>
-#include <thread>
-#include <array>
+#include "client.hpp"
 #include "util.hpp"
 
 void ClientDriver::ProcessMoveInput(SDL_Event ev) {
@@ -64,71 +58,32 @@ void ClientDriver::ProcessMoveInput(SDL_Event ev) {
         if (mvkey >= wasd.size()) {
             //Log::emit("Unexpected mvkey value outside of array range: %d\n", mvkey);
         }
-        wasd[mvkey] = 1;
     }
-
-    void clear(MovementKey mvkey) {
-        wasd[mvkey] = 0;
-    }
-    
-    bool get(MovementKey mvkey) {
-        return wasd[mvkey];
-    }
-
-    bool operator==(const MovementCode& rhs) const {
-        for (int i = 0; i < 4; i++) {
-            if (wasd[i] != rhs.wasd[i]) return false;
+    else {
+        logger.Emit("event is a keyRelease\n");
+        logger.Emit("old movement status %X\n", moveInfo.asBits());
+        
+        switch (sdlKey) {
+        case SDLK_w:
+            moveInfo.clear(MovementCode::MovementKey::W);
+            break;
+        case SDLK_a:
+            moveInfo.clear(MovementCode::MovementKey::A);
+            break;
+        case SDLK_s:
+            moveInfo.clear(MovementCode::MovementKey::S);
+            break;
+        case SDLK_d:
+            moveInfo.clear(MovementCode::MovementKey::D);
+            break;
+        default:
+            logger.Error("Error: key release not one of w,a,s,d. sdlKey = %d\n", sdlKey);
+            break;
         }
-        return true;
     }
 
-    bool operator!=(const MovementCode& rhs) const {
-        return !(*this == rhs);
-    }
-
-    bool IsMovingUp() {
-        return wasd[0] && !wasd[2];
-    }
-
-    bool IsMovingDown() {
-        return wasd[2] && !wasd[0];
-    }
-
-    bool IsMovingRight() {
-        return wasd[3] && !wasd[1];
-    }
-
-    bool IsMovingLeft() {
-        return wasd[1] && !wasd[3];
-    }
-
-    bool IsMoving() {
-        return IsMovingUp() || IsMovingDown() || IsMovingLeft() || IsMovingRight();
-    }
-};
-
-class ClientDriver {
-    public:
-    ClientDriver() {}
-    void Initialize();
-    bool ProcessEvent(SDL_Event);
-    void ExecuteFrame();
-
-    // networking functions
-    void ProcessServerUpdate();
-    void InitializeEntities();
-
-    void Cleanup();
-
-    private:
-    MovementCode currentMovementInfo;
-    Client clientInfo;
-    Map map;
-    Player* me;
-    Display* display;
-    std::vector<MapEntity*> entitiesToDraw;
-    Log logger;
-};
+    logger.Emit("new movement status %X\n", moveInfo.asBits());
+}
 
 // returns false if we are to exit the user from the game.
 bool ClientDriver::ProcessEvent(SDL_Event ev) {
@@ -143,55 +98,7 @@ bool ClientDriver::ProcessEvent(SDL_Event ev) {
     }
 
     if (InputIsUserMovement(ev)) {
-
-        auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
-        
-        if (!isKeyRelease) {   
-            logger.Emit("event is a keyPress\n");
-            logger.Emit("old movement status %X\n", currentMovementInfo.asBits());
-
-            switch (sdlKey) {
-            case SDLK_w:
-                currentMovementInfo.set(MovementCode::MovementKey::W);
-                break;
-            case SDLK_a:
-                currentMovementInfo.set(MovementCode::MovementKey::A);
-                break;
-            case SDLK_s:
-                currentMovementInfo.set(MovementCode::MovementKey::S);
-                break;
-            case SDLK_d:
-                currentMovementInfo.set(MovementCode::MovementKey::D);
-                break;
-            default:
-                logger.Error("Error: key press not one of w,a,s,d. sdlKey = %d\n", sdlKey);
-                break;
-            }
-        }
-        else {
-            logger.Emit("event is a keyRelease\n");
-            logger.Emit("old movement status %X\n", currentMovementInfo.asBits());
-            
-            switch (sdlKey) {
-            case SDLK_w:
-                currentMovementInfo.clear(MovementCode::MovementKey::W);
-                break;
-            case SDLK_a:
-                currentMovementInfo.clear(MovementCode::MovementKey::A);
-                break;
-            case SDLK_s:
-                currentMovementInfo.clear(MovementCode::MovementKey::S);
-                break;
-            case SDLK_d:
-                currentMovementInfo.clear(MovementCode::MovementKey::D);
-                break;
-            default:
-                logger.Error("Error: key release not one of w,a,s,d. sdlKey = %d\n", sdlKey);
-                break;
-            }
-        }
-
-        logger.Emit("new movement status %X\n", currentMovementInfo.asBits());
+        ProcessMoveInput(ev);     
     }
 
     return false;
@@ -200,25 +107,25 @@ bool ClientDriver::ProcessEvent(SDL_Event ev) {
 void ClientDriver::ExecuteFrame() {
     logger.StartPhase("ExecuteFrame");
     logger.Emit("begin\n");
-    if (currentMovementInfo.IsMoving()) {
+    if (moveInfo.IsMoving()) {
 
         logger.Emit("user moved this frame\n");
 
         ImMoving moving {0, 0};
-        if (currentMovementInfo.IsMovingUp()) {
+        if (moveInfo.IsMovingUp()) {
             logger.Emit("moving up\n");
             moving.yOff = -1;
         }
-        else if (currentMovementInfo.IsMovingDown()) {
+        else if (moveInfo.IsMovingDown()) {
             logger.Emit("moving down\n");
             moving.yOff = 1;
         }
 
-        if (currentMovementInfo.IsMovingRight()) {
+        if (moveInfo.IsMovingRight()) {
             logger.Emit("moving right\n");
             moving.xOff = 1;
         }
-        else if (currentMovementInfo.IsMovingLeft()) {
+        else if (moveInfo.IsMovingLeft()) {
             logger.Emit("moving left\n");
             moving.xOff = -1;
         }
