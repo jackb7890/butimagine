@@ -108,8 +108,6 @@ class ClientDriver {
 
     private:
     MovementCode currentMovementInfo;
-    bool justMoved;
-    MovementCode lastMovementInfo;
     Client clientInfo;
     Map map;
     Player* me;
@@ -139,8 +137,6 @@ bool ClientDriver::ProcessEvent(SDL_Event ev) {
         if (!isKeyRelease) {   
             logger.Emit("event is a keyPress\n");
             logger.Emit("old movement status %X\n", currentMovementInfo.asBits());
-
-            justMoved = true;
 
             switch (sdlKey) {
             case SDLK_w:
@@ -192,28 +188,27 @@ bool ClientDriver::ProcessEvent(SDL_Event ev) {
 void ClientDriver::ExecuteFrame() {
     logger.StartPhase("ExecuteFrame");
     logger.Emit("begin\n");
-    if (justMoved) {
-        justMoved = false;
+    if (currentMovementInfo.IsMoving()) {
 
         logger.Emit("user moved this frame\n");
 
         ImMoving moving {0, 0};
         if (currentMovementInfo.IsMovingUp()) {
             logger.Emit("moving up\n");
-            moving.yOff = -10;
+            moving.yOff = -1;
         }
         else if (currentMovementInfo.IsMovingDown()) {
             logger.Emit("moving down\n");
-            moving.yOff = 10;
+            moving.yOff = 1;
         }
 
         if (currentMovementInfo.IsMovingRight()) {
             logger.Emit("moving right\n");
-            moving.xOff = 10;
+            moving.xOff = 1;
         }
         else if (currentMovementInfo.IsMovingLeft()) {
             logger.Emit("moving left\n");
-            moving.xOff = -10;
+            moving.xOff = -1;
         }
 
         Packet newPacket(Packet::Flag_t::bMoving);
