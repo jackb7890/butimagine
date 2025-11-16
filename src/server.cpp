@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
     if (args.size() != 0) {
         timeoutTime = stoi(args[0]);
     }
-    driver.logger.EmitVerbose("timeout set to %dms\n", timeoutTime);
+    driver.logger.EmitVerbose("timeout set to %s seconds\n", timeoutTime);
 
     const int MAX_PLAYERS = Server::MAX_SOCKETS-1;
     std::vector<Player> clientPlayers;
