@@ -1,129 +1,64 @@
-
-#include <cstdio>
-#include <string.h>
-#include <assert.h>
-#include <chrono>
-#include <thread>
-#include <array>
+#include "client.hpp"
 #include "util.hpp"
 
-#define SDL_MAIN_HANDLED 1
+void ClientDriver::ProcessMoveInput(SDL_Event ev) {
 
-#include "SDL.h"
-#include "SDL_image.h"
-#include "SDL_net.h"
+    logger.EmitVerbose("old movement status: %X\n", moveInfo.asBits());
 
-#include "sockets/networking.hpp"
-#include "sdl_helpers/events.hpp"
-#include "World.hpp"
+    auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
+        
+    if (!isKeyRelease) {   
+        logger.EmitVerbose("event is a keyPress\n");
 
-//-----------------------------------------------------------------------------
-#define MAX_PACKET 0xFF
- 
-//-----------------------------------------------------------------------------
-#define FLAG_QUIT 0x0000
-
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-// @@@@@@@@@ @@@@@@@ @@@@@@@@@@@@@@@@
-// @@@@@@@@@ @@@@@@@ @@@@@@@@@@@@@@@@
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-// @@@@@@@\@@@@@@@@@@@/@@@@@@@@@@@@@@
-// @@@@@@@@@         @@@@@@@@@@@@@@@@
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-const char * serverIP = "";
-const size_t serverPort = 8099;
-
-struct MovementCode {
-    enum MovementKey {W, A, S, D};
-    std::array<char, 4> wasd;
-    
-    MovementCode() {
-        wasd = {0, 0, 0, 0};
-    }
-
-    int asBits() {
-        return wasd[D] | (wasd[S] << 1) | (wasd[A] << 2) | (wasd[W] << 3);
-    }
-
-    void set(MovementKey mvkey) {
-        if (mvkey >= wasd.size()) {
-            //Log::emit("Unexpected mvkey value outside of array range: %d\n", mvkey);
+        switch (sdlKey) {
+        case SDLK_w:
+            moveInfo.set(MovementCode::MovementKey::W);
+            break;
+        case SDLK_a:
+            moveInfo.set(MovementCode::MovementKey::A);
+            break;
+        case SDLK_s:
+            moveInfo.set(MovementCode::MovementKey::S);
+            break;
+        case SDLK_d:
+            moveInfo.set(MovementCode::MovementKey::D);
+            break;
+        default:
+            logger.Error("Error: key press not one of w,a,s,d. sdlKey = %d\n", sdlKey);
+            break;
         }
-        wasd[mvkey] = 1;
     }
-
-    void clear(MovementKey mvkey) {
-        wasd[mvkey] = 0;
-    }
-    
-    bool get(MovementKey mvkey) {
-        return wasd[mvkey];
-    }
-
-    bool operator==(const MovementCode& rhs) const {
-        for (int i = 0; i < 4; i++) {
-            if (wasd[i] != rhs.wasd[i]) return false;
+    else {
+        logger.EmitVerbose("event is a keyRelease\n");
+        
+        switch (sdlKey) {
+        case SDLK_w:
+            moveInfo.clear(MovementCode::MovementKey::W);
+            break;
+        case SDLK_a:
+            moveInfo.clear(MovementCode::MovementKey::A);
+            break;
+        case SDLK_s:
+            moveInfo.clear(MovementCode::MovementKey::S);
+            break;
+        case SDLK_d:
+            moveInfo.clear(MovementCode::MovementKey::D);
+            break;
+        default:
+            logger.Error("Error: key release not one of w,a,s,d. sdlKey = %d\n", sdlKey);
+            break;
         }
-        return true;
     }
 
-    bool operator!=(const MovementCode& rhs) const {
-        return !(*this == rhs);
-    }
-
-    bool IsMovingUp() {
-        return wasd[0] && !wasd[2];
-    }
-
-    bool IsMovingDown() {
-        return wasd[2] && !wasd[0];
-    }
-
-    bool IsMovingRight() {
-        return wasd[3] && !wasd[1];
-    }
-
-    bool IsMovingLeft() {
-        return wasd[1] && !wasd[3];
-    }
-
-    bool IsMoving() {
-        return IsMovingUp() || IsMovingDown() || IsMovingLeft() || IsMovingRight();
-    }
-};
-
-class ClientDriver {
-    public:
-    ClientDriver() {}
-    void Initialize();
-    bool ProcessEvent(SDL_Event);
-    void ExecuteFrame();
-
-    // networking functions
-    void ProcessServerUpdate();
-    void InitializeEntities();
-
-    void Cleanup();
-
-    private:
-    MovementCode currentMovementInfo;
-    Client clientInfo;
-    Map map;
-    Player* me;
-    Display* display;
-    std::vector<MapEntity*> entitiesToDraw;
-    Log logger;
-};
+    logger.Emit("new movement status %X\n", moveInfo.asBits());
+}
 
 // returns false if we are to exit the user from the game.
 bool ClientDriver::ProcessEvent(SDL_Event ev) {
 
-    logger.StartPhase("ProcessEvent");
-
     const char* description = MapEventIdToName(ev.type);
 
-    logger.Emit("event type = %s\n", description);
+    logger.EmitVerbose("event type = %s\n", description);
 
     if (InputIsQuitGame(ev)) {
         logger.Emit("quit game (returning 'true')\n");
@@ -131,55 +66,7 @@ bool ClientDriver::ProcessEvent(SDL_Event ev) {
     }
 
     if (InputIsUserMovement(ev)) {
-
-        auto [sdlKey, isKeyRelease] = EventGetMovementInfo(ev);
-        
-        if (!isKeyRelease) {   
-            logger.Emit("event is a keyPress\n");
-            logger.Emit("old movement status %X\n", currentMovementInfo.asBits());
-
-            switch (sdlKey) {
-            case SDLK_w:
-                currentMovementInfo.set(MovementCode::MovementKey::W);
-                break;
-            case SDLK_a:
-                currentMovementInfo.set(MovementCode::MovementKey::A);
-                break;
-            case SDLK_s:
-                currentMovementInfo.set(MovementCode::MovementKey::S);
-                break;
-            case SDLK_d:
-                currentMovementInfo.set(MovementCode::MovementKey::D);
-                break;
-            default:
-                logger.Error("Error: key press not one of w,a,s,d. sdlKey = %d\n", sdlKey);
-                break;
-            }
-        }
-        else {
-            logger.Emit("event is a keyRelease\n");
-            logger.Emit("old movement status %X\n", currentMovementInfo.asBits());
-            
-            switch (sdlKey) {
-            case SDLK_w:
-                currentMovementInfo.clear(MovementCode::MovementKey::W);
-                break;
-            case SDLK_a:
-                currentMovementInfo.clear(MovementCode::MovementKey::A);
-                break;
-            case SDLK_s:
-                currentMovementInfo.clear(MovementCode::MovementKey::S);
-                break;
-            case SDLK_d:
-                currentMovementInfo.clear(MovementCode::MovementKey::D);
-                break;
-            default:
-                logger.Error("Error: key release not one of w,a,s,d. sdlKey = %d\n", sdlKey);
-                break;
-            }
-        }
-
-        logger.Emit("new movement status %X\n", currentMovementInfo.asBits());
+        ProcessMoveInput(ev);     
     }
 
     return false;
@@ -188,25 +75,25 @@ bool ClientDriver::ProcessEvent(SDL_Event ev) {
 void ClientDriver::ExecuteFrame() {
     logger.StartPhase("ExecuteFrame");
     logger.Emit("begin\n");
-    if (currentMovementInfo.IsMoving()) {
+    if (moveInfo.IsMoving()) {
 
         logger.Emit("user moved this frame\n");
 
         ImMoving moving {0, 0};
-        if (currentMovementInfo.IsMovingUp()) {
+        if (moveInfo.IsMovingUp()) {
             logger.Emit("moving up\n");
             moving.yOff = -1;
         }
-        else if (currentMovementInfo.IsMovingDown()) {
+        else if (moveInfo.IsMovingDown()) {
             logger.Emit("moving down\n");
             moving.yOff = 1;
         }
 
-        if (currentMovementInfo.IsMovingRight()) {
+        if (moveInfo.IsMovingRight()) {
             logger.Emit("moving right\n");
             moving.xOff = 1;
         }
-        else if (currentMovementInfo.IsMovingLeft()) {
+        else if (moveInfo.IsMovingLeft()) {
             logger.Emit("moving left\n");
             moving.xOff = -1;
         }
@@ -231,8 +118,6 @@ void ClientDriver::ExecuteFrame() {
 void ClientDriver::ProcessServerUpdate() {
     const int WAIT_TIME = 0;
 
-    logger.StartPhase("ProcessServerUpdate");
-
     int clients_ready = SDLNet_CheckSockets(clientInfo.socket_set, WAIT_TIME);
     if (clients_ready == -1) {
         Log::error("Error returned by SDLNet_CheckSockets\n");
@@ -254,7 +139,7 @@ void ClientDriver::ProcessServerUpdate() {
         
         for (auto p : consumedPackets) {
             if (p.flags.test(Packet::Flag_t::bMoving)) {
-                // something has moved in the world
+                logger.Emit("Something has moved in the world (update our map)");
                 EntityMoveUpdate data = p.ReadAsType<EntityMoveUpdate>();
                 MapEntity* entityToMove = map.GetEntity(data.id);
                 entityToMove->Move(data.xOff, data.yOff);
@@ -262,7 +147,6 @@ void ClientDriver::ProcessServerUpdate() {
             }
         }
     }
-    logger.EndPhase();
 }
 
 // ask server for the world initialization data
@@ -272,14 +156,14 @@ void ClientDriver::InitializeEntities() {
     bool recvComplete = false;
     while (!recvComplete) {
         int clients_ready = SDLNet_CheckSockets(clientInfo.socket_set, WAIT_TIME);
-        logger.Emit("\tclients_ready=%d\n", clients_ready);
         if (clients_ready < 0) {
             Log::error("Error: SDLNet_CheckSockets failed\n");
         }
         else if (clients_ready == 0) {
-            logger.Emit("\twaiting for socket...\n");
+            logger.EmitVerbose("waiting for socket...\n");
         }
         else {
+            logger.Emit("made connection to server");
             if(!SDLNet_SocketReady(clientInfo.serverSoc)) {
                 Log::error("Error: CheckSockets returned %d, but the SocketReady(server) was false\n)");
                 continue;
@@ -290,30 +174,30 @@ void ClientDriver::InitializeEntities() {
             
             for (auto p : consumedPackets) {
                 if (p.flags.test(Packet::Flag_t::bEndOfPacketGroup)) {
-                    logger.Emit("\trecevied end-of-list packet\n");
+                    logger.Emit("recevied end-of-list packet\n");
                     recvComplete = true;
                     break;
                 }
                 else if (p.flags.test(Packet::Flag_t::bNewEntity)) {
                     // we need to build the entity type again
                     
-                    logger.Emit("\treceived new-entity packet\n");
+                    logger.Emit("received new-entity packet\n");
 
                     // get the type id from data
                     if (p.polyTypeID == TypeDetails<Player>::index) {
-                        logger.Emit("\tnew-entity packet is a Player\n");
+                        logger.EmitVerbose("new-entity packet is a Player\n");
                         Player transmitted = p.ReadAsType<Player>();
                         Player* player = map.SpawnEntity<>(transmitted);
                         map.drawMeBuf.push_back(player);
                     }
                     else if (p.polyTypeID == TypeDetails<Wall>::index) {
-                        logger.Emit("\tnew-entity packet is a Wall\n");
+                        logger.EmitVerbose("new-entity packet is a Wall\n");
                         Wall transmitted = p.ReadAsType<Wall>();
                         Wall* wall = map.SpawnEntity<>(transmitted);
                         map.drawMeBuf.push_back(wall);
                     }
                     else if (p.polyTypeID == TypeDetails<MapEntity>::index) {
-                        logger.Emit("\tnew-entity packet is a MapEntity\n");
+                        logger.EmitVerbose("new-entity packet is a MapEntity\n");
                         MapEntity transmitted = p.ReadAsType<Player>();
                         map.SpawnEntity<>(transmitted);
                         MapEntity* entity = map.SpawnEntity<>(transmitted);
@@ -335,6 +219,28 @@ void ClientDriver::InitializeEntities() {
     logger.EndPhase();
 }
 
+void ClientDriver::Execute() {
+    const int WAIT_TIME = 0;
+    SDL_Event ev;
+    bool running = true;
+
+    while (running) {
+        // next check if the server has anything for us
+        logger.StartPhase("ProcessServerUpdate");
+        ProcessServerUpdate();
+        logger.EndPhase();
+
+        // first check for any input from the client device
+        if (SDL_PollEvent(&ev) != 0) {
+            logger.StartPhase("ProcessEvent");
+            running = !ProcessEvent(ev);
+            logger.EndPhase();
+        }
+
+        ExecuteFrame();
+    }
+}
+
 int main() {
 
     ClientDriver driver = ClientDriver();
@@ -344,21 +250,7 @@ int main() {
     // build up the entities sent over from the server to start with
     driver.InitializeEntities();
 
-    const int WAIT_TIME = 0;
-    SDL_Event ev;
-    bool running = true;
-
-    while (running) {
-        // next check if the server has anything for us
-        driver.ProcessServerUpdate();
-
-        // first check for any input from the client device
-        if (SDL_PollEvent(&ev) != 0) {
-            running = !driver.ProcessEvent(ev);
-        }
-
-        driver.ExecuteFrame();
-    }
+    driver.Execute();
 
     driver.Cleanup();
 }

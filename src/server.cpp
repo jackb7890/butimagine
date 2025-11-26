@@ -18,32 +18,11 @@
 #include "sockets/networking.hpp"
 #include "sdl_helpers/events.hpp"
 
+#include "server.hpp"
+
 using namespace std;
 
 #pragma warning(disable : 4244)
-
-void init() {
-    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
-    SDL_Init(SDL_INIT_EVERYTHING);
-    //A- Note the global timer starts at SDL initilization
-}
-
-void cleanup() {
-    SDL_Quit();
-}
-
-class ServerDriver {
-    public:
-    Map map;
-    Server ntwk;
-    std::array<Player*, Server::MAX_SOCKETS> clientEntities; // move this to map.players
-    Log logger;
-
-    std::vector<std::string> ProcessArgs(int argc, char* argv[]);
-    void SendAllEntities(TCPsocket socket);
-    void SendPacketToAllButOne(Packet p, int socketIndx);
-    void ProcessMoveData(std::vector<Player>& clientPlayers, Packet& packet, int client);
-};
 
 // assumes error handling already done
 void ServerDriver::ProcessMoveData(std::vector<Player>& clientPlayers, Packet& packet, int client) {
@@ -107,6 +86,16 @@ std::vector<std::string> ServerDriver::ProcessArgs(int argc, char* argv[]) {
     return args;
 }
 
+void ServerDriver::Initialize() {
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+    SDL_Init(SDL_INIT_EVERYTHING);
+    //A- Note the global timer starts at SDL initilization
+}
+
+void ServerDriver::Cleanup() {
+    SDL_Quit();
+}
+
 int main(int argc, char* argv[]) {
     ServerDriver driver;
     // process args
@@ -121,12 +110,12 @@ int main(int argc, char* argv[]) {
     if (args.size() != 0) {
         timeoutTime = stoi(args[0]);
     }
-    driver.logger.EmitVerbose("timeout set to %dms\n", timeoutTime);
+    driver.logger.EmitVerbose("timeout set to %s seconds\n", timeoutTime);
 
     const int MAX_PLAYERS = Server::MAX_SOCKETS-1;
     std::vector<Player> clientPlayers;
 
-    init();
+    driver.Initialize();
 
     // Init network connection
     if (!(driver.ntwk.Setup())) {
@@ -216,7 +205,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    cleanup();
+    driver.Cleanup();
     return 0;
 }
 
