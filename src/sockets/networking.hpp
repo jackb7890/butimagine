@@ -142,7 +142,6 @@ struct Packet {
     }
 
     // assumes its handed a ptr to already allocated memory
-    // releases memory allocated by data
     void WriteBuffer(void* buffer);
 
     inline void SetFlags(unsigned short _flags) {

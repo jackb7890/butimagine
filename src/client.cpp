@@ -12,8 +12,9 @@
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_net.h"
-#include "sockets/networking.hpp"
 
+#include "sockets/networking.hpp"
+#include "sdl_helpers/events.hpp"
 #include "World.hpp"
 
 //-----------------------------------------------------------------------------
@@ -35,7 +36,7 @@ const size_t serverPort = 8099;
 
 struct MovementCode {
     enum MovementKey {W, A, S, D};
-    std::array<int, 4> wasd;
+    std::array<char, 4> wasd;
     
     MovementCode() {
         wasd = {0, 0, 0, 0};
@@ -116,32 +117,6 @@ class ClientDriver {
     std::vector<MapEntity*> entitiesToDraw;
     Log logger;
 };
-
-bool InputIsUserMovement(const SDL_Event& ev) {
-    if (ev.type != SDL_KEYDOWN && ev.type != SDL_KEYUP) {
-        return false;
-    }
-
-    switch (ev.key.keysym.sym) {
-        case SDLK_w:
-        case SDLK_a:
-        case SDLK_s:
-        case SDLK_d:
-        return true;
-        
-        default:
-        return false;
-    }
-    return false;
-}
-
-std::pair<int, bool> EventGetMovementInfo(SDL_Event ev) {
-    return std::pair(ev.key.keysym.sym, ev.type == SDL_KEYUP);
-}
-
-bool InputIsQuitGame(const SDL_Event& ev) {
-    return ev.type == SDL_QUIT;
-}
 
 // returns false if we are to exit the user from the game.
 bool ClientDriver::ProcessEvent(SDL_Event ev) {

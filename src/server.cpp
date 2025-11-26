@@ -16,6 +16,7 @@
 
 #include "SDL_net.h"
 #include "sockets/networking.hpp"
+#include "sdl_helpers/events.hpp"
 
 using namespace std;
 
@@ -132,16 +133,24 @@ int main(int argc, char* argv[]) {
         Log::error("Failed server setup\n");
     }
     
+    SDL_Event ev;
     bool runLoop = true;
     const int WAIT_TIME = 0;
     while (runLoop) {
-        std::time_t frameTime = std::time(nullptr);
-        if (frameTime < startTime) {
+        std::time_t currTime = std::time(nullptr);
+        if (currTime < startTime) {
             // overflow, come back to this, for now, just switch them
             Log::error("TODO handle overflow time (error for now)\n");
         }
-        else if ((frameTime - startTime) >= timeoutTime) {
+        else if ((currTime - startTime) >= timeoutTime) {
             runLoop = false;
+        }
+
+        if (SDL_PollEvent(&ev) != 0) {
+            if (InputIsQuitGame(ev)) {
+                Log::emit("heddo\n");
+                runLoop = false;
+            }
         }
 
         int clients_ready = SDLNet_CheckSockets(driver.ntwk.socket_set, WAIT_TIME);

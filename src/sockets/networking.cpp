@@ -56,6 +56,7 @@ int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
     //Log::emit("Transmitted %d bytes\n", num_sent);
 
     if(num_sent < packet.EncodeSize()) {
+        // this can happen if we lose our connection to the server
         const char* sdl_err = SDLNet_GetError();
         if (sdl_err) {
             //Log::emit(sdl_err);
