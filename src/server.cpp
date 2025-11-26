@@ -20,8 +20,6 @@
 
 #include "server.hpp"
 
-using namespace std;
-
 #pragma warning(disable : 4244)
 
 // assumes error handling already done
