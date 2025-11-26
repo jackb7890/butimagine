@@ -97,6 +97,7 @@ class ClientDriver {
     public:
     ClientDriver() {}
     void Initialize();
+    void Execute();
     bool ProcessEvent(SDL_Event);
     void ProcessMoveInput(SDL_Event ev);
     void ExecuteFrame();

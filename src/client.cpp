@@ -50,38 +50,6 @@ void ClientDriver::ProcessMoveInput(SDL_Event ev) {
         }
     }
 
-    int asBits() {
-        return wasd[D] | (wasd[S] << 1) | (wasd[A] << 2) | (wasd[W] << 3);
-    }
-
-    void set(MovementKey mvkey) {
-        if (mvkey >= wasd.size()) {
-            //Log::emit("Unexpected mvkey value outside of array range: %d\n", mvkey);
-        }
-    }
-    else {
-        logger.Emit("event is a keyRelease\n");
-        logger.Emit("old movement status %X\n", moveInfo.asBits());
-        
-        switch (sdlKey) {
-        case SDLK_w:
-            moveInfo.clear(MovementCode::MovementKey::W);
-            break;
-        case SDLK_a:
-            moveInfo.clear(MovementCode::MovementKey::A);
-            break;
-        case SDLK_s:
-            moveInfo.clear(MovementCode::MovementKey::S);
-            break;
-        case SDLK_d:
-            moveInfo.clear(MovementCode::MovementKey::D);
-            break;
-        default:
-            logger.Error("Error: key release not one of w,a,s,d. sdlKey = %d\n", sdlKey);
-            break;
-        }
-    }
-
     logger.Emit("new movement status %X\n", moveInfo.asBits());
 }
 
@@ -195,7 +163,7 @@ void ClientDriver::InitializeEntities() {
             logger.EmitVerbose("waiting for socket...\n");
         }
         else {
-            logger.Emit("made connection to server")
+            logger.Emit("made connection to server");
             if(!SDLNet_SocketReady(clientInfo.serverSoc)) {
                 Log::error("Error: CheckSockets returned %d, but the SocketReady(server) was false\n)");
                 continue;
@@ -251,6 +219,28 @@ void ClientDriver::InitializeEntities() {
     logger.EndPhase();
 }
 
+void ClientDriver::Execute() {
+    const int WAIT_TIME = 0;
+    SDL_Event ev;
+    bool running = true;
+
+    while (running) {
+        // next check if the server has anything for us
+        logger.StartPhase("ProcessServerUpdate");
+        ProcessServerUpdate();
+        logger.EndPhase();
+
+        // first check for any input from the client device
+        if (SDL_PollEvent(&ev) != 0) {
+            logger.StartPhase("ProcessEvent");
+            running = !ProcessEvent(ev);
+            logger.EndPhase();
+        }
+
+        ExecuteFrame();
+    }
+}
+
 int main() {
 
     ClientDriver driver = ClientDriver();
@@ -260,25 +250,7 @@ int main() {
     // build up the entities sent over from the server to start with
     driver.InitializeEntities();
 
-    const int WAIT_TIME = 0;
-    SDL_Event ev;
-    bool running = true;
-
-    while (running) {
-        // next check if the server has anything for us
-        logger.StartPhase("ProcessServerUpdate");
-        driver.ProcessServerUpdate();
-        logger.EndPhase();
-
-        // first check for any input from the client device
-        if (SDL_PollEvent(&ev) != 0) {
-            logger.StartPhase("ProcessEvent");
-            running = !driver.ProcessEvent(ev);
-            logger.EndPhase();
-        }
-
-        driver.ExecuteFrame();
-    }
+    driver.Execute();
 
     driver.Cleanup();
 }
