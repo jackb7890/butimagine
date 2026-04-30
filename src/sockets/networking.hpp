@@ -184,10 +184,11 @@ class Networking {
 
     void PushUnfinishedPacket(Packet p);
     Packet PopUnfinishedPacket();
+    bool TestConnection(TCPsocket& socket);
     int SendPacket(TCPsocket& socket, Packet& Packet);
     Packet ConsumePacket(TCPsocket& socket);
     bool ConsumePackets(TCPsocket& socket, std::vector<Packet>& outPackets);
-    void CloseSocket(TCPsocket* socket);
+    void CloseSocket(TCPsocket& socket);
     
     protected:
 
@@ -198,7 +199,8 @@ class Networking {
 
 struct Server : public Networking {
     static const int MAX_SOCKETS = 0x10; // max number of client sockets to hold
-    int next_ind;
+    int nextIndex;
+    int currentClientCount;
 
     TCPsocket clientSockets[MAX_SOCKETS];
 
@@ -208,6 +210,8 @@ struct Server : public Networking {
 
     bool Setup();
     int TryAddClient();
+
+    void CloseDeadClients();
 
     private:
 };

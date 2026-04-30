@@ -123,14 +123,29 @@ int main(int argc, char* argv[]) {
     SDL_Event ev;
     bool runLoop = true;
     const int WAIT_TIME = 0;
+    bool doTimeout = true;
     while (runLoop) {
-        std::time_t currTime = std::time(nullptr);
-        if (currTime < startTime) {
-            // overflow, come back to this, for now, just switch them
-            Log::error("TODO handle overflow time (error for now)\n");
+
+        if (!doTimeout) {
+            driver.ntwk.CloseDeadClients();
+            if (driver.ntwk.currentClientCount == 0) {
+                doTimeout = true;
+                startTime = std::time(nullptr);
+            }   
         }
-        else if ((currTime - startTime) >= timeoutTime) {
-            runLoop = false;
+        else if (driver.ntwk.currentClientCount > 0) {
+            doTimeout = false;
+        }
+
+        if (doTimeout) {
+            std::time_t currTime = std::time(nullptr);
+            if (currTime < startTime) {
+                // overflow, come back to this, for now, just switch them
+                Log::error("TODO handle overflow time (error for now)\n");
+            }
+            else if ((currTime - startTime) >= timeoutTime) {
+                runLoop = false;
+            }
         }
 
         if (SDL_PollEvent(&ev) != 0) {
@@ -154,7 +169,7 @@ int main(int argc, char* argv[]) {
             int newPlayerInd = -1;
             if(SDLNet_SocketReady(driver.ntwk.serverSoc)) {
                 driver.logger.Emit("new player has connected!\n");
-                newPlayerInd = driver.ntwk.next_ind;
+                newPlayerInd = driver.ntwk.nextIndex;
                 int indx = driver.ntwk.TryAddClient();
                 if (indx >= 0) {
                     Player* joinedPlayer = driver.map.SpawnEntity<Player>();
