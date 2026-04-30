@@ -39,6 +39,12 @@ const char* Packet::ToString() {
     return description.c_str();
 }
 
+bool Networking::TestConnection(TCPsocket& socket) {
+    Packet testPacket(Packet::Flag_t::bEndOfPacketGroup);
+    int bytes_sent = this->SendPacket(socket, testPacket);
+    return bytes_sent != 0;
+}
+
 int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
 
     //Log::emit("Running SendPacket... (%d bytes)\n", packet.EncodeSize());
@@ -61,7 +67,7 @@ int Networking::SendPacket(TCPsocket& socket, Packet& packet) {
         if (sdl_err) {
             //Log::emit(sdl_err);
         }
-        Log::error("SDLNet_TCP_Send - Error: num_sent < packet.EncodeSize\n");
+        Log::emit("SDLNet_TCP_Send - Warning: did not send full packet\n");
     }
 
     //Log::emit("Finished SendPacket - success!\n");
@@ -100,33 +106,33 @@ bool Networking::ConsumePackets(TCPsocket& socket, std::vector<Packet>& packetsO
     return true;
 }
 
-void Networking::CloseSocket(TCPsocket* socket) {
+void Networking::CloseSocket(TCPsocket& socket) {
     if (!socket) {
         // we should probably assert if we are trying to close a null socket
         assert(false);
         return;
     }
 
-    if(SDLNet_TCP_DelSocket(socket_set, *socket) == -1) {
+    if(SDLNet_TCP_DelSocket(socket_set, socket) == -1) {
         Log::error("ER: SDLNet_TCP_DelSocket: %s\n", SDLNet_GetError());
     }
 
-    SDLNet_TCP_Close(*socket);
+    SDLNet_TCP_Close(socket);
     socket = nullptr;
 }
 
 // NetworkHelper
 // todo: make this a singleton
 
-Server::Server() : next_ind(0) {
-    memset(&clientSockets[0], 0, sizeof(TCPsocket[MAX_SOCKETS]));
+Server::Server() : nextIndex(0), currentClientCount(0) {
+    memset(&clientSockets[0], 0, sizeof(clientSockets));
 }
 
 Server::~Server() {
     // Remember, base class destructor is called automatically, after this one
     for (int i=0; i<MAX_SOCKETS; ++i) {
         if(clientSockets[i] == nullptr) continue;
-        CloseSocket(&clientSockets[i]);
+        CloseSocket(clientSockets[i]);
     }
 }
 
@@ -170,31 +176,42 @@ bool Server::Setup() {
 // returns index in clientSockets of newest client
 // if it failed, returns -1
 int Server::TryAddClient() {
-    if (next_ind >= MAX_SOCKETS) {
-        // could choose to override sockets here, probably should
+    if (currentClientCount >= MAX_SOCKETS) {
         return -1;
     }
 
-    clientSockets[next_ind] = SDLNet_TCP_Accept(serverSoc);
+    clientSockets[nextIndex] = SDLNet_TCP_Accept(serverSoc);
 
-    if (clientSockets[next_ind] == nullptr) {
+    if (clientSockets[nextIndex] == nullptr) {
         Log::error("Error adding new client socket, SDLNet_TCP_Accept returned nullptr\n");
     }
 
-    if (SDLNet_TCP_AddSocket(socket_set, clientSockets[next_ind]) == -1) {
+    if (SDLNet_TCP_AddSocket(socket_set, clientSockets[nextIndex]) == -1) {
         Log::error("ER: SDLNet_TCP_AddSocket: %sn", SDLNet_GetError());
     }
 
     //Log::emit("Successfully added new client to socket %d\n", next_ind);
-    return next_ind++; // increment it
+    currentClientCount++;
+    return nextIndex++; // increment it
+}
+
+void Server::CloseDeadClients() {
+    for (int i = 0; i < MAX_SOCKETS; i++) {
+        if (clientSockets[i]) {
+            if (!TestConnection(clientSockets[i])) {
+                currentClientCount--;
+                CloseSocket(clientSockets[i]);
+            }
+        }
+    }
 }
 
 // Client
 
-Client::Client() : serverHostname("") {}
+Client::Client() : serverHostname(""), clientSocket(nullptr) {}
 
 Client::Client(std::string _serverHostname) :
-    serverHostname(_serverHostname) {
+    serverHostname(_serverHostname), clientSocket(nullptr) {
 }
 
 bool Client::Connect() {
